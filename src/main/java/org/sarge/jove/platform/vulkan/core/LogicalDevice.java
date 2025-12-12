@@ -11,6 +11,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.*;
 
@@ -206,7 +207,6 @@ public class LogicalDevice extends TransientNativeObject {
 		private final Set<String> layers = new HashSet<>();
 		private final Set<String> features = new HashSet<>();
 		private final List<RequiredQueue> queues = new ArrayList<>();
-		private final Set<Family> families = new HashSet<>();
 
 		/**
 		 * Constructor.
@@ -261,16 +261,31 @@ public class LogicalDevice extends TransientNativeObject {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + queue.family);
 			}
 
-			// Check only one required queue is configured for each family
-			if(families.contains(queue.family)) {
-				throw new IllegalArgumentException("Queue already specified for family: " + queue.family);
+			// Ensure only one required queue per family
+			final boolean distinct = queues
+					.stream()
+					.map(RequiredQueue::family)
+					.noneMatch(queue.family::equals);
+
+			if(distinct) {
+				queues.add(queue);
 			}
 
-			// Add required queue
-			queues.add(queue);
-			families.add(queue.family);
-
 			return this;
+		}
+
+		/**
+		 * Helper.
+		 * Adds a required queue for the given selector.
+		 * @param selector Physical device selector
+		 * @throws IllegalStateException if the selected queue family is {@code null}
+		 */
+		public Builder queue(Selector selector) {
+			final Family family = selector.family(parent);
+			if(family == null) {
+				throw new IllegalStateException("No queue family selected");
+			}
+			return queue(new RequiredQueue(family));
 		}
 
 		/**

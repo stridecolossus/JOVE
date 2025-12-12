@@ -3,6 +3,7 @@ package org.sarge.jove.util;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.sarge.jove.common.*;
@@ -154,8 +155,8 @@ public class ImageData {
 	/**
 	 * @return Image data
 	 */
-	public byte[] data() {
-		return data;
+	public MemorySegment data() {
+		return MemorySegment.ofArray(data).asReadOnly();
 	}
 
 	/**

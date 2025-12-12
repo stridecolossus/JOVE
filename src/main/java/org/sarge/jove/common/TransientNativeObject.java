@@ -58,6 +58,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 
 	@Override
 	public String toString() {
-		return String.format("TransientNativeObject[%s]", handle);
+		final String name = this.getClass().getSimpleName();
+		return String.format("%s[%s]", name, handle);
 	}
 }

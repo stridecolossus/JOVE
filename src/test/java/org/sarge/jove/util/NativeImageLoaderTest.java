@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.util.ImageData.Level;
 
-public class NativeImageLoaderTest {
+class NativeImageLoaderTest {
 	private NativeImageLoader loader;
 
 	@BeforeEach
@@ -40,7 +40,7 @@ public class NativeImageLoaderTest {
 		assertEquals(List.of(new Level(0, len)), image.levels());
 
 		// Check image data
-		assertEquals(len, image.data().length);
+		assertEquals(len, image.data().byteSize());
 	}
 
 	@DisplayName("ABGR should be loaded as-is")
@@ -80,19 +80,3 @@ public class NativeImageLoaderTest {
 		assertThrows(RuntimeException.class, () -> loader.load(buffered));
 	}
 }
-
-//
-//	@DisplayName("Should load supported buffered formats")
-//	@ParameterizedTest
-//	@CsvSource({
-//		"duke.jpg, 5",
-//		//"duke.png, 13",		// TODO - only has 2 channels?
-//		"heightmap.jpg, 10",
-//	})
-//	void map(String filename, int type) throws IOException {
-//		final Path path = Paths.get("./src/test/resources", filename);
-//		final BufferedImage buffered = loader.map(Files.newInputStream(path));
-//		assertEquals(type, buffered.getType());
-//		assertNotNull(loader.load(buffered));
-//	}
-//}

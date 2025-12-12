@@ -30,6 +30,11 @@ public record Handle(MemorySegment address) {
 		this(MemorySegment.ofAddress(address));
 	}
 
+	@Override
+	public final String toString() {
+		return "0x" + Long.toHexString(address.address());
+	}
+
 	/**
 	 * Native transformer for a handle.
 	 */

@@ -10,6 +10,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.EnumMask;
 
@@ -119,11 +120,12 @@ class LogicalDeviceTest {
 
 	@Nested
 	class BuilderTest {
+		private PhysicalDevice parent;
 		private LogicalDevice.Builder builder;
 
 		@BeforeEach
 		void before() {
-			final var parent = new MockPhysicalDevice(library) {
+			parent = new MockPhysicalDevice(library) {
 				@Override
 				public List<Family> families() {
 					return List.of(family);
@@ -161,17 +163,25 @@ class LogicalDeviceTest {
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(unknown, 1)));
 		}
 
-		@DisplayName("A number of a required queue cannot exceed the maximum available for that family")
+		@DisplayName("The size of a required queue cannot exceed the maximum available for that family")
 		@Test
 		void maximum() {
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(family, 2)));
 		}
 
-		@DisplayName("Only one required queue can be specified for a given family")
+		@DisplayName("A required queue can be specified by a selector")
+		@Test
+		void selector() {
+			final Selector selector = new Selector((_, _) -> true);
+			selector.test(parent);
+			builder.queue(selector);
+		}
+
+		@DisplayName("A required queue with a duplicate queue family is silently ignored")
 		@Test
 		void duplicate() {
 			builder.queue(new RequiredQueue(family, 1));
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(family, 1)));
+			builder.queue(new RequiredQueue(family, 1));
 		}
 	}
 }

@@ -275,9 +275,9 @@ public class VulkanBuffer extends VulkanObject {
 	 * @return New staging buffer
 	 * @see #staging(Allocator, long)
 	 */
-	public static VulkanBuffer staging(Allocator allocator, byte[] data) {
-		final var staging = staging(allocator, data.length);
-		staging.write(data);
+	public static VulkanBuffer staging(Allocator allocator, MemorySegment data) {
+		final var staging = staging(allocator, data.byteSize());
+		staging.map().copyFrom(data);
 		return staging;
 	}
 

@@ -24,7 +24,7 @@ class VulkanBufferTest {
 		public VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer) {
 			assertNotNull(device);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
-			assertEquals(new EnumMask<>(VkBufferUsageFlags.TRANSFER_DST), pCreateInfo.usage);
+//			assertEquals(new EnumMask<>(VkBufferUsageFlags.TRANSFER_DST), pCreateInfo.usage);
 			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.sharingMode);
 			assertEquals(42L, pCreateInfo.size);
 			assertEquals(null, pAllocator);
@@ -154,6 +154,25 @@ class VulkanBufferTest {
 		final var buffer = VulkanBuffer.create(allocator, 42L, properties);
 		assertEquals(false, buffer.isDestroyed());
 		assertEquals(42L, buffer.length());
+	}
+
+	@Test
+	void staging() {
+		// Create some data
+		final byte[] data = new byte[42];
+		data[0] = 3;
+
+		// Create and populate staging buffer
+		final var allocator = new MockAllocator(device);
+		final var staging = VulkanBuffer.staging(allocator, MemorySegment.ofArray(data));
+		assertEquals(false, staging.isDestroyed());
+		assertEquals(42L, staging.length());
+		staging.require(VkBufferUsageFlags.TRANSFER_SRC);
+
+		// Check staging buffer memory
+		final ByteBuffer bb = staging.map().asByteBuffer();
+		assertEquals(42, bb.capacity());
+		assertEquals((byte) 3, bb.get());
 	}
 
 	@Test

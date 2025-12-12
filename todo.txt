@@ -12,6 +12,9 @@ also injects superfluous padding
 
 mesh loader still needs custom indexed implementation
 
+helper for 'wrappers' that are not native objects (i.e. not destroyed) but compose and optionally destroy their dependencies?
+e.g. VertexBuffer, View
+
 OBJ group probably not right
 - separate lookup tables for VNT and actual JOVE models
 - s/o/g start a new JOVE model NOT the overall OBJ model
