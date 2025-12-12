@@ -1,21 +1,25 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
+import java.util.function.IntFunction;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.render.Swapchain.*;
+import org.sarge.jove.platform.vulkan.image.View;
+import org.sarge.jove.platform.vulkan.present.Swapchain.*;
+import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 
 /**
- * The <i>swapchain factory</i> recreates and configures the swapchain on-demand.
+ * The <i>swapchain manager</i> recreates and configures the swapchain on-demand.
  * @see Invalidated
  * @see SwapchainConfiguration
  * @author Sarge
  */
-public class SwapchainFactory implements TransientObject {
+public class SwapchainManager implements TransientObject {
 	/**
 	 * A <i>swapchain configuration</i> is used to select and configure a property of the swapchain prior to construction.
 	 */
@@ -41,7 +45,7 @@ public class SwapchainFactory implements TransientObject {
 	 * @param builder			Swapchain builder
 	 * @param configuration		Swapchain configuration
 	 */
-	public SwapchainFactory(LogicalDevice device, Properties properties, Builder builder, List<SwapchainConfiguration> configuration) {
+	public SwapchainManager(LogicalDevice device, Properties properties, Builder builder, List<SwapchainConfiguration> configuration) {
 		this.device = requireNonNull(device);
 		this.properties = requireNonNull(properties);
 		this.builder = requireNonNull(builder);
@@ -62,11 +66,24 @@ public class SwapchainFactory implements TransientObject {
 	}
 
 	/**
-	 * Recreates the swapchain.
+	 * Helper.
+	 * Creates the colour attachment for the swapchain.
+	 * @param description Attachment description
+	 * @return Attachment
 	 */
-	public void recreate() {
+	public Attachment attachment(AttachmentDescription description) {
+		final IntFunction<View> view = index -> this.swapchain().view(index);
+		return new Attachment(AttachmentType.COLOUR, description, view);
+	}
+
+	/**
+	 * Recreates the swapchain.
+	 * @return New swapchain
+	 */
+	public Swapchain recreate() {
 		swapchain.destroy();
 		swapchain = build();
+		return swapchain;
 	}
 
 	/**

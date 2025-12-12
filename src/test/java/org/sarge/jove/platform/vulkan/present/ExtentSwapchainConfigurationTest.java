@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -7,7 +7,7 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.vulkan.VkExtent2D;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 
 class ExtentSwapchainConfigurationTest {
 	private static class MockSwapchainBuilder extends Swapchain.Builder {

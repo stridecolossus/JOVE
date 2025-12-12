@@ -10,8 +10,8 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
-import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 import org.sarge.jove.util.EnumMask;
 
 class RenderPassTest {
@@ -32,29 +32,44 @@ class RenderPassTest {
 	}
 
 	private RenderPass pass;
-	private MockRenderPassLibrary library;
+	private Attachment attachment;
 
 	@BeforeEach
 	void before() {
-		final var attachment = Attachment.colour(VkFormat.R32G32B32A32_SFLOAT);
-		final var subpass = new Subpass(List.of(new AttachmentReference(attachment, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL)), null, Set.of());
+		// Create an attachment
+		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
+		attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
 
+		// Create subpass
+		final var subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(attachment)));
+
+		// Specify a dependency on the start of the render pass
 		final var dependency = new Dependency(
 				new Properties(subpass, Set.of(VkPipelineStageFlags.FRAGMENT_SHADER), Set.of()),
 				new Properties(Dependency.VK_SUBPASS_EXTERNAL, Set.of(VkPipelineStageFlags.VERTEX_SHADER), Set.of()),
 				Set.of()
 		);
 
-		library = new MockRenderPassLibrary();
-
+		// Create render pass
 		pass = new RenderPass.Builder()
 				.add(subpass)
 				.dependency(dependency)
-				.build(new MockLogicalDevice(library));
+				.build(new MockLogicalDevice(new MockRenderPassLibrary()));
+	}
+
+	@Test
+	void attachments() {
+		assertEquals(List.of(attachment), pass.attachments());
 	}
 
 	@Test
 	void granularity() {
+	}
+
+	@Test
+	void empty() {
+		final var builder = new RenderPass.Builder();
+		assertThrows(IllegalArgumentException.class, () -> builder.build(new MockLogicalDevice()));
 	}
 
 	@Test

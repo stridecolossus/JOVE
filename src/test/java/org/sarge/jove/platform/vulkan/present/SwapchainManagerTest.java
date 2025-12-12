@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -9,11 +9,10 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
-import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
-import org.sarge.jove.platform.vulkan.render.SwapchainTest.MockSwapchainLibrary;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
-class SwapchainFactoryTest {
+class SwapchainManagerTest {
 	private static class MockConfiguration implements SwapchainConfiguration {
 		boolean applied;
 
@@ -23,7 +22,7 @@ class SwapchainFactoryTest {
 		}
 	}
 
-	private SwapchainFactory factory;
+	private SwapchainManager manager;
 	private MockSurfaceProperties properties;
 	private Builder builder;
 	private VkSurfaceFormatKHR format;
@@ -55,21 +54,21 @@ class SwapchainFactoryTest {
 
 		configuration = new MockConfiguration();
 
-		factory = new SwapchainFactory(device, properties, builder, List.of(configuration));
+		manager = new SwapchainManager(device, properties, builder, List.of(configuration));
 	}
 
 	@Test
 	void swapchain() {
-		final Swapchain swapchain = factory.swapchain();
+		final Swapchain swapchain = manager.swapchain();
 		assertEquals(false, swapchain.isDestroyed());
 		assertEquals(true, configuration.applied);
 	}
 
 	@Test
 	void recreate() {
-		final Swapchain previous = factory.swapchain();
-		factory.recreate();
-		final Swapchain swapchain = factory.swapchain();
+		final Swapchain previous = manager.swapchain();
+		manager.recreate();
+		final Swapchain swapchain = manager.swapchain();
 		assertEquals(false, swapchain.isDestroyed());
 		assertNotSame(previous, swapchain);
 		assertEquals(true, configuration.applied);
@@ -77,8 +76,8 @@ class SwapchainFactoryTest {
 
 	@Test
 	void destroy() {
-		final Swapchain swapchain = factory.swapchain();
-		factory.destroy();
+		final Swapchain swapchain = manager.swapchain();
+		manager.destroy();
 		assertEquals(true, swapchain.isDestroyed());
 	}
 }

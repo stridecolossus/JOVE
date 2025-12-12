@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
@@ -43,54 +43,61 @@ public class Swapchain extends VulkanObject {
 	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
-	private final VkFormat format;
-	private final Dimensions extents;
-	private final List<View> attachments;
-	private int latest;
+	private final List<View> views;
 
 	/**
 	 * Constructor.
-	 * @param handle 			Swapchain handle
-	 * @param device			Logical device
-	 * @param library			Swapchain library
-	 * @param format			Image format
-	 * @param extents			Image extents
-	 * @param attachments		Attachments
+	 * @param handle 		Swapchain handle
+	 * @param device		Logical device
+	 * @param library		Swapchain library
+	 * @param views			Image views
 	 */
-	Swapchain(Handle handle, LogicalDevice device, Library library, VkFormat format, Dimensions extents, List<View> attachments) {
+	Swapchain(Handle handle, LogicalDevice device, Library library, List<View> views) {
 		super(handle, device);
 		this.library = requireNonNull(library);
-		this.format = requireNonNull(format);
-		this.extents = requireNonNull(extents);
-		this.attachments = List.copyOf(attachments);
+		this.views = List.copyOf(views);
 	}
 
 	/**
 	 * @return Swapchain Image format
 	 */
 	public VkFormat format() {
-		return format;
+		return this.descriptor().format();
 	}
 
 	/**
 	 * @return Swapchain extents
 	 */
 	public Dimensions extents() {
-		return extents;
+		return this.descriptor().extents().size();
 	}
 
 	/**
-	 * @return Colour attachments
+	 * @return Image descriptor for the first attachment
 	 */
-	public List<View> attachments() {
-		return attachments;
+	private Image.Descriptor descriptor() {
+		return views
+				.getFirst()
+				.image()
+				.descriptor();
 	}
 
 	/**
-	 * @return Last rendered swapchain image
+	 * @return Number of colour attachments
 	 */
-	public View latest() {
-		return attachments.get(latest);
+	public int count() {
+		return views.size();
+	}
+
+	/**
+	 * Retrieves a colour attachment by index.
+	 * @param index Attachment index
+	 * @return Colour attachment
+	 * @throws IndexOutOfBoundsException for an invalid index
+	 * @see #count()
+	 */
+	public View view(int index) {
+		return views.get(index);
 	}
 
 	/**
@@ -113,13 +120,11 @@ public class Swapchain extends VulkanObject {
 		final VkResult result = MAPPING.map(code);
 
 		// Check result
-		switch(result) {
-			case VK_SUCCESS, VK_SUBOPTIMAL_KHR -> latest = index.get();
+		return switch(result) {
+			case VK_SUCCESS, VK_SUBOPTIMAL_KHR -> index.get();
 			case VK_ERROR_OUT_OF_DATE_KHR -> throw new Invalidated(result);
 			default -> throw new VulkanException(result);
-		}
-
-		return latest;
+		};
 	}
 
 	/**
@@ -169,7 +174,7 @@ public class Swapchain extends VulkanObject {
 
 	@Override
 	protected void release() {
-		attachments.forEach(View::destroy);
+		views.forEach(View::destroy);
 	}
 
 	/**
@@ -380,6 +385,7 @@ public class Swapchain extends VulkanObject {
 			}
 		}
 
+		// TODO - break up
 		/**
 		 * Constructs this swapchain.
 		 * @param device Logical device
@@ -408,10 +414,9 @@ public class Swapchain extends VulkanObject {
 			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
 
 			// Build the common image descriptor for the views
-			final var extents = dimensions(info.imageExtent);
 			final var descriptor = new Image.Descriptor.Builder()
     				.format(info.imageFormat)
-    				.extents(extents)
+    				.extents(dimensions(info.imageExtent))
     				.aspect(VkImageAspectFlags.COLOR)
     				.build();
 
@@ -428,7 +433,7 @@ public class Swapchain extends VulkanObject {
 					.toList();
 
 			// Create swapchain instance
-			return new Swapchain(pointer.handle(), device, library, info.imageFormat, extents, views);
+			return new Swapchain(pointer.handle(), device, library, views);
 		}
 
 		/**

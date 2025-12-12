@@ -1,49 +1,51 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sarge.jove.platform.vulkan.VkImageLayout.*;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.IntFunction;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
+import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 import org.sarge.jove.util.EnumMask;
 
 class SubpassTest {
 	private Subpass subpass;
-	private AttachmentReference colour, depth;
+	private Attachment colour, depth;
 
 	@BeforeEach
 	void before() {
-		colour = new AttachmentReference(Attachment.colour(VkFormat.R32G32B32A32_SFLOAT), COLOR_ATTACHMENT_OPTIMAL);
-		depth = new AttachmentReference(Attachment.depth(VkFormat.D32_SFLOAT), DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-		subpass = new Subpass.Builder()
-				.colour(colour)
-				.depth(depth)
-				.build();
-	}
-
-	@Test
-	void attachments() {
-		assertEquals(List.of(colour, depth), subpass.attachments().toList());
+		final IntFunction<View> views = _ -> new MockView(new MockLogicalDevice());
+		colour = new Attachment(AttachmentType.COLOUR, AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT), views);
+		depth = new Attachment(AttachmentType.DEPTH, AttachmentDescription.depth(VkFormat.D32_SFLOAT), views);
+		subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(colour), AttachmentReference.of(depth)));
 	}
 
 	@Test
 	void description() {
-		final VkSubpassDescription description = subpass.description(List.of(colour.attachment(), depth.attachment()));
+		// Check subpass descriptor
+		final VkSubpassDescription description = subpass.description(List.of(colour, depth));
 		assertEquals(new EnumMask<>(), description.flags);
 		assertEquals(VkPipelineBindPoint.GRAPHICS, description.pipelineBindPoint);
 		assertEquals(1, description.colorAttachmentCount);
 		assertEquals(1, description.pColorAttachments.length);
-		assertNotNull(description.pColorAttachments[0]);
-		assertNotNull(description.pDepthStencilAttachment);
+
+		// Check colour attachment descriptor
+		final VkAttachmentReference colour = description.pColorAttachments[0];
+		assertEquals(0, colour.attachment);
+		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, colour.layout);
+
+		// Check depth attachment descriptor
+		final VkAttachmentReference depth = description.pDepthStencilAttachment;
+		assertEquals(1, depth.attachment);
+		assertEquals(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL, depth.layout);
 	}
 
 	@Test
 	void unknown() {
 		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of()));
-		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of(colour.attachment())));
-		assertThrows(IllegalArgumentException.class, () -> subpass.description(List.of(depth.attachment())));
 	}
 }

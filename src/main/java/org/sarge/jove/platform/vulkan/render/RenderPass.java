@@ -8,7 +8,6 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -100,10 +99,11 @@ public class RenderPass extends VulkanObject {
 				throw new IllegalArgumentException("At least one subpass must be specified");
 			}
 
-			// Enumerate attachment references across the subpasses
+			// Aggregate attachments used across the subpasses
 			final List<Attachment> attachments = subpasses
 					.stream()
-					.flatMap(Subpass::attachments)
+					.map(Subpass::references)
+					.flatMap(List::stream)
 					.map(AttachmentReference::attachment)
 					.distinct()
 					.toList();
@@ -134,7 +134,8 @@ public class RenderPass extends VulkanObject {
 			info.attachmentCount = attachments.size();
 			info.pAttachments = attachments
 					.stream()
-					.map(Attachment::populate)
+					.map(Attachment::description)
+					.map(AttachmentDescription::populate)
 					.toArray(VkAttachmentDescription[]::new);
 
 			// Populate subpasses

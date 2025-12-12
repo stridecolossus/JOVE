@@ -7,6 +7,7 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.present.MockSwapchain;
 
 class FrameStateTest {
 	private FrameState frame;

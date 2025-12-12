@@ -25,6 +25,10 @@ public sealed interface ClearValue {
 	 * Clear value for the depth-stencil attachment.
 	 */
 	record DepthClearValue(Percentile depth) implements ClearValue {
+		/**
+		 * Default clear value for the depth buffer.
+		 */
+		public static final DepthClearValue DEFAULT = new DepthClearValue(Percentile.ONE);
 	}
 
 	/**

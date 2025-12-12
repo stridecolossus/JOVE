@@ -1,11 +1,11 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
-import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.ImageCountSwapchainConfiguration.Policy;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 
 class ImageCountSwapchainConfigurationTest {
 	private static class MockSwapchainBuilder extends Swapchain.Builder {

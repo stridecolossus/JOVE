@@ -3,7 +3,7 @@
  * <p>
  * The {@link Swapchain} is the controller for the rendering and presentation process and contains a number of colour attachment images.
  * <p>
- * An {@link Attachment} specifies the format and structure or colour or depth-stencil images.
+ * An {@link AttachmentDescription} specifies the format and structure or colour or depth-stencil images.
  * <p>
  * A {@link RenderPass} is comprised of a number of {@link Subpass} that manages the attachment(s) used during each stage of rendering.
  * <p>
@@ -11,3 +11,5 @@
  * <p>
  */
 package org.sarge.jove.platform.vulkan.render;
+
+import org.sarge.jove.platform.vulkan.present.Swapchain;

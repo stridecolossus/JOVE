@@ -1,20 +1,26 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireOneOrMore;
+
+import java.util.*;
+import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
+import org.sarge.jove.platform.vulkan.present.*;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
- * The <i>render task</i> encapsulates the process of rendering and presenting frames to the swapchain.
+ * The <i>render task</i> orchestrates the various components that collaborate to render and present a frame to the swapchain.
  * <p>
- * This class orchestrates the various components that collaborate to render a frame as follows:
+ * The rendering process is as follows:
  * <ol>
  * <li>Select the next in-flight frame instance to render</li>
- * <li>Acquire the next framebuffer to be rendered from the swapchain</li>
- * <li>Compose the render sequence for the next frame</li>
+ * <li>Acquire the framebuffer to be rendered from the swapchain</li>
+ * <li>Compose the render sequence for the frame</li>
  * <li>Submit the render task</li>
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
@@ -22,108 +28,152 @@ import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
  * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frames concurrently.
  * The number of in-flight frames can be overridden by the {@link #count(Swapchain)} method.
  * <p>
- * If the acquire or present steps fail due to an {@link Invalidated} swapchain, the frame buffers and swapchain are recreated on demand.
+ * The swapchain and frame buffers are recreated on demand if the swapchain is {@link Invalidated}.
  * <p>
  * @author Sarge
  */
 public class RenderTask implements Runnable, TransientObject {
-	private final SwapchainFactory factory;
-	private final Framebuffer.Group group;
+	private final SwapchainManager manager;
+	private final IntFunction<Framebuffer> factory;
+	private final List<Framebuffer> framebuffers = new ArrayList<>();
 	private final FrameComposer composer;
-	private final FrameState[] frames;
-	private int next;
+	private final FrameStateIterator iterator;
 
 	/**
 	 * Constructor.
-	 * @param swapchain			Swapchain factory
-	 * @param group				Frame buffers
-	 * @param composer			Composer for the render sequence
+	 * @param manager		Swapchain manager
+	 * @param factory		Frame buffer factory
+	 * @param composer		Composer for the render sequence
 	 */
-	public RenderTask(SwapchainFactory factory, Framebuffer.Group group, FrameComposer composer) {
+	public RenderTask(SwapchainManager manager, IntFunction<Framebuffer> factory, FrameComposer composer) {
+		final var swapchain = manager.swapchain();
+		this.manager = requireNonNull(manager);
 		this.factory = requireNonNull(factory);
-		this.group = requireNonNull(group);
 		this.composer = requireNonNull(composer);
-		this.frames = init(factory.swapchain());
+		this.iterator = new FrameStateIterator(count(swapchain), swapchain.device());
+		createFramebuffers(swapchain);
 	}
 
 	/**
-	 * Builds the array of in-flight frames.
-	 * @param swapchain Swapchain
-	 * @return In-flight frames
+	 * Cycle iterator for in-flight frames.
 	 */
-	private FrameState[] init(Swapchain swapchain) {
-		final int count = count(swapchain);
-		final var frames = new FrameState[count];
-		final var device = swapchain.device();
-		for(int n = 0; n < count; ++n) {
-			frames[n] = frame(device);
+	private static class FrameStateIterator {
+		private final List<FrameState> frames;
+		private int index;
+
+		/**
+		 * Constructor.
+		 * @param count			Number of in-flight frames
+		 * @param device		Logical device
+		 */
+		public FrameStateIterator(int count, LogicalDevice device) {
+			this.frames = IntStream
+					.range(0, requireOneOrMore(count))
+					.mapToObj(_ -> FrameState.create(device))
+					.toList();
 		}
-		return frames;
+
+		/**
+		 * @return Next in-flight frame
+		 */
+		public FrameState next() {
+			if(index == frames.size()) {
+				index = 0;
+			}
+			return frames.get(index++);
+		}
+
+		/**
+		 * Releases resources.
+		 */
+		public void destroy() {
+			for(FrameState f : frames) {
+				f.destroy();
+			}
+		}
 	}
 
 	/**
-	 * Specifies the number of in-flight frames.
-	 * By default this is the same as the number of swapchain attachments.
+	 * Determines the number of in-flight frames.
+	 * By default this is the same as the {@link Swapchain#count()}.
 	 * @param swapchain Swapchain
 	 * @return Number of in-flight frames
 	 */
 	protected int count(Swapchain swapchain) {
-		return swapchain.attachments().size();
+		return swapchain.count();
 	}
 
 	/**
-	 * Instantiates a frame state tracker.
-	 * @param device Logical device
-	 * @return New frame state
+	 * Builds the framebuffers for the given swapchain.
 	 */
-	protected FrameState frame(LogicalDevice device) {
-		return FrameState.create(device);
+	private void createFramebuffers(Swapchain swapchain) {
+		assert framebuffers.isEmpty();
+		final int count = swapchain.count();
+		for(int n = 0; n < count; ++n) {
+			framebuffers.add(factory.apply(n));
+		}
+	}
+
+	/**
+	 * Releases the framebuffers.
+	 */
+	private void releaseFramebuffers() {
+		for(Framebuffer b : framebuffers) {
+			b.destroy();
+		}
+		framebuffers.clear();
 	}
 
 	@Override
 	public void run() {
 		try {
-			frame();
+			render();
 		}
 		catch(Invalidated e) {
-			waitIdle();
-			factory.recreate();
-			group.recreate(factory.swapchain());
+			recreate();
 		}
 	}
 
-	private void frame() throws Invalidated {
+	/**
+	 * Renders the next frame.
+	 */
+	private void render() throws Invalidated {
 		// Select the next in-flight frame
-		final FrameState frame = frames[next];
-		if(++next >= frames.length) {
-			next = 0;
-		}
+		final FrameState frame = iterator.next();
 
 		// Acquire next frame buffer
-		final Swapchain swapchain = factory.swapchain();
+		final Swapchain swapchain = manager.swapchain();
 		final int index = frame.acquire(swapchain);
-		final Framebuffer framebuffer = group.get(index);
+		final Framebuffer framebuffer = framebuffers.get(index);
 
 		// Render frame
 		final Buffer sequence = composer.compose(index, framebuffer);
 		frame.render(sequence);
+		// TODO - how/where to record 'latest' COMPLETED framebuffer index? i.e. only ready/valid after render completed (?)
 
 		// Present frame
 		frame.present(sequence, index, swapchain);
 	}
 
 	/**
-	 * Blocks until the device has completed all pending work.
+	 * Recreates the swapchain and framebuffers.
 	 */
-	private void waitIdle() {
-		final LogicalDevice device = factory.swapchain().device();
+	private void recreate() {
+		// Wait for pending rendering tasks
+		final LogicalDevice device = manager.swapchain().device();
 		device.waitIdle();
+
+		// Recreate the swapchain
+		final Swapchain swapchain = manager.recreate();
+
+		// Rebuild the framebuffers
+		releaseFramebuffers();
+		createFramebuffers(swapchain);
 	}
 
 	@Override
 	public void destroy() {
-		for(FrameState f : frames) {
-			f.destroy();
-		}
+		iterator.destroy();
+		releaseFramebuffers();
 	}
 }

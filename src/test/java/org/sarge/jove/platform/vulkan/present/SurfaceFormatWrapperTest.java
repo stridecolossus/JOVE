@@ -1,9 +1,10 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.present.SurfaceFormatWrapper;
 
 class SurfaceFormatWrapperTest {
 	private SurfaceFormatWrapper wrapper;

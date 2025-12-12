@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
 
@@ -6,8 +6,8 @@ import java.util.function.ToIntFunction;
 
 import org.sarge.jove.platform.vulkan.VkSurfaceCapabilitiesKHR;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
-import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
 /**
  * The <i>image count</i> swapchain configuration selects the number of swapchain attachments.

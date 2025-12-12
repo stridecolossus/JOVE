@@ -1,9 +1,10 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import java.util.List;
 
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.present.SurfaceFormatWrapper;
 import org.sarge.jove.util.EnumMask;
 
 public class MockSurfaceProperties implements VulkanSurface.Properties {

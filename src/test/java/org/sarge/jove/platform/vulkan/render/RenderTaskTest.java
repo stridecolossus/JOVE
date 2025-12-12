@@ -11,7 +11,7 @@ import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.render.SwapchainTest.MockSwapchainLibrary;
+import org.sarge.jove.platform.vulkan.present.*;
 
 class RenderTaskTest {
 	private static class MockRenderTaskLibrary extends MockSwapchainLibrary {
@@ -45,10 +45,10 @@ class RenderTaskTest {
 	private RenderTask task;
 	private LogicalDevice device;
 	private MockRenderTaskLibrary library;
-	private Framebuffer.Group group;
 	private RenderSequence sequence;
 	private FrameComposer composer;
 
+	// TODO - clean
 	@BeforeEach
 	void before() {
 		library = new MockRenderTaskLibrary();
@@ -61,9 +61,7 @@ class RenderTaskTest {
 				.format(MockSurfaceProperties.FORMAT)
 				.extent(new Dimensions(640, 480));
 
-		final var factory = new SwapchainFactory(device, properties, builder, List.of());
-
-		group = new Framebuffer.Group(factory.swapchain(), new MockRenderPass(device), null);
+		final var manager = new SwapchainManager(device, properties, builder, List.of());
 
 		sequence = new RenderSequence() {
 			@Override
@@ -74,11 +72,14 @@ class RenderTaskTest {
 			}
 		};
 
+		final var factory = new Framebuffer.Factory(new MockRenderPass(device));
+
 		composer = new FrameComposer(new MockCommandPool(), sequence);
 
-		task = new RenderTask(factory, group, composer);
+		task = new RenderTask(manager, factory::create, composer);
 	}
 
+	// TODO
 	@Test
 	void run() {
 		task.run();

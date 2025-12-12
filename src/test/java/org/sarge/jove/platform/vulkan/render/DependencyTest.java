@@ -8,8 +8,8 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
-import org.sarge.jove.platform.vulkan.render.Subpass.AttachmentReference;
 import org.sarge.jove.util.EnumMask;
 
 class DependencyTest {
@@ -18,9 +18,11 @@ class DependencyTest {
 
 	@BeforeEach
 	void before() {
-		final var attachment = new AttachmentReference(Attachment.colour(VkFormat.R32G32B32A32_SFLOAT), VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
-		one = new Subpass(List.of(attachment), null, Set.of());
-		two = new Subpass(List.of(attachment), null, Set.of());
+		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
+		final var attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
+		final var reference = AttachmentReference.of(attachment);
+		one = new Subpass(Set.of(), List.of(reference));
+		two = new Subpass(Set.of(), List.of(reference));
 		dependency = new Dependency(
 				new Properties(one, Set.of(FRAGMENT_SHADER), Set.of(SHADER_READ)),
 				new Properties(two, Set.of(VERTEX_SHADER), Set.of(SHADER_WRITE)),

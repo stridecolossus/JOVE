@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import java.util.*;
 
@@ -12,8 +12,7 @@ public class MockSwapchain extends Swapchain {
 
 	public MockSwapchain(LogicalDevice device) {
 		final var attachment = new MockView(device);
-		final var descriptor = attachment.image().descriptor();
-		super(new Handle(2), device, device.library(), descriptor.format(), descriptor.extents().size(), List.of(attachment));
+		super(new Handle(2), device, device.library(), List.of(attachment));
 	}
 
 	public void invalidate() {

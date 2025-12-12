@@ -1,10 +1,10 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import java.util.List;
 
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
+import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
 /**
  * The <i>presentation mode</i> swapchain configuration selects a preferred presentation mode for the swapchain.

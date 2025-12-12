@@ -8,7 +8,8 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Invalidated;
+import org.sarge.jove.platform.vulkan.present.Swapchain;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
  * The <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during rendering.

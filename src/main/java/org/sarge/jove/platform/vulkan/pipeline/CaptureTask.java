@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier.BarrierType.ImageBarrier;
-import org.sarge.jove.platform.vulkan.render.Swapchain;
+import org.sarge.jove.platform.vulkan.present.Swapchain;
 
 /**
  * The <i>capture task</i> is used to capture a screenshot from the swapchain.
@@ -47,7 +47,7 @@ public class CaptureTask {
 	 */
 	public Image capture(Swapchain swapchain, Allocator allocator) {
 		// Retrieve latest rendered swapchain image
-		final Image image = swapchain.latest().image();
+		final Image image = swapchain.view(0).image(); // TODO - where to get 'latest' COMPLETED framebuffer index?
 
 		// Create destination screenshot image
 		final LogicalDevice device = swapchain.device();

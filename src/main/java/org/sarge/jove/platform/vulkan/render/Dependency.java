@@ -16,7 +16,7 @@ public record Dependency(Properties source, Properties destination, Set<VkDepend
 	/**
 	 * Marker for the <i>implicit</i> subpass before or after the render pass.
 	 */
-	public static final Subpass VK_SUBPASS_EXTERNAL = new Subpass(List.of(), null, Set.of());
+	public static final Subpass VK_SUBPASS_EXTERNAL = new Subpass(Set.of(), List.of());
 
 	/**
 	 * Properties of this dependency.

@@ -3,88 +3,56 @@ package org.sarge.jove.platform.vulkan.render;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.LoadStore;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
+import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.image.ClearValue.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 
 class AttachmentTest {
-	private static final VkFormat FORMAT = VkFormat.R32G32B32A32_SFLOAT;
-
 	private Attachment attachment;
+	private AttachmentDescription description;
+	private View view;
 
 	@BeforeEach
 	void before() {
-		attachment = new Attachment(
-				FORMAT,
-				VkSampleCountFlags.COUNT_1,
-				new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE),
-				new LoadStore(VkAttachmentLoadOp.DONT_CARE, VkAttachmentStoreOp.DONT_CARE),
-				VkImageLayout.UNDEFINED,
-				VkImageLayout.PRESENT_SRC_KHR
-		);
+		description = new AttachmentDescription.Builder()
+				.format(VkFormat.R32G32B32A32_SFLOAT)
+				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
+				.build();
+		view = new MockView(new MockLogicalDevice());
+		attachment = new Attachment(AttachmentType.COLOUR, description, _ -> view);
 	}
 
 	@Test
 	void constructor() {
-		assertEquals(FORMAT, attachment.format());
+		assertEquals("colour", attachment.name());
+		assertEquals(AttachmentType.COLOUR, attachment.type());
+		assertEquals(description, attachment.description());
+		assertEquals(new ClearValue.None(), attachment.clear());
 	}
 
 	@Test
-	void populate() {
-		final var descriptor = attachment.populate();
-		assertEquals(FORMAT, descriptor.format);
-		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_1), descriptor.samples);
-		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
-		assertEquals(VkAttachmentStoreOp.STORE, descriptor.storeOp);
-		assertEquals(VkAttachmentLoadOp.DONT_CARE, descriptor.stencilLoadOp);
-		assertEquals(VkAttachmentStoreOp.DONT_CARE, descriptor.stencilStoreOp);
-		assertEquals(VkImageLayout.UNDEFINED, descriptor.initialLayout);
-		assertEquals(VkImageLayout.PRESENT_SRC_KHR, descriptor.finalLayout);
+	void views() {
+		assertEquals(view, attachment.view(0));
 	}
 
 	@Test
-	void equals() {
-		assertEquals(attachment, attachment);
-		assertNotEquals(attachment, null);
+	void name() {
+		attachment.name("name");
+		assertEquals("name", attachment.name());
 	}
 
-	@Nested
-	class BuilderTests {
-		private Attachment.Builder builder;
+	@Test
+	void clear() {
+		final var clear = new ColourClearValue(Colour.BLACK);
+		attachment.clear(clear);
+		assertEquals(clear, attachment.clear());
+	}
 
-		@BeforeEach
-		void before() {
-			builder = new Attachment.Builder().format(FORMAT);
-		}
-
-		@Test
-		void build() {
-			builder.samples(1);
-			builder.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE));
-			builder.finalLayout(VkImageLayout.PRESENT_SRC_KHR);
-			assertEquals(attachment, builder.build());
-		}
-
-		@DisplayName("The image format of an attachment cannot be undefined")
-		@Test
-		void undefined() {
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder().build());
-			assertThrows(NullPointerException.class, () -> new Attachment.Builder().format(VkFormat.UNDEFINED).build());
-		}
-
-		@DisplayName("The final image layout of an attachment cannot be undefined")
-		@Test
-		void invalid() {
-			assertThrows(IllegalArgumentException.class, () -> builder.finalLayout(VkImageLayout.UNDEFINED).build());
-			assertThrows(IllegalArgumentException.class, () -> builder.finalLayout(VkImageLayout.PREINITIALIZED).build());
-		}
-
-		@DisplayName("The initial image layout of an attachment cannot be undefined if the image is loaded")
-		@Test
-		void load() {
-			final LoadStore op = new LoadStore(VkAttachmentLoadOp.LOAD, VkAttachmentStoreOp.DONT_CARE);
-			assertThrows(NullPointerException.class, () -> builder.operation(op).build());
-			assertThrows(NullPointerException.class, () -> builder.stencil(op).build());
-		}
+	@Test
+	void clearInvalidType() {
+		assertThrows(IllegalArgumentException.class, () -> attachment.clear(DepthClearValue.DEFAULT));
 	}
 }

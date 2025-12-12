@@ -10,7 +10,6 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.util.EnumMask;
 
 class FramebufferTest {
@@ -63,21 +62,16 @@ class FramebufferTest {
 	}
 
 	private Framebuffer framebuffer;
-	private Framebuffer.Group group;
-	private Swapchain swapchain;
-	private RenderPass pass;
-	private LogicalDevice device;
 	private MockFramebufferLibrary library;
+	private LogicalDevice device;
+	private RenderPass pass;
 
 	@BeforeEach
 	void before() {
 		library = new MockFramebufferLibrary();
 		device = new MockLogicalDevice(library);
-		var pass = new MockRenderPass(device);
-		swapchain = new MockSwapchain(device);
-		group = new Framebuffer.Group(swapchain, pass, null);
-		group.clear(pass.attachments().getFirst(), new ColourClearValue(Colour.BLACK));
-		framebuffer = group.get(0);
+		pass = new MockRenderPass(device);
+		framebuffer = new Framebuffer(new Handle(1), pass, new Dimensions(640, 480));
 	}
 
 	@Test
@@ -101,39 +95,10 @@ class FramebufferTest {
 		assertEquals(true, library.destroyed);
 	}
 
-	@DisplayName("A frame buffer group...")
-	@Nested
-	class GroupTest {
-		@DisplayName("has a number of buffers equal to the number of swapchain attachments")
-		@Test
-		void size() {
-			assertEquals(1, group.buffers().size());
-		}
-
-		@DisplayName("can lookup a framebuffer by swapchain index")
-		@Test
-		void get() {
-			final Framebuffer buffer = group.get(0);
-   			assertEquals(false, buffer.isDestroyed());
-		}
-
-		@DisplayName("can be recreated if the swapchain is invalidated")
-		@Test
-		void create() {
-			group.recreate(swapchain);
-			assertEquals(1, group.buffers().size());
-		}
-
-		@DisplayName("can be destroyed releasing all buffers")
-		@Test
-		void destroy() {
-			final Framebuffer buffer = group.get(0);
-			group.destroy();
-			assertEquals(0, group.buffers().size());
-			assertEquals(true, buffer.isDestroyed());
-			assertThrows(IndexOutOfBoundsException.class, () -> group.get(0));
-		}
-
-		// TODO - clear values
+	@Test
+	void factory() {
+		final var factory = new Framebuffer.Factory(pass);
+		final var result = factory.create(1);
+		assertEquals(false, result.isDestroyed());
 	}
 }

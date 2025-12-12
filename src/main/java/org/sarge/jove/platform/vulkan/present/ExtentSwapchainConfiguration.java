@@ -1,11 +1,11 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
-import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
 /**
  * The <i>extent</i> swapchain configuration selects the swapchain extent.

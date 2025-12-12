@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,7 +6,7 @@ import java.util.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.platform.vulkan.render.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 
 class SharingModeSwapchainConfigurationTest {
 	private static class MockSwapchainBuilder extends Swapchain.Builder {

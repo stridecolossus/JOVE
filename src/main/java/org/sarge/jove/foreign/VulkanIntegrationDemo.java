@@ -2,7 +2,7 @@ package org.sarge.jove.foreign;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.LogManager;
 
@@ -24,9 +24,10 @@ import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
 import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.*;
+import org.sarge.jove.platform.vulkan.present.*;
+import org.sarge.jove.platform.vulkan.present.ImageCountSwapchainConfiguration.Policy;
+import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 import org.sarge.jove.platform.vulkan.render.*;
-import org.sarge.jove.platform.vulkan.render.ImageCountSwapchainConfiguration.Policy;
-import org.sarge.jove.platform.vulkan.render.SwapchainFactory.SwapchainConfiguration;
 
 public class VulkanIntegrationDemo {
 	void main() throws Exception {
@@ -146,7 +147,7 @@ public class VulkanIntegrationDemo {
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
 				new ExtentSwapchainConfiguration()
 		};
-		final var factory = new SwapchainFactory(device, properties, builder, List.of(configuration));
+		final var factory = new SwapchainManager(device, properties, builder, List.of(configuration));
 
 		// Shaders
 		System.out.println("Creating shaders...");
@@ -156,10 +157,10 @@ public class VulkanIntegrationDemo {
 
 		// Render pass
 		System.out.println("Building render pass...");
-		final var colour = Attachment.colour(factory.swapchain().format());
-		final Subpass subpass = new Subpass.Builder()
-				.colour(colour)
-				.build();
+		final var colour = AttachmentDescription.colour(factory.swapchain().format());
+		final var attachment = factory.attachment(colour);
+		attachment.clear(new ColourClearValue(new Colour(0.4f, 0.4f, 0.4f)));
+		final Subpass subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(attachment)));
 		final RenderPass pass = new RenderPass.Builder()
 				.add(subpass)
 				.build(device);
@@ -197,11 +198,6 @@ public class VulkanIntegrationDemo {
 		System.out.println("Creating command pool...");
 		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER);
 
-		// Frame buffers
-		System.out.println("Building frame buffers...");
-		final var group = new Framebuffer.Group(factory.swapchain(), pass, null);
-		group.clear(colour, new ColourClearValue(new Colour(0.3f, 0.3f, 0.3f, 1f)));
-
 		// Sequence
 		System.out.println("Recording render sequence...");
 		final var draw = DrawCommand.of(4, device);
@@ -211,7 +207,8 @@ public class VulkanIntegrationDemo {
 			buffer.add(draw);
 		};
 		final var composer = new FrameComposer(pool, sequence);
-		final var render = new RenderTask(factory, group, composer);
+		final var framebuffers = new Framebuffer.Factory(pass);
+		final var render = new RenderTask(factory, framebuffers::create, composer);
 
 		// Render...
 		System.out.println("Rendering...");
@@ -238,7 +235,6 @@ b.destroy();
 		pool.destroy();
 		pipeline.destroy();
 		pipelineLayout.destroy();
-		group.destroy();
 		pass.destroy();
 		fragment.destroy();
 		vertex.destroy();

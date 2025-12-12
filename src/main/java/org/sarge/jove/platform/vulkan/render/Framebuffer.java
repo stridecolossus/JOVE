@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.*;
+import java.util.List;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
@@ -18,24 +18,22 @@ import org.sarge.jove.util.EnumMask;
  * @author Sarge
  */
 public class Framebuffer extends VulkanObject {
-	private final Group group;
+	private final Library library;
+	private final RenderPass pass;
+	private final VkRect2D extents;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Handle
 	 * @param device		Logical device
-	 * @param group			Parent group
+	 * @param extents		Framebuffer extents
 	 */
-	Framebuffer(Handle handle, LogicalDevice device, Group group) {
+	Framebuffer(Handle handle, RenderPass pass, Dimensions extents) {
+		final var device = pass.device();
 		super(handle, device);
-		this.group = requireNonNull(group);
-	}
-
-	/**
-	 * @return Framebuffer group
-	 */
-	public Group group() {
-		return group;
+		this.library = device.library();
+		this.pass = requireNonNull(pass);
+		this.extents = Vulkan.rectangle(new Rectangle(extents));
 	}
 
 	/**
@@ -47,29 +45,40 @@ public class Framebuffer extends VulkanObject {
 		// Create descriptor
 		final var info = new VkRenderPassBeginInfo();
 		info.sType = VkStructureType.RENDER_PASS_BEGIN_INFO;
-		info.renderPass = group.pass.handle();
+		info.renderPass = pass.handle();
 		info.framebuffer = this.handle();
-		info.renderArea = Vulkan.rectangle(new Rectangle(group.extents));
+		info.renderArea = extents;
 
 		// Build attachment clear array
-		final var clear = group.clear.values();
-		info.clearValueCount = clear.size();
-		info.pClearValues = clear.stream().map(ClearValue::populate).toArray(VkClearValue[]::new);
+		info.pClearValues = clear();
+		info.clearValueCount = info.pClearValues.length;
 
 		// Create command
-		return buffer -> group.library.vkCmdBeginRenderPass(buffer, info, contents);
+		return buffer -> library.vkCmdBeginRenderPass(buffer, info, contents);
+	}
+
+	/**
+	 * @return Attachment clear values
+	 */
+	private VkClearValue[] clear() {
+		return pass
+				.attachments()
+				.stream()
+				.map(Attachment::clear)
+				.map(ClearValue::populate)
+				.toArray(VkClearValue[]::new);
 	}
 
 	/**
 	 * @return End render pass command
 	 */
 	public Command end() {
-		return group.library::vkCmdEndRenderPass;
+		return library::vkCmdEndRenderPass;
 	}
 
 	@Override
 	protected Destructor<Framebuffer> destructor() {
-		return group.library::vkDestroyFramebuffer;
+		return library::vkDestroyFramebuffer;
 	}
 
 //	public static Framebuffer create(RenderPass pass, Rectangle extents, List<View> attachments) {
@@ -97,111 +106,64 @@ public class Framebuffer extends VulkanObject {
 //		}
 
 	/**
-	 * A <i>framebuffer group</i> is the set of framebuffers for a given swapchain.
+	 * The <i>frame buffer factory</i> generates new framebuffer instances.
 	 */
-	public static class Group implements TransientObject {
+	public static class Factory {
 		private final RenderPass pass;
-		private final Library library;
-		private final View depth;
-		private final List<Framebuffer> buffers = new ArrayList<>();
-		private final Map<Attachment, ClearValue> clear = new LinkedHashMap<>();
-		private Dimensions extents;
 
 		/**
 		 * Constructor.
-		 * @param swapchain			Swapchain
-		 * @param pass				Render pass
-		 * @param depth				Optional depth-stencil attachment
+		 * @param pass Render pass
 		 */
-		public Group(Swapchain swapchain, RenderPass pass, View depth) {
+		public Factory(RenderPass pass) {
 			this.pass = requireNonNull(pass);
-			this.library = swapchain.device().library();
-			this.depth = depth;
-
-			for(Attachment attachment : pass.attachments()) {
-				clear.put(attachment, new ClearValue.None());
-			}
-
-			build(swapchain);
-		}
-		// TODO - check 'depth' vs 'attachments'
-
-		/**
-		 * @return Framebuffers in this group
-		 */
-		public List<Framebuffer> buffers() {
-			return Collections.unmodifiableList(buffers);
-		}
-
-		/**
-		 * Retrieves a framebuffer.
-		 * @param index Index
-		 * @return Framebuffer
-		 * @throws IndexOutOfBoundsException for an invalid index or if this group has been destroyed
-		 */
-		public Framebuffer get(int index) {
-			return buffers.get(index);
-		}
-
-		/**
-		 * Sets the clear value for the given attachment.
-		 * @param clear Clear value
-		 * @throws IllegalArgumentException if {@link #attachment} does not belong to this framebuffer group
-		 * @throws IllegalStateException if the {@link #clear} value does not match the attachment
-		 */
-		public void clear(Attachment attachment, ClearValue clear) {
-			if(!pass.attachments().contains(attachment)) {
-				throw new IllegalArgumentException("Invalid attachment for render pass: " + attachment);
-			}
-			// TODO - validate clear vs attachment => need attachment 'type', also add index to Attachment?
-			this.clear.put(attachment, clear);
-		}
-
-		/**
-		 * Recreates this group of framebuffers when the swapchain has been invalidated.
-		 * @param swapchain Swapchain
-		 */
-		public void recreate(Swapchain swapchain) {
-			destroy();
-			build(swapchain);
-		}
-
-		/**
-		 * Builds the framebuffer group.
-		 * @param swapchain Swapchain
-		 */
-		private void build(Swapchain swapchain) {
-			final View[] colour = swapchain.attachments().toArray(View[]::new);
-			this.extents = swapchain.extents();
-			for(int n = 0; n < colour.length; ++n) {
-				// Aggregate attachments for this framebuffer
-				// TODO - assumes colour is 0, optional depth is 1
-				final List<View> attachments = new ArrayList<>();
-				attachments.add(colour[n]);
-				if(depth != null) {
-					attachments.add(depth);
-				}
-
-				// Create buffer
-				final Framebuffer buffer = create(attachments, extents);
-				buffers.add(buffer);
-			}
 		}
 
 		/**
 		 * Creates a new framebuffer.
-		 * @param attachments		Attachments
-		 * @param extents			Framebuffer extents
+		 * @param index Framebuffer index
 		 * @return New framebuffer
 		 */
-		private Framebuffer create(List<View> attachments, Dimensions extents) {
+		public Framebuffer create(int index) {
+			final List<View> views = views(index);
+			final Dimensions extents = extents(views);
+			return create(views, extents);
+		}
+
+		/**
+		 * Enumerates the attachment views for the given framebuffer index.
+		 */
+		private List<View> views(int index) {
+			return pass
+					.attachments()
+					.stream()
+					.map(attachment -> attachment.view(index))
+					.toList();
+		}
+
+		/**
+		 * @return Framebuffer extents
+		 */
+		private static Dimensions extents(List<View> views) {
+			return views
+					.getFirst()
+					.image()
+					.descriptor()
+					.extents()
+					.size();
+		}
+
+		/**
+		 * Creates a new framebuffer.
+		 */
+		private Framebuffer create(List<View> views, Dimensions extents) {
 			// Build descriptor
 			final var info = new VkFramebufferCreateInfo();
 			info.sType = VkStructureType.FRAMEBUFFER_CREATE_INFO;
 			info.flags = new EnumMask<>();
 			info.renderPass = pass.handle();
-			info.attachmentCount = attachments.size();
-			info.pAttachments = NativeObject.handles(attachments);
+			info.attachmentCount = views.size();
+			info.pAttachments = NativeObject.handles(views);
 			info.width = extents.width();
 			info.height = extents.height();
 			info.layers = 1; // TODO - layers?
@@ -213,15 +175,7 @@ public class Framebuffer extends VulkanObject {
 			library.vkCreateFramebuffer(device, info, null, pointer);
 
 			// Create frame buffer
-			return new Framebuffer(pointer.handle(), device, this);
-		}
-
-		@Override
-		public void destroy() {
-			for(Framebuffer buffer : buffers) {
-				buffer.destroy();
-			}
-			buffers.clear();
+			return new Framebuffer(pointer.handle(), pass, extents);
 		}
 	}
 
