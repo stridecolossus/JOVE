@@ -10,8 +10,6 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
-import org.sarge.jove.platform.vulkan.render.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 
 /**
  * The <i>swapchain manager</i> recreates and configures the swapchain on-demand.
@@ -67,13 +65,11 @@ public class SwapchainManager implements TransientObject {
 
 	/**
 	 * Helper.
-	 * Creates the colour attachment for the swapchain.
-	 * @param description Attachment description
-	 * @return Attachment
+	 * Creates a provider for the swapchain colour attachments.
+	 * @return Swapchain attachment provider
 	 */
-	public Attachment attachment(AttachmentDescription description) {
-		final IntFunction<View> view = index -> this.swapchain().view(index);
-		return new Attachment(AttachmentType.COLOUR, description, view);
+	public IntFunction<View> views() {
+		return index -> this.swapchain().view(index);
 	}
 
 	/**

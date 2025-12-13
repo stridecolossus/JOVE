@@ -28,6 +28,7 @@ import org.sarge.jove.platform.vulkan.present.*;
 import org.sarge.jove.platform.vulkan.present.ImageCountSwapchainConfiguration.Policy;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 import org.sarge.jove.platform.vulkan.render.*;
+import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 
 public class VulkanIntegrationDemo {
 	void main() throws Exception {
@@ -147,7 +148,7 @@ public class VulkanIntegrationDemo {
 				new SharingModeSwapchainConfiguration(List.of(graphicsFamily, presentationFamily)),
 				new ExtentSwapchainConfiguration()
 		};
-		final var factory = new SwapchainManager(device, properties, builder, List.of(configuration));
+		final var manager = new SwapchainManager(device, properties, builder, List.of(configuration));
 
 		// Shaders
 		System.out.println("Creating shaders...");
@@ -157,8 +158,8 @@ public class VulkanIntegrationDemo {
 
 		// Render pass
 		System.out.println("Building render pass...");
-		final var colour = AttachmentDescription.colour(factory.swapchain().format());
-		final var attachment = factory.attachment(colour);
+		final var descripton = AttachmentDescription.colour(manager.swapchain().format());
+		final var attachment = new Attachment(AttachmentType.COLOUR, descripton, manager.views());
 		attachment.clear(new ColourClearValue(new Colour(0.4f, 0.4f, 0.4f)));
 		final Subpass subpass = new Subpass(Set.of(), List.of(attachment.reference()));
 		final RenderPass pass = new RenderPass.Builder()
@@ -186,7 +187,7 @@ public class VulkanIntegrationDemo {
 		pipelineBuilder.input().add(binding);
 		pipelineBuilder.assembly().topology(Primitive.TRIANGLE_STRIP);
 		///////////////
-		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(factory.swapchain().extents()));
+		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(manager.swapchain().extents()));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.VERTEX, vertex));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.FRAGMENT, fragment));
 		final Pipeline pipeline = pipelineBuilder
@@ -208,7 +209,7 @@ public class VulkanIntegrationDemo {
 		};
 		final var composer = new FrameComposer(pool, sequence);
 		final var framebuffers = new Framebuffer.Factory(pass);
-		final var render = new RenderTask(factory, framebuffers::create, composer);
+		final var render = new RenderTask(manager, framebuffers, composer);
 
 		// Render...
 		System.out.println("Rendering...");
@@ -232,13 +233,14 @@ public class VulkanIntegrationDemo {
 b.destroy();
 ///////////////
 		render.destroy();
+		framebuffers.destroy();
 		pool.destroy();
 		pipeline.destroy();
 		pipelineLayout.destroy();
 		pass.destroy();
 		fragment.destroy();
 		vertex.destroy();
-		factory.destroy();
+		manager.destroy();
 		device.destroy();
 		surface.destroy();
 //		handler.destroy();

@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
+import java.util.*;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
@@ -11,6 +11,7 @@ import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
+import org.sarge.jove.platform.vulkan.present.Swapchain;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -108,8 +109,9 @@ public class Framebuffer extends VulkanObject {
 	/**
 	 * The <i>frame buffer factory</i> generates new framebuffer instances.
 	 */
-	public static class Factory {
+	public static class Factory implements TransientObject {
 		private final RenderPass pass;
+		private final List<Framebuffer> framebuffers = new ArrayList<>();
 
 		/**
 		 * Constructor.
@@ -120,18 +122,39 @@ public class Framebuffer extends VulkanObject {
 		}
 
 		/**
-		 * Creates a new framebuffer.
+		 * Retrieves the framebuffer with the given index.
 		 * @param index Framebuffer index
-		 * @return New framebuffer
+		 * @return Framebuffer
+		 * @throws IndexOutOfBoundsException if the index is invalid
 		 */
-		public Framebuffer create(int index) {
-			final List<View> views = views(index);
-			final Dimensions extents = extents(views);
-			return create(views, extents);
+		public Framebuffer framebuffer(int index) {
+			return framebuffers.get(index);
 		}
 
 		/**
-		 * Enumerates the attachment views for the given framebuffer index.
+		 * Recreates the framebuffers for the given swapchain.
+		 * @param swapchain Swapchain
+		 */
+		public void build(Swapchain swapchain) {
+			destroy();
+			create(swapchain);
+		}
+
+		/**
+		 * Recreates the framebuffers.
+		 */
+		private void create(Swapchain swapchain) {
+			final int count = swapchain.count();
+			final Dimensions extents = swapchain.extents();
+			for(int n = 0; n < count; ++n) {
+				final List<View> views = views(n);
+				final Framebuffer buffer = create(views, extents);
+				framebuffers.add(buffer);
+			}
+		}
+
+		/**
+		 * @return Attachment views for the given framebuffer index
 		 */
 		private List<View> views(int index) {
 			return pass
@@ -139,18 +162,6 @@ public class Framebuffer extends VulkanObject {
 					.stream()
 					.map(attachment -> attachment.view(index))
 					.toList();
-		}
-
-		/**
-		 * @return Framebuffer extents
-		 */
-		private static Dimensions extents(List<View> views) {
-			return views
-					.getFirst()
-					.image()
-					.descriptor()
-					.extents()
-					.size();
 		}
 
 		/**
@@ -176,6 +187,14 @@ public class Framebuffer extends VulkanObject {
 
 			// Create frame buffer
 			return new Framebuffer(pointer.handle(), pass, extents);
+		}
+
+		@Override
+		public void destroy() {
+			for(Framebuffer buffer : framebuffers) {
+				buffer.destroy();
+			}
+			framebuffers.clear();
 		}
 	}
 

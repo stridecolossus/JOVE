@@ -76,7 +76,7 @@ class RenderTaskTest {
 
 		composer = new FrameComposer(new MockCommandPool(), sequence);
 
-		task = new RenderTask(manager, factory::create, composer);
+		task = new RenderTask(manager, factory, composer);
 	}
 
 	// TODO

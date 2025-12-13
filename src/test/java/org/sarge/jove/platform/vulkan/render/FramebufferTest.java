@@ -10,6 +10,7 @@ import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.present.MockSwapchain;
 import org.sarge.jove.util.EnumMask;
 
 class FramebufferTest {
@@ -98,7 +99,8 @@ class FramebufferTest {
 	@Test
 	void factory() {
 		final var factory = new Framebuffer.Factory(pass);
-		final var result = factory.create(1);
-		assertEquals(false, result.isDestroyed());
+		final var swapchain = new MockSwapchain(device);
+		factory.build(swapchain);
+		assertNotNull(factory.framebuffer(0));
 	}
 }

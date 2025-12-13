@@ -3,8 +3,7 @@ package org.sarge.jove.platform.vulkan.render;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
-import java.util.*;
-import java.util.function.IntFunction;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.TransientObject;
@@ -34,8 +33,7 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  */
 public class RenderTask implements Runnable, TransientObject {
 	private final SwapchainManager manager;
-	private final IntFunction<Framebuffer> factory;
-	private final List<Framebuffer> framebuffers = new ArrayList<>();
+	private final Framebuffer.Factory factory;
 	private final FrameComposer composer;
 	private final FrameStateIterator iterator;
 
@@ -45,13 +43,13 @@ public class RenderTask implements Runnable, TransientObject {
 	 * @param factory		Frame buffer factory
 	 * @param composer		Composer for the render sequence
 	 */
-	public RenderTask(SwapchainManager manager, IntFunction<Framebuffer> factory, FrameComposer composer) {
+	public RenderTask(SwapchainManager manager, Framebuffer.Factory factory, FrameComposer composer) {
 		final var swapchain = manager.swapchain();
 		this.manager = requireNonNull(manager);
 		this.factory = requireNonNull(factory);
 		this.composer = requireNonNull(composer);
 		this.iterator = new FrameStateIterator(count(swapchain), swapchain.device());
-		createFramebuffers(swapchain);
+		factory.build(swapchain);
 	}
 
 	/**
@@ -103,27 +101,6 @@ public class RenderTask implements Runnable, TransientObject {
 		return swapchain.count();
 	}
 
-	/**
-	 * Builds the framebuffers for the given swapchain.
-	 */
-	private void createFramebuffers(Swapchain swapchain) {
-		assert framebuffers.isEmpty();
-		final int count = swapchain.count();
-		for(int n = 0; n < count; ++n) {
-			framebuffers.add(factory.apply(n));
-		}
-	}
-
-	/**
-	 * Releases the framebuffers.
-	 */
-	private void releaseFramebuffers() {
-		for(Framebuffer b : framebuffers) {
-			b.destroy();
-		}
-		framebuffers.clear();
-	}
-
 	@Override
 	public void run() {
 		try {
@@ -144,7 +121,7 @@ public class RenderTask implements Runnable, TransientObject {
 		// Acquire next frame buffer
 		final Swapchain swapchain = manager.swapchain();
 		final int index = frame.acquire(swapchain);
-		final Framebuffer framebuffer = framebuffers.get(index);
+		final Framebuffer framebuffer = factory.framebuffer(index);
 
 		// Render frame
 		final Buffer sequence = composer.compose(index, framebuffer);
@@ -167,13 +144,11 @@ public class RenderTask implements Runnable, TransientObject {
 		final Swapchain swapchain = manager.recreate();
 
 		// Rebuild the framebuffers
-		releaseFramebuffers();
-		createFramebuffers(swapchain);
+		factory.build(swapchain);
 	}
 
 	@Override
 	public void destroy() {
 		iterator.destroy();
-		releaseFramebuffers();
 	}
 }

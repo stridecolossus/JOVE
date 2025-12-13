@@ -65,6 +65,11 @@ class SwapchainManagerTest {
 	}
 
 	@Test
+	void views() {
+		assertNotNull(manager.views().apply(0));
+	}
+
+	@Test
 	void recreate() {
 		final Swapchain previous = manager.swapchain();
 		manager.recreate();
