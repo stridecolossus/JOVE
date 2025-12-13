@@ -160,7 +160,7 @@ public class VulkanIntegrationDemo {
 		final var colour = AttachmentDescription.colour(factory.swapchain().format());
 		final var attachment = factory.attachment(colour);
 		attachment.clear(new ColourClearValue(new Colour(0.4f, 0.4f, 0.4f)));
-		final Subpass subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(attachment)));
+		final Subpass subpass = new Subpass(Set.of(), List.of(attachment.reference()));
 		final RenderPass pass = new RenderPass.Builder()
 				.add(subpass)
 				.build(device);

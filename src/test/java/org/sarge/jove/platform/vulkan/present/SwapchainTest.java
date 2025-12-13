@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
 
-public class SwapchainTest {
+class SwapchainTest {
 	private Swapchain swapchain;
 	private View view;
 	private LogicalDevice device;
@@ -21,15 +21,22 @@ public class SwapchainTest {
 	void before() {
 		library = new MockSwapchainLibrary();
 		device = new MockLogicalDevice(library);
-		view = new View(new Handle(3), device, new MockImage(), false);
-		swapchain = new Swapchain(new Handle(2), device, library, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480), List.of(view));
+		view = new MockView(device);
+		swapchain = new Swapchain(new Handle(2), device, List.of(view, new MockView(device)));
 	}
 
 	@Test
 	void constructor() {
+		assertEquals(2, swapchain.count());
 		assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
 		assertEquals(new Dimensions(640, 480), swapchain.extents());
-		assertEquals(List.of(view), swapchain.views());
+	}
+
+	@Test
+	void views() {
+		assertEquals(view, swapchain.view(0));
+		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.view(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.view(2));
 	}
 
 	@Test
@@ -52,7 +59,6 @@ public class SwapchainTest {
 		@Test
 		void acquire() {
 			assertEquals(0, swapchain.acquire(semaphore, null));
-			assertEquals(view, swapchain.latest());
 		}
 
 		@Test
@@ -70,11 +76,6 @@ public class SwapchainTest {
 		@Test
 		void sync() {
 			assertThrows(IllegalArgumentException.class, () -> swapchain.acquire(null, null));
-		}
-
-		@Test
-		void latest() {
-			assertEquals(view, swapchain.latest());
 		}
 	}
 
@@ -97,10 +98,10 @@ public class SwapchainTest {
 					.extent(new Dimensions(640, 480))
 					.build(device, properties);
 
-			assertEquals(1, swapchain.views().size());
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(MockSurfaceProperties.FORMAT.format, swapchain.format());
 			assertEquals(false, swapchain.isDestroyed());
+			assertNotNull(swapchain.view(0));
 		}
 
 		// TODO

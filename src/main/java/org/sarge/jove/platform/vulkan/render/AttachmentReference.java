@@ -33,18 +33,4 @@ public record AttachmentReference(Attachment attachment, VkImageLayout layout) {
 		descriptor.attachment = requireZeroOrMore(index);
 		return descriptor;
 	}
-
-	/**
-	 * Helper.
-	 * Creates a reference for the given attachment with a default image layout.
-	 * @param attachment Attachment
-	 * @return Attachment reference
-	 */
-	public static AttachmentReference of(Attachment attachment) {
-		final VkImageLayout layout = switch(attachment.type()) {
-			case COLOUR -> VkImageLayout.COLOR_ATTACHMENT_OPTIMAL;
-			case DEPTH	-> VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		};
-		return new AttachmentReference(attachment, layout);
-	}
 }

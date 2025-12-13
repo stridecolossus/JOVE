@@ -10,12 +10,6 @@ import org.sarge.jove.util.Percentile;
  */
 public sealed interface ClearValue {
 	/**
-	 * Unused clear value.
-	 */
-	record None() implements ClearValue {
-	}
-
-	/**
 	 * Clear value for a colour attachment.
 	 */
 	record ColourClearValue(Colour colour) implements ClearValue {
@@ -40,10 +34,6 @@ public sealed interface ClearValue {
 		final var descriptor = new VkClearValue();
 
 		switch(clear) {
-    		case None _ -> {
-    			// Empty
-    		}
-
 			case ColourClearValue(Colour colour) -> {
 				descriptor.color = new VkClearColorValue();
 				descriptor.color.float32 = colour.toArray();

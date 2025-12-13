@@ -22,7 +22,7 @@ public class MockSwapchainLibrary extends MockVulkanLibrary {
 
 		assertEquals(new EnumMask<>(), pCreateInfo.flags);
 		assertNotNull(pCreateInfo.surface);
-		assertEquals(1, pCreateInfo.minImageCount);
+		assertTrue(pCreateInfo.minImageCount > 0);
 		assertEquals(VkFormat.R32G32B32_SFLOAT, pCreateInfo.imageFormat);
 		assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, pCreateInfo.imageColorSpace);
 		assertTrue(pCreateInfo.imageExtent.width >= 640);

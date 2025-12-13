@@ -41,7 +41,7 @@ class RenderPassTest {
 		attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
 
 		// Create subpass
-		final var subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(attachment)));
+		final var subpass = new Subpass(Set.of(), List.of(attachment.reference()));
 
 		// Specify a dependency on the start of the render pass
 		final var dependency = new Dependency(

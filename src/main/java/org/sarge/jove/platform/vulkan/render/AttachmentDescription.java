@@ -12,7 +12,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples, LoadStore operation, LoadStore stencil, VkImageLayout initialLayout,VkImageLayout finalLayout) {
+public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples, LoadStore operation, LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store pair.
 	 */
@@ -85,9 +85,9 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	}
 
 	/**
-	 * Creates description for a colour attachment for presentation.
+	 * Creates the description for a colour attachment for presentation.
 	 * @param format Colour image layout
-	 * @return Colour attachment
+	 * @return Colour attachment description
 	 */
 	public static AttachmentDescription colour(VkFormat format) {
 		return new Builder()
@@ -98,9 +98,9 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	}
 
 	/**
-	 * Creates the depth-stencil attachment.
+	 * Creates the description for a depth-stencil attachment.
 	 * @param format Depth format
-	 * @return Depth attachment
+	 * @return Depth-stencil attachment description
 	 */
 	public static AttachmentDescription depth(VkFormat format) {
 		return new Builder()

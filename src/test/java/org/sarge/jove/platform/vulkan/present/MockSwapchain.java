@@ -12,7 +12,7 @@ public class MockSwapchain extends Swapchain {
 
 	public MockSwapchain(LogicalDevice device) {
 		final var attachment = new MockView(device);
-		super(new Handle(2), device, device.library(), List.of(attachment));
+		super(new Handle(2), device, List.of(attachment));
 	}
 
 	public void invalidate() {

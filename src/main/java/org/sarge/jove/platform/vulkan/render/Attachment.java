@@ -6,13 +6,16 @@ import static org.sarge.jove.util.Validation.requireNotEmpty;
 import java.util.Objects;
 import java.util.function.IntFunction;
 
+import org.sarge.jove.common.Colour;
+import org.sarge.jove.platform.vulkan.VkImageLayout;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
+import org.sarge.jove.util.Percentile;
 
 /**
  * An <i>attachment</i> is a target of the rendering process, such as a swapchain image or the depth-stencil.
  * <p>
- * Note there is no equivalent Vulkan type for this class.
+ * Note there is no direct equivalent Vulkan type for this class.
  * <p>
  * @author Sarge
  */
@@ -25,11 +28,20 @@ public class Attachment {
 		DEPTH;
 
 		/**
+		 * @return Default clear value for this type of attachment
+		 */
+		private ClearValue clear() {
+			return switch(this) {
+				case COLOUR -> new ColourClearValue(Colour.BLACK);
+				case DEPTH	-> new DepthClearValue(Percentile.ONE);
+			};
+		}
+
+		/**
 		 * @return Expected attachment type for the given clear value
 		 */
-		private AttachmentType expected(ClearValue clear) {
+		private static AttachmentType expected(ClearValue clear) {
 			return switch(clear) {
-				case None _					-> this;
 				case ColourClearValue _		-> COLOUR;
 				case DepthClearValue _		-> DEPTH;
 			};
@@ -41,7 +53,7 @@ public class Attachment {
 	private final IntFunction<View> views;
 
 	private String name;
-	private ClearValue clear = new None();
+	private ClearValue clear;
 
 	/**
 	 * Constructor.
@@ -53,6 +65,7 @@ public class Attachment {
 		this.type = requireNonNull(type);
 		this.description = requireNonNull(description);
 		this.views = requireNonNull(views);
+		this.clear = type.clear();
 		name(type.name().toLowerCase());
 		// TODO - validate description vs type?
 	}
@@ -105,15 +118,26 @@ public class Attachment {
 	/**
 	 * Sets the clear value for this attachment.
 	 * @param clear Clear value
-	 * @throws IllegalArgumentException if the value is invalid for this attachment
+	 * @throws IllegalArgumentException if {@link #clear} is invalid for this attachment
 	 */
 	public void clear(ClearValue clear) {
-		final AttachmentType actual = type.expected(clear);
-		if(actual != type) {
-			throw new IllegalArgumentException("Invalid clear value %s for attachment %s".formatted(actual, this));
+		if(type != AttachmentType.expected(clear)) {
+			throw new IllegalArgumentException("Invalid clear value %s for attachment %s".formatted(clear, this));
 		}
 
 		this.clear = clear;
+	}
+
+	/**
+	 * Creates a reference for this attachment with a default image layout.
+	 * @return Attachment reference
+	 */
+	public AttachmentReference reference() {
+		final VkImageLayout layout = switch(type) {
+			case COLOUR -> VkImageLayout.COLOR_ATTACHMENT_OPTIMAL;
+			case DEPTH	-> VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		};
+		return new AttachmentReference(this, layout);
 	}
 
 	@Override

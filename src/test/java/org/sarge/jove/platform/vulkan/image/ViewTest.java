@@ -20,7 +20,7 @@ class ViewTest {
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(new Handle(3), pCreateInfo.image);
 			assertEquals(VkImageViewType.TYPE_2D, pCreateInfo.viewType);
-			assertEquals(VkFormat.R32G32B32A32_SFLOAT, pCreateInfo.format);
+			assertEquals(VkFormat.B8G8R8A8_UNORM, pCreateInfo.format);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.r);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.g);
 			assertEquals(VkComponentSwizzle.IDENTITY, pCreateInfo.components.b);

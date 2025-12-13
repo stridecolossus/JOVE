@@ -23,17 +23,4 @@ class AttachmentReferenceTest {
 		assertEquals(3, descriptor.attachment);
 		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, descriptor.layout);
 	}
-
-	@Test
-	void colour() {
-		assertEquals(reference, AttachmentReference.of(colour));
-	}
-
-	@Test
-	void depth() {
-		final var description = AttachmentDescription.depth(VkFormat.D32_SFLOAT);
-		final Attachment depth = new Attachment(AttachmentType.DEPTH, description, _ -> null);
-		final var ref = AttachmentReference.of(depth);
-		assertEquals(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL, ref.layout());
-	}
 }

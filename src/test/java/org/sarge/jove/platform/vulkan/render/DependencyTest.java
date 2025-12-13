@@ -20,9 +20,9 @@ class DependencyTest {
 	void before() {
 		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
 		final var attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
-		final var reference = AttachmentReference.of(attachment);
+		final var reference = attachment.reference();
 		one = new Subpass(Set.of(), List.of(reference));
-		two = new Subpass(Set.of(), List.of(reference));
+		two = new Subpass(Set.of(), List.of(reference, reference));
 		dependency = new Dependency(
 				new Properties(one, Set.of(FRAGMENT_SHADER), Set.of(SHADER_READ)),
 				new Properties(two, Set.of(VERTEX_SHADER), Set.of(SHADER_WRITE)),

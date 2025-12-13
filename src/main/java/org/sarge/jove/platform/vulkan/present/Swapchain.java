@@ -49,12 +49,11 @@ public class Swapchain extends VulkanObject {
 	 * Constructor.
 	 * @param handle 		Swapchain handle
 	 * @param device		Logical device
-	 * @param library		Swapchain library
 	 * @param views			Image views
 	 */
-	Swapchain(Handle handle, LogicalDevice device, Library library, List<View> views) {
+	Swapchain(Handle handle, LogicalDevice device, List<View> views) {
 		super(handle, device);
-		this.library = requireNonNull(library);
+		this.library = device.library();
 		this.views = List.copyOf(views);
 	}
 
@@ -174,7 +173,9 @@ public class Swapchain extends VulkanObject {
 
 	@Override
 	protected void release() {
-		views.forEach(View::destroy);
+		for(View view : views) {
+			view.destroy();
+		}
 	}
 
 	/**
@@ -433,7 +434,7 @@ public class Swapchain extends VulkanObject {
 					.toList();
 
 			// Create swapchain instance
-			return new Swapchain(pointer.handle(), device, library, views);
+			return new Swapchain(pointer.handle(), device, views);
 		}
 
 		/**

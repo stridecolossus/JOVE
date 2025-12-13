@@ -21,7 +21,7 @@ class SubpassTest {
 		final IntFunction<View> views = _ -> new MockView(new MockLogicalDevice());
 		colour = new Attachment(AttachmentType.COLOUR, AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT), views);
 		depth = new Attachment(AttachmentType.DEPTH, AttachmentDescription.depth(VkFormat.D32_SFLOAT), views);
-		subpass = new Subpass(Set.of(), List.of(AttachmentReference.of(colour), AttachmentReference.of(depth)));
+		subpass = new Subpass(Set.of(), List.of(colour.reference(), depth.reference()));
 	}
 
 	@Test

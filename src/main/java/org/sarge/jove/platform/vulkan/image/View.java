@@ -24,7 +24,7 @@ public class View extends VulkanObject {
 	 * @param handle 	Image view handle
 	 * @param device	Logical device
 	 * @param image		Underlying image
-	 * @param release	Whether the image is also destroyed when this image is released
+	 * @param release	Whether the image is also destroyed when this view is released
 	 */
 	public View(Handle handle, LogicalDevice device, Image image, boolean release) {
 		super(handle, device);

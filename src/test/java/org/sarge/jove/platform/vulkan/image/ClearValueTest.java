@@ -8,13 +8,7 @@ import org.sarge.jove.platform.vulkan.VkClearValue;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.util.Percentile;
 
-public class ClearValueTest {
-	@Test
-	void none() {
-		final var none = new None();
-		assertNotNull(ClearValue.populate(none));
-	}
-
+class ClearValueTest {
 	@Test
 	void colour() {
 		final var colour = new ColourClearValue(Colour.WHITE);
