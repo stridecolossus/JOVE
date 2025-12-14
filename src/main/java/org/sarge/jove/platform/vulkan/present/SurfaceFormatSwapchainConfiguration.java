@@ -6,6 +6,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
+import org.sarge.jove.util.PrioritySelector;
 
 /**
  * The <i>surface format</i> swapchain configuration selects a preferred surface format for the swapchain.
@@ -34,13 +35,8 @@ public class SurfaceFormatSwapchainConfiguration implements SwapchainConfigurati
 
 	@Override
 	public void configure(Builder builder, Properties properties) {
-		final VkSurfaceFormatKHR selected = properties
-				.formats()
-				.stream()
-				.filter(format::equals)
-				.findAny()
-				.orElse(properties.formats().getFirst());
-
+		final var selector = new PrioritySelector<VkSurfaceFormatKHR>(format::equals);		// TODO - configurable/protected
+		final VkSurfaceFormatKHR selected = selector.select(properties.formats());
 		builder.format(selected);
 	}
 }

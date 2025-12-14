@@ -5,6 +5,7 @@ import java.util.List;
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
+import org.sarge.jove.util.PrioritySelector;
 
 /**
  * The <i>presentation mode</i> swapchain configuration selects a preferred presentation mode for the swapchain.
@@ -24,13 +25,9 @@ public class PresentationModeSwapchainConfiguration implements SwapchainConfigur
 
 	@Override
 	public void configure(Swapchain.Builder builder, Properties properties) {
-		final VkPresentModeKHR selected = properties
-				.modes()
-				.stream()
-				.filter(modes::contains)
-				.findAny()
-				.orElse(Swapchain.DEFAULT_PRESENTATION_MODE);
-
-		builder.presentation(selected);
+		final var available = properties.modes();
+		final var selector = new PrioritySelector<>(available::contains, Swapchain.DEFAULT_PRESENTATION_MODE);
+		final VkPresentModeKHR mode = selector.select(modes);
+		builder.presentation(mode);
 	}
 }
