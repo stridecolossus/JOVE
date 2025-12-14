@@ -2,9 +2,8 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
 
 /**
  * Adapter for an indexed model that performs de-duplication of the OBJ vertices.
@@ -13,8 +12,13 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
 class RemoveDuplicateMesh extends IndexedMesh {
 	private final Map<Vertex, Integer> map = new HashMap<>();
 
-	public RemoveDuplicateMesh() {
-		super(Primitive.TRIANGLE, Point.LAYOUT, Normal.LAYOUT, Coordinate2D.LAYOUT);
+	/**
+	 * Constructor.
+	 * @param layout Component layout
+	 */
+	public RemoveDuplicateMesh(Layout... layout) {
+		// TODO - at least Point.LAYOUT?
+		super(Primitive.TRIANGLE, layout);
 	}
 
 	@Override

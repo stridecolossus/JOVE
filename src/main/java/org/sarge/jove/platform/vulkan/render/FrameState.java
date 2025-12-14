@@ -12,13 +12,14 @@ import org.sarge.jove.platform.vulkan.present.Swapchain;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
- * The <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during rendering.
+ * A <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during rendering.
  * @author Sarge
  */
 public class FrameState implements TransientObject {
 	/**
 	 * Creates a frame state instance.
 	 * @param device Logical device
+	 * @return New frame state
 	 */
 	public static FrameState create(LogicalDevice device) {
 		final var available = VulkanSemaphore.create(device);
@@ -50,7 +51,7 @@ public class FrameState implements TransientObject {
 	 * Acquires the index of the next frame buffer.
 	 * @param swapchain Swapchain
 	 * @return Frame buffer index
-	 * @throws Invalidated if the frame buffer index cannot be acquired
+	 * @throws Invalidated if a frame buffer cannot be acquired
 	 */
 	public int acquire(Swapchain swapchain) throws Invalidated {
 		// Wait for the previous frame to be completed

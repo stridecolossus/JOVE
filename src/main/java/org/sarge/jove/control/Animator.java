@@ -100,7 +100,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	@Override
-	public void end(Frame frame) {
+	public void frame(Frame frame) {
 		// Ignore if stopped or paused
 		if(!isPlaying()) {
 			return;

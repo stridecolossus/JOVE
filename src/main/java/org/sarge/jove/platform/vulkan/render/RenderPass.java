@@ -11,7 +11,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A <i>render pass</i> is comprised of a number of sub passes that render to the frame buffer.
+ * A <i>render pass</i> is comprised of a number of sub passes that render to a frame buffer.
  * @see Subpass
  * @author Sarge
  */

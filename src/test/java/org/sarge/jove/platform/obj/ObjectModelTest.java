@@ -14,18 +14,20 @@ class ObjectModelTest {
 	@BeforeEach
 	void before() {
 		model = new ObjectModel();
-		model.positions().add(Point.ORIGIN);
-		model.start();
 	}
 
 	@Test
-	void add() {
-		final var vertex = new Vertex(Point.ORIGIN);
-		model.add(vertex);
+	void empty() {
+		model.start();
+		assertEquals(0, model.build().size());
 	}
 
 	@Test
 	void models() {
+		// Emulate group command
+		model.positions().add(Point.ORIGIN);
+		model.start();
+
 		// Add a triangle
 		final var vertex = new Vertex(Point.ORIGIN);
 		model.add(vertex);

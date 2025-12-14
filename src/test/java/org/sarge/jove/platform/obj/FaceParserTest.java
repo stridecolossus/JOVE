@@ -29,6 +29,7 @@ class FaceParserTest {
 		model.positions().add(Point.ORIGIN);
 		model.normals().add(Axis.X);
 		model.coordinates().add(Coordinate2D.BOTTOM_LEFT);
+		model.start();
 	}
 
 	private void parse(String line, Bufferable... components) {

@@ -3,20 +3,33 @@ package org.sarge.jove.control;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.*;
 
 @Timeout(1)
 public class RenderLoopTest {
-	private CountDownLatch latch;
+	private static class Task implements Runnable {
+		private CountDownLatch latch = new CountDownLatch(1);
+		private boolean fail;
+
+		@Override
+		public void run() {
+			if(fail) {
+				fail = false;
+				throw new RuntimeException("doh");
+			}
+			latch.countDown();
+		}
+	}
+
 	private RenderLoop loop;
-	private Runnable task;
+	private Task task;
 	private Frame.Tracker tracker;
 
 	@BeforeEach
 	void before() {
-		latch = new CountDownLatch(2);
-		task = latch::countDown;
+		task = new Task();
 		tracker = new Frame.Tracker();
 		loop = new RenderLoop(task, tracker);
 	}
@@ -62,7 +75,7 @@ public class RenderLoopTest {
 
 		@Test
 		void started() throws InterruptedException {
-			latch.await();
+			task.latch.await();
 			// TODO - how to effectively check listener? since happens AFTER latch
 		}
 
@@ -109,5 +122,15 @@ public class RenderLoopTest {
     		assertThrows(IllegalArgumentException.class, () -> loop.rate(0));
     		assertThrows(IllegalArgumentException.class, () -> loop.rate(-1));
     	}
+	}
+
+	@Test
+	void handler() throws InterruptedException {
+		final var handler = new AtomicReference<Throwable>();
+		loop.handler(handler::set);
+		loop.start();
+		task.fail = true;
+		task.latch.await();
+		assertNotNull(handler.get());
 	}
 }

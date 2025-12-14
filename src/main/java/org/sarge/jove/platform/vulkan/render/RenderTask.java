@@ -17,7 +17,6 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  * <p>
  * The rendering process is as follows:
  * <ol>
- * <li>Select the next in-flight frame instance to render</li>
  * <li>Acquire the framebuffer to be rendered from the swapchain</li>
  * <li>Compose the render sequence for the frame</li>
  * <li>Submit the render task</li>
@@ -74,7 +73,7 @@ public class RenderTask implements Runnable, TransientObject {
 		/**
 		 * @return Next in-flight frame
 		 */
-		public FrameState next() {
+		public synchronized FrameState next() {
 			if(index == frames.size()) {
 				index = 0;
 			}
@@ -118,7 +117,7 @@ public class RenderTask implements Runnable, TransientObject {
 		// Select the next in-flight frame
 		final FrameState frame = iterator.next();
 
-		// Acquire next frame buffer
+		// Acquire frame buffer
 		final Swapchain swapchain = manager.swapchain();
 		final int index = frame.acquire(swapchain);
 		final Framebuffer framebuffer = factory.framebuffer(index);

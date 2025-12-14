@@ -20,8 +20,9 @@ public record Frame(Instant start, Instant end) {
 		 * Notifies completion of a frame.
 		 * @param frame Frame
 		 */
-		void end(Frame frame);
+		void frame(Frame frame);
 
+		// TODO - this stinks
 		/**
 		 * Creates an adapter for a frame listener invoked on the expiry of the given duration.
 		 * @param period		Iteration period
@@ -36,9 +37,9 @@ public record Frame(Instant start, Instant end) {
 				private Instant end = Instant.now().plus(period);
 
 				@Override
-				public void end(Frame frame) {
+				public void frame(Frame frame) {
 					if(frame.end.isAfter(end)) {
-						delegate.end(frame);
+						delegate.frame(frame);
 						end = frame.end.plus(period);
 					}
 				}
@@ -60,36 +61,24 @@ public record Frame(Instant start, Instant end) {
 		private final Set<Listener> listeners = new HashSet<>();
 
 		/**
-		 * Starts a new frame.
-		 * @return Frame completion callback
-		 * @see Listener#start(int)
+		 * Starts a frame timer that notifies listeners on completion of the frame.
+		 * @return Frame timer
+		 * @see Listener#frame(Frame)
 		 */
-    	public Runnable begin() {
-    		return new Timer();
+    	public AutoCloseable timer() {
+    		return new AutoCloseable() {
+    			private final Instant start = Instant.now();
+
+    			@Override
+    			public void close() throws Exception {
+    				final Frame frame = new Frame(start, Instant.now());
+		            for(Listener listener : listeners) {
+		            	listener.frame(frame);
+		            }
+		    	}
+    		};
     	}
-
-    	/**
-    	 * Notifies listeners on completion of the frame.
-    	 */
-    	private class Timer implements Runnable {
-            private final Instant start = Instant.now();
-            private boolean completed;
-
-            @Override
-            public void run() {
-                if(completed) {
-                	throw new IllegalStateException();
-                }
-
-                final Frame frame = new Frame(start, Instant.now());
-
-                for(Listener listener : listeners) {
-                	listener.end(frame);
-                }
-
-                completed = true;
-            }
-    	}
+    	// TODO - do we need the framebuffer index here? and if so HOW? since Runnable obviously does not return anything!
 
     	/**
     	 * Registers a frame completion listener.

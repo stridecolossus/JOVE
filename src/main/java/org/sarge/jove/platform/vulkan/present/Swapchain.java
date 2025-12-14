@@ -18,7 +18,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
 /**
  * A <i>swapchain</i> presents rendered images to a {@link VulkanSurface}.
  * <p>
- * A swapchain is comprised of an array of colour image <i>attachments</i>.
+ * A swapchain is comprised of an array of colour image <i>attachments</i> which are accessed via {@link #attachment(int)}.
  * Note that swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
  * <p>
  * The process of rendering a frame is comprised of two operations:
@@ -49,7 +49,7 @@ public class Swapchain extends VulkanObject {
 	 * Constructor.
 	 * @param handle 		Swapchain handle
 	 * @param device		Logical device
-	 * @param views			Image views
+	 * @param views			Colour attachment views
 	 */
 	Swapchain(Handle handle, LogicalDevice device, List<View> views) {
 		super(handle, device);
@@ -95,7 +95,7 @@ public class Swapchain extends VulkanObject {
 	 * @throws IndexOutOfBoundsException for an invalid index
 	 * @see #count()
 	 */
-	public View view(int index) {
+	public View attachment(int index) {
 		return views.get(index);
 	}
 
@@ -196,11 +196,6 @@ public class Swapchain extends VulkanObject {
 		private final Set<VkImageUsageFlags> usage = new HashSet<>();
 
 		public Builder() {
-			init();
-			usage(VkImageUsageFlags.COLOR_ATTACHMENT);
-		}
-
-		private void init() {
 			info.imageFormat = VkFormat.UNDEFINED;
 			info.preTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
 			info.imageArrayLayers = 1;
@@ -211,8 +206,7 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Initialises some of the properties of this swapchain according to the given surface capabilities.
-		 * TODO - list
+		 * Initialises the properties of this swapchain that are dependant on the surface.
 		 * @param capabilities Surface capabilities
 		 */
 		public Builder init(VkSurfaceCapabilitiesKHR capabilities) {
@@ -344,6 +338,10 @@ public class Swapchain extends VulkanObject {
 		}
 
 		private void validate(VulkanSurface.Properties properties) {
+			requireNonNull(info.imageExtent, "Expected swapchain extent");
+			requireNonNull(info.imageFormat, "Expected swapchain image format");
+			requireNonNull(info.imageColorSpace, "Expected swapchain image colour-space");
+
 			final VkSurfaceCapabilitiesKHR capabilities = properties.capabilities();
 			if((info.minImageCount < capabilities.minImageCount) || (info.minImageCount > capabilities.maxImageCount)) {
 				throw new IllegalArgumentException("Image count %d out of range %d...%d".formatted(info.minImageCount, capabilities.minImageCount, capabilities.maxImageCount));
@@ -386,7 +384,6 @@ public class Swapchain extends VulkanObject {
 			}
 		}
 
-		// TODO - break up
 		/**
 		 * Constructs this swapchain.
 		 * @param device Logical device
@@ -395,23 +392,53 @@ public class Swapchain extends VulkanObject {
 		 * @throws IllegalArgumentException if any swapchain property is out-of-bounds or unsupported by the surface
 		 */
 		public Swapchain build(LogicalDevice device, VulkanSurface.Properties properties) {
-			// Initialise swapchain descriptor
-			requireNonNull(info.imageExtent, "Expected swapchain extent");
-			requireNonNull(info.imageFormat, "Expected swapchain image format");
-			requireNonNull(info.imageColorSpace, "Expected swapchain image colour-space");
-			info.sType = VkStructureType.SWAPCHAIN_CREATE_INFO_KHR;
-			info.flags = new EnumMask<>(flags);
-			info.surface = requireNonNull(properties.surface().handle());
-			info.imageUsage = new EnumMask<>(usage);
+			// Initialise and validate swapchain descriptor
+			init(properties);
 			validate(properties);
 
 			// Create swapchain
+			final Handle handle = create(device, info);
+
+			// Create colour attachment views
+			final List<View> views = views(device, handle);
+
+			// Create swapchain
+			return new Swapchain(handle, device, views);
+		}
+
+		/**
+		 * Initialises the swapchain descriptor.
+		 */
+		private void init(VulkanSurface.Properties properties) {
+			// Init swapchain descriptor
+			info.sType = VkStructureType.SWAPCHAIN_CREATE_INFO_KHR;
+			info.flags = new EnumMask<>(flags);
+			info.surface = requireNonNull(properties.surface().handle());
+
+			// Init image usage
+			if(usage.isEmpty()) {
+				usage.add(VkImageUsageFlags.COLOR_ATTACHMENT);
+			}
+			info.imageUsage = new EnumMask<>(usage);
+		}
+
+		/**
+		 * Creates the swapchain.
+		 */
+		private static Handle create(LogicalDevice device, VkSwapchainCreateInfoKHR info) {
 			final Library library = device.library();
 			final Pointer pointer = new Pointer();
 			library.vkCreateSwapchainKHR(device, info, null, pointer);
+			return pointer.handle();
+		}
 
+		/**
+		 * Creates the colour attachment views.
+		 */
+		private List<View> views(LogicalDevice device, Handle swapchain) {
 			// Retrieve swapchain images
-			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, pointer.handle(), count, array);
+			final Library library = device.library();
+			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
 			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
 
 			// Build the common image descriptor for the views
@@ -427,14 +454,11 @@ public class Swapchain extends VulkanObject {
 					.subresource(descriptor);
 
 			// Create image views
-			final List<View> views = Arrays
+			return Arrays
 					.stream(images)
 					.map(handle -> new SwapChainImage(handle, descriptor))
 					.map(image -> builder.build(device, image))
 					.toList();
-
-			// Create swapchain instance
-			return new Swapchain(pointer.handle(), device, views);
 		}
 
 		/**

@@ -69,7 +69,7 @@ public class SwapchainManager implements TransientObject {
 	 * @return Swapchain attachment provider
 	 */
 	public IntFunction<View> views() {
-		return index -> this.swapchain().view(index);
+		return index -> this.swapchain().attachment(index);
 	}
 
 	/**

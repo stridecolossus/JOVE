@@ -5,15 +5,24 @@ generator for primitive arrays -> need to be handles?
 VkShaderModuleCreateInfo::pCode
 VkSubmitInfo::pWaitDstStageMask
 VkSpecializationInfo::pData
+VkDebugUtilsMessengerCallbackDataEXT
 
 also injects superfluous padding
 
 **********
 
+blog
+- mesh loader very slow with scanner ~20s -> 2s custom
+
 mesh loader still needs custom indexed implementation
+
+can we use same/similar mechanism as mesh loader output file when buffering a mesh?
+but one that can be converted to/from bytes more easily? i.e. rather than dodgy order() hack? 
 
 helper for 'wrappers' that are not native objects (i.e. not destroyed) but compose and optionally destroy their dependencies?
 e.g. VertexBuffer, View
+
+we would want to configure pipeline stage from YAML like files, fluid builder less important (?)
 
 OBJ group probably not right
 - separate lookup tables for VNT and actual JOVE models

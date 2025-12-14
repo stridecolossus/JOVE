@@ -12,7 +12,7 @@ public class DepthStencilStage {
 	private final VkPipelineDepthStencilStateCreateInfo info = new VkPipelineDepthStencilStateCreateInfo();
 
 	DepthStencilStage() {
-		compare(VkCompareOp.LESS_OR_EQUAL);
+		compare(VkCompareOp.LESS);
 	}
 
 	/**
@@ -20,6 +20,8 @@ public class DepthStencilStage {
 	 */
 	public DepthStencilStage enable() {
 		info.depthTestEnable = true;
+		// TODO
+//		info.depthWriteEnable = true;
 		return this;
 	}
 
@@ -180,6 +182,7 @@ public class DepthStencilStage {
 	 * @see #enable()
 	 */
 	public DepthStencilStage write() {
+		// TODO
 		if(!info.depthTestEnable) throw new IllegalStateException();
 		info.depthWriteEnable = true;
 		return this;

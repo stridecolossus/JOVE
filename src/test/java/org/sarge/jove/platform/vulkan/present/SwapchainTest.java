@@ -34,9 +34,9 @@ class SwapchainTest {
 
 	@Test
 	void views() {
-		assertEquals(view, swapchain.view(0));
-		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.view(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.view(2));
+		assertEquals(view, swapchain.attachment(0));
+		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(-1));
+		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(2));
 	}
 
 	@Test
@@ -101,7 +101,7 @@ class SwapchainTest {
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(MockSurfaceProperties.FORMAT.format, swapchain.format());
 			assertEquals(false, swapchain.isDestroyed());
-			assertNotNull(swapchain.view(0));
+			assertNotNull(swapchain.attachment(0));
 		}
 
 		// TODO

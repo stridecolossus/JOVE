@@ -30,6 +30,24 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 		buffer.require(VkBufferUsageFlags.INDEX_BUFFER);
 	}
 
+//	// TODO
+// - determine element type: either literal (e.g. 32) or >= minimumElementBytes => policy?
+// - make this (and VBO) transient with optional release (same as View)
+// - fix doc above
+//	public void write(Mesh.Index index) {
+//		final int bytes = index.minimumElementBytes();
+//	}
+
+	/**
+	 * Creates a command to bind this index buffer.
+	 * @return Command to bind this index buffer
+	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
+	 * @see #bind(long)
+	 */
+	public Command bind() {
+		return bind(0L);
+	}
+
 	/**
 	 * Creates a command to bind this index buffer.
 	 * @param offset Buffer offset

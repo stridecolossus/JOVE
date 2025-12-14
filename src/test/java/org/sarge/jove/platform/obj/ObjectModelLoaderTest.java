@@ -23,7 +23,7 @@ class ObjectModelLoaderTest {
 		// Create an OBJ file
 		final String data = """
 				# comment
-				s ignored
+				o ignored
 
 				v 1 2 3
 				v 4 5 6
@@ -37,7 +37,7 @@ class ObjectModelLoaderTest {
 				vt 3 4
 				vt 5 6
 
-				s object
+				s 1
 				f 1/1/1 2/2/2 3/3/3
 		""";
 

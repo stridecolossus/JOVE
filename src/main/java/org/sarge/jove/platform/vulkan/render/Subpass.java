@@ -24,9 +24,9 @@ public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<AttachmentRefer
 	}
 
 	/**
-	 * Builds the descriptor for this subpass.
+	 * Builds the description for this subpass.
 	 * @param attachments Aggregated attachments for this render pass
-	 * @return Subpass descriptor
+	 * @return Subpass description
 	 * @throws IllegalArgumentException for an unknown attachment
 	 */
 	VkSubpassDescription description(List<Attachment> aggregated) {

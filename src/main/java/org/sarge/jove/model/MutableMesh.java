@@ -82,6 +82,12 @@ public class MutableMesh implements Mesh {
 	 * @throws IllegalArgumentException if {@link #component} is not present
 	 */
 	public MutableMesh remove(Layout component) {
+
+		// TODO
+		// - check that each vertex actually has same number of components as the layout
+		// e.g. if we never add a normal, then calling remove(Normal.LAYOUT) deletes the texture coordinate!
+		// and the vertex is essentially undefined, also need to check buffered data == expected length
+
 		// Remove component from layout
 		final int index = indexOf(component);
 		layout.remove(index);
@@ -116,6 +122,8 @@ public class MutableMesh implements Mesh {
 				for(Vertex v : vertices) {
 					v.buffer(buffer);
 				}
+				// TODO
+				assert buffer.remaining() == 0;
 			}
 		};
 	}

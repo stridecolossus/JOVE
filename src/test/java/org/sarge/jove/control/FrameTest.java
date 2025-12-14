@@ -12,7 +12,7 @@ class FrameTest {
 		private int count;
 
 		@Override
-		public void end(Frame frame) {
+		public void frame(Frame frame) {
 			assertNotNull(frame);
 			++count;
 		}
@@ -34,50 +34,41 @@ class FrameTest {
 	}
 
 	@Test
-	void begin() {
-		tracker.begin();
+	void timer() throws Exception {
+		try(final var _ = tracker.timer()) {
+			// Empty
+		}
 	}
 
 	@Test
-	void end() {
-		final var timer = tracker.begin();
-		timer.run();
-	}
-
-	@Test
-	void already() {
-		final var timer = tracker.begin();
-		timer.run();
-		assertThrows(IllegalStateException.class, () -> timer.run());
-	}
-
-	@Test
-	void listener() {
+	void listener() throws Exception {
 		tracker.add(listener);
 		for(int n = 0; n < 3; ++n) {
-    		final var timer = tracker.begin();
-    		timer.run();
+			try(final var _ = tracker.timer()) {
+				// Empty
+			}
 		}
 		assertEquals(3, listener.count);
 	}
 
-	@Test
-	void parallel() {
-		tracker.add(listener);
-		final var one = tracker.begin();
-		final var two = tracker.begin();
-		two.run();
-		one.run();
-		assertEquals(2, listener.count);
-	}
+//	@Test
+//	void parallel() {
+//		tracker.add(listener);
+//		final var one = tracker.timer();
+//		final var two = tracker.timer();
+//		two.run();
+//		one.run();
+//		assertEquals(2, listener.count);
+//	}
 
+	// TODO
 	@Test
 	void periodic() {
 		final var periodic = Listener.periodic(Duration.ofSeconds(1), listener);
 		final Instant start = Instant.now();
-		periodic.end(new Frame(start, start.plusMillis(500)));
+		periodic.frame(new Frame(start, start.plusMillis(500)));
 		assertEquals(0, listener.count);
-		periodic.end(new Frame(start, start.plusMillis(1500)));
+		periodic.frame(new Frame(start, start.plusMillis(1500)));
 		assertEquals(1, listener.count);
 	}
 }

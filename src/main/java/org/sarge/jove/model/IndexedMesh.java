@@ -82,6 +82,8 @@ public class IndexedMesh extends MutableMesh {
 			for(int n : indices) {
 				buffer.putInt(n);
 			}
+			// TODO
+			assert buffer.remaining() == 0;
 		}
 
 		@Override

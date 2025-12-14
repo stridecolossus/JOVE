@@ -35,18 +35,20 @@ public class Camera {
 	 * Moves the camera to a new position.
 	 * @param position New position
 	 */
-	public void move(Point position) {
+	public Camera move(Point position) {
 		this.position = requireNonNull(position);
 		dirty();
+		return this;
 	}
 
 	/**
 	 * Moves the camera by the given vector.
 	 * @param vector Movement vector
 	 */
-	public void move(Vector vector) {
+	public Camera move(Vector vector) {
 		position = position.add(vector);
 		dirty();
+		return this;
 	}
 
 	/**
@@ -54,8 +56,9 @@ public class Camera {
 	 * @param distance Distance to move
 	 * @see #direction()
 	 */
-	public void move(float distance) {
+	public Camera move(float distance) {
 		move(direction.multiply(distance));
+		return this;
 	}
 
 	/**
@@ -63,9 +66,10 @@ public class Camera {
 	 * @param distance Distance to strafe
 	 * @see #right()
 	 */
-	public void strafe(float distance) {
+	public Camera strafe(float distance) {
 		// TODO - assumes right is valid at this point? what if direction or up have been changed?
 		move(right.multiply(distance));
+		return this;
 	}
 
 	/**
@@ -80,10 +84,11 @@ public class Camera {
 	 * @param direction View direction
 	 * @throws IllegalStateException if the direction would result in gimbal lock
 	 */
-	public void direction(Normal direction) {
+	public Camera direction(Normal direction) {
 		validate(direction, up);
 		this.direction = requireNonNull(direction);
 		dirty();
+		return this;
 	}
 
 	/**
@@ -92,12 +97,13 @@ public class Camera {
 	 * @throws IllegalArgumentException if {@link #target} is the same as the current position of the camera
 	 * @throws IllegalStateException if the resultant direction would result in gimbal lock
 	 */
-	public void look(Point target) {
+	public Camera look(Point target) {
 		if(position.equals(target)) {
 			throw new IllegalArgumentException("Cannot point camera at its current position");
 		}
 		final Vector look = Vector.between(target, position);
 		direction(new Normal(look));
+		return this;
 	}
 
 	/**
@@ -106,10 +112,11 @@ public class Camera {
 	 * @param up Camera up axis
 	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
-	public void up(Normal up) {
+	public Camera up(Normal up) {
 		validate(direction, up);
 		this.up = requireNonNull(up);
 		dirty();
+		return this;
 	}
 
 	/**

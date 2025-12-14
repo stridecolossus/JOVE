@@ -1,7 +1,7 @@
 package org.sarge.jove.model;
 
 import java.io.*;
-import java.nio.ByteBuffer;
+import java.nio.*;
 import java.nio.file.*;
 import java.util.*;
 
@@ -189,6 +189,9 @@ public class MeshLoader {
 		else {
 			out.writeInt(0);
 		}
+
+		// Done
+		out.flush();
 	}
 
 	/**
@@ -208,7 +211,7 @@ public class MeshLoader {
 		}
 
 		// Buffer data
-		final var buffer = ByteBuffer.allocate(length);
+		final var buffer = ByteBuffer.allocate(length).order(ByteOrder.nativeOrder());
 		data.buffer(buffer);
 
 		// Copy buffer to output

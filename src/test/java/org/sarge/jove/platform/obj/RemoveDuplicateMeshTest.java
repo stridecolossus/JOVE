@@ -3,8 +3,7 @@ package org.sarge.jove.platform.obj;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.geometry.*;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.Vertex;
 
 class RemoveDuplicateMeshTest {
@@ -12,14 +11,14 @@ class RemoveDuplicateMeshTest {
 
 	@BeforeEach
 	void before() {
-		mesh = new RemoveDuplicateMesh();
+		mesh = new RemoveDuplicateMesh(Point.LAYOUT);
 	}
 
 	@Test
 	void build() {
 		// Create some vertices
-		final Vertex vertex = new Vertex(Point.ORIGIN, Axis.X, Coordinate2D.BOTTOM_LEFT);
-		final Vertex other = new Vertex(new Point(1, 2, 3), Axis.Y, Coordinate2D.TOP_RIGHT);
+		final Vertex vertex = new Vertex(Point.ORIGIN);
+		final Vertex other = new Vertex(new Point(1, 2, 3));
 
 		// Build an indexed mesh that re-uses some vertices
 		mesh.add(vertex);
@@ -28,7 +27,7 @@ class RemoveDuplicateMeshTest {
 
 		// Verify the de-duplicated model
 		assertEquals(3, mesh.count());
-		assertEquals(2 * (3 + 3 + 2) * 4, mesh.vertices().length());
+		assertEquals(2 * 3 * 4, mesh.vertices().length());
 		assertEquals(3 * 4, mesh.index().get().length());
 	}
 }

@@ -2,6 +2,7 @@ package org.sarge.jove.platform.obj;
 
 import java.util.*;
 
+import org.sarge.jove.common.Layout;
 import org.sarge.jove.geometry.*;
 import org.sarge.jove.model.*;
 import org.sarge.jove.model.Coordinate.Coordinate2D;
@@ -16,18 +17,6 @@ class ObjectModel {
 	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
 	private final List<IndexedMesh> meshes = new ArrayList<>();
 	private IndexedMesh current;
-
-	public ObjectModel() {
-		append();
-	}
-
-	/**
-	 * Starts a new mesh.
-	 */
-	private void append() {
-		current = new RemoveDuplicateMesh();
-		meshes.add(current);
-	}
 
 	/**
 	 * @return Vertex positions
@@ -54,13 +43,24 @@ class ObjectModel {
 	 * Starts a new object group.
 	 */
 	public void start() {
-		// Ignore empty models
-		if(current.count() == 0) {
+		// Ignore leading group commands
+		if(positions.isEmpty()) {
 			return;
 		}
 
-		// Construct the current model
-		append();
+		// Determine model layout
+		final var layout = new ArrayList<>();
+		layout.add(Point.LAYOUT);
+		if(!normals.isEmpty()) {
+			layout.add(Normal.LAYOUT);
+		}
+		if(!coordinates().isEmpty()) {
+			layout.add(Coordinate2D.LAYOUT);
+		}
+
+		// Start model
+		current = new RemoveDuplicateMesh(layout.toArray(Layout[]::new));
+		meshes.add(current);
 	}
 
 	/**

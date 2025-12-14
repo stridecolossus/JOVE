@@ -15,7 +15,7 @@ import org.sarge.jove.util.Percentile;
 /**
  * An <i>attachment</i> is a target of the rendering process, such as a swapchain image or the depth-stencil.
  * <p>
- * Note there is no direct equivalent Vulkan type for this class.
+ * Note there is no direct Vulkan equivalent for this type.
  * <p>
  * @author Sarge
  */

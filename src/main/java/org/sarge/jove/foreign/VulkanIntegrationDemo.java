@@ -8,10 +8,8 @@ import java.util.logging.LogManager;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.control.*;
-import org.sarge.jove.control.Button.ButtonEvent;
-import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
-import org.sarge.jove.model.Coordinate.Coordinate2D;
+import org.sarge.jove.model.Mesh.MeshData;
 import org.sarge.jove.platform.desktop.*;
 import org.sarge.jove.platform.desktop.Window.Hint;
 import org.sarge.jove.platform.vulkan.*;
@@ -23,7 +21,7 @@ import org.sarge.jove.platform.vulkan.image.ClearValue.ColourClearValue;
 import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.pipeline.Shader.ShaderLoader;
-import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.*;
+import org.sarge.jove.platform.vulkan.pipeline.VertexInputStage.VertexBinding;
 import org.sarge.jove.platform.vulkan.present.*;
 import org.sarge.jove.platform.vulkan.present.ImageCountSwapchainConfiguration.Policy;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
@@ -60,14 +58,8 @@ public class VulkanIntegrationDemo {
 		//////////////////
 
 		final var running = new AtomicBoolean(true);
-		final var exit = new Action<>("exit", ButtonEvent.class, _ -> running.set(false));
-		final var dump = new Action<>("dump", ButtonEvent.class, System.out::println);
-		final var bindings = new ActionBindings(List.of(exit, dump));
 		final var keyboard = new KeyboardDevice(window);
-		final var adapter = new ButtonDeviceAdapter(keyboard);
-		//final int escape = KeyTable.defaultKeyTable().code("ESCAPE");
-		bindings.bind(exit, adapter.button(256));		// TODO - should be actual button/template?
-		bindings.bind(dump, adapter.button(65));
+		keyboard.bind(_ -> running.set(false));
 
 		//////////////////
 
@@ -166,16 +158,31 @@ public class VulkanIntegrationDemo {
 				.add(subpass)
 				.build(device);
 
+		// Command Pool
+		System.out.println("Creating command pool...");
+		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER);
+
 		///////////////
 
-		final VertexBinding binding = new VertexBinding.Builder()
-        		.attribute(new VertexAttribute(0, VkFormat.R32G32B32_SFLOAT, 0))
-        		.attribute(new VertexAttribute(1, VkFormat.R32G32_SFLOAT, 3 * 4))
-        		.stride((3 + 2) * 4)
-				.build();
+//		final VertexBinding binding = new VertexBinding.Builder()
+//        		.attribute(new VertexAttribute(0, VkFormat.R32G32B32_SFLOAT, 0))
+//        		.attribute(new VertexAttribute(1, VkFormat.R32G32_SFLOAT, 3 * 4))
+//        		.stride((3 + 2) * 4)
+//				.build();
+//
+//		final VulkanBuffer b = vbo(device, physical, graphicsQueue);
+//		final var vbo = new VertexBuffer(b);
 
-		final VulkanBuffer b = vbo(device, physical, graphicsQueue);
-		final var vbo = new VertexBuffer(b);
+		final var loader = new MeshLoader();
+		final Mesh mesh = loader.load(Path.of("../Demo/Data/chalet.model"));
+
+		final var types = MemoryType.enumerate(physical.memory());
+		final var allocator = new Allocator(device, types);
+
+		final var vertices = load(mesh.vertices(), pool, allocator, VkBufferUsageFlags.VERTEX_BUFFER);
+		final var index = load(mesh.index().get(), pool, allocator, VkBufferUsageFlags.INDEX_BUFFER);
+
+		final var binding = VertexBinding.of(0, 0, mesh.layout());
 
 		///////////////
 
@@ -185,7 +192,8 @@ public class VulkanIntegrationDemo {
 		final var pipelineBuilder = new GraphicsPipelineBuilder();
 		///////////////
 		pipelineBuilder.input().add(binding);
-		pipelineBuilder.assembly().topology(Primitive.TRIANGLE_STRIP);
+		pipelineBuilder.assembly().topology(Primitive.TRIANGLE);
+		pipelineBuilder.rasterizer().cull(VkCullModeFlags.NONE);
 		///////////////
 		pipelineBuilder.viewport().viewportAndScissor(new Rectangle(manager.swapchain().extents()));
 		pipelineBuilder.shader(new ProgrammableShaderStage(VkShaderStageFlags.VERTEX, vertex));
@@ -195,16 +203,15 @@ public class VulkanIntegrationDemo {
 				.layout(pipelineLayout)
 				.build(device);
 
-		// Command Pool
-		System.out.println("Creating command pool...");
-		final var pool = Command.Pool.create(device, graphicsQueue, VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER);
-
 		// Sequence
 		System.out.println("Recording render sequence...");
-		final var draw = DrawCommand.of(4, device);
+		final var draw = DrawCommand.of(mesh, device);
+		final var vbo = new VertexBuffer(vertices).bind(0);
+		final var ibo = new IndexBuffer(VkIndexType.UINT32, index).bind();
 		final RenderSequence sequence = (_, buffer) -> {
 			buffer.add(pipeline.bind());
-			buffer.add(vbo.bind(0));
+			buffer.add(vbo);
+			buffer.add(ibo);
 			buffer.add(draw);
 		};
 		final var composer = new FrameComposer(pool, sequence);
@@ -229,9 +236,11 @@ public class VulkanIntegrationDemo {
 		// Cleanup
 		System.out.println("Cleanup...");
 		device.waitIdle();
-///////////////
-b.destroy();
-///////////////
+
+		index.destroy();
+		vertices.destroy();
+		//pool.destroy();
+
 		render.destroy();
 		framebuffers.destroy();
 		pool.destroy();
@@ -251,61 +260,9 @@ b.destroy();
 		System.out.println("DONE");
 	}
 
-	private static VulkanBuffer vbo(LogicalDevice device, PhysicalDevice physical, WorkQueue queue) {
-
-		// Builds mesh
-
-		final Vertex[] vertices = {
-			new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT),
-			new Vertex(new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT),
-			new Vertex(new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT),
-			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
-		};
-
-		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, Point.LAYOUT, Coordinate2D.LAYOUT);
-		for(Vertex v : vertices) {
-			mesh.add(v);
-		}
-
-		final var data = mesh.vertices();
-
-		// Init memory
-
-		final var types = MemoryType.enumerate(physical.memory());
-		final var allocator = new Allocator(device, types);
-
-		// Create staging
-
-//		final var stagingProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
-//				.required(VkMemoryProperty.HOST_VISIBLE)
-//				.optimal(VkMemoryProperty.DEVICE_LOCAL)
-//				.usage(VkBufferUsageFlag.TRANSFER_SRC)
-//				.build();
-//
-//		final var staging = VulkanBuffer.create(allocator, data.length(), stagingProperties); //  4 * (3 + 2) * 4, stagingProperties);
+	private static VulkanBuffer load(MeshData data, Command.Pool pool, Allocator allocator, VkBufferUsageFlags usage) {
 
 		final var staging = VulkanBuffer.staging(allocator, data.length());
-
-		/*
-		final var mem = staging.memory().map(0L, 80).segment(0L, 80);
-
-		mem.set(ValueLayout.JAVA_FLOAT, 0L, -0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 4L, -0.5f);
-
-		mem.set(ValueLayout.JAVA_FLOAT, 20L, -0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 24L, +0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 36L, 1);
-
-		mem.set(ValueLayout.JAVA_FLOAT, 40L, +0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 44L, -0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 52L, 1);
-
-		mem.set(ValueLayout.JAVA_FLOAT, 60L, +0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 64L, +0.5f);
-		mem.set(ValueLayout.JAVA_FLOAT, 72L, 1);
-		mem.set(ValueLayout.JAVA_FLOAT, 76L, 1);
-		*/
-
 		final ByteBuffer bb = staging.buffer();
 		data.buffer(bb);
 
@@ -313,18 +270,92 @@ b.destroy();
 		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlags>()
 				.required(VkMemoryPropertyFlags.DEVICE_LOCAL)
 				.usage(VkBufferUsageFlags.TRANSFER_DST)
-				.usage(VkBufferUsageFlags.VERTEX_BUFFER)
+				.usage(usage)
 				.build();
 
 		final var dest = VulkanBuffer.create(allocator, data.length(), destProperties);
 
 		// Copy staging to VBO
-		final var pool = Command.Pool.create(device, queue);
-		Work.submit(staging.copy(dest), pool);
-
+		staging.copy(dest).submit(pool);
 		staging.destroy();
-		pool.destroy();
 
 		return dest;
 	}
 }
+
+//
+//	private static VulkanBuffer vbo(LogicalDevice device, PhysicalDevice physical, WorkQueue queue) {
+//
+//		// Builds mesh
+//
+//		final Vertex[] vertices = {
+//			new Vertex(new Point(-0.5f, -0.5f, 0), Coordinate2D.TOP_LEFT),
+//			new Vertex(new Point(-0.5f, +0.5f, 0), Coordinate2D.BOTTOM_LEFT),
+//			new Vertex(new Point(+0.5f, -0.5f, 0), Coordinate2D.TOP_RIGHT),
+//			new Vertex(new Point(+0.5f, +0.5f, 0), Coordinate2D.BOTTOM_RIGHT),
+//		};
+//
+//		final var mesh = new MutableMesh(Primitive.TRIANGLE_STRIP, Point.LAYOUT, Coordinate2D.LAYOUT);
+//		for(Vertex v : vertices) {
+//			mesh.add(v);
+//		}
+//
+//		final var data = mesh.vertices();
+//
+//		// Init memory
+//
+//
+//		// Create staging
+//
+////		final var stagingProperties = new MemoryProperties.Builder<VkBufferUsageFlag>()
+////				.required(VkMemoryProperty.HOST_VISIBLE)
+////				.optimal(VkMemoryProperty.DEVICE_LOCAL)
+////				.usage(VkBufferUsageFlag.TRANSFER_SRC)
+////				.build();
+////
+////		final var staging = VulkanBuffer.create(allocator, data.length(), stagingProperties); //  4 * (3 + 2) * 4, stagingProperties);
+//
+//		final var staging = VulkanBuffer.staging(allocator, data.length());
+//
+//		/*
+//		final var mem = staging.memory().map(0L, 80).segment(0L, 80);
+//
+//		mem.set(ValueLayout.JAVA_FLOAT, 0L, -0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 4L, -0.5f);
+//
+//		mem.set(ValueLayout.JAVA_FLOAT, 20L, -0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 24L, +0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 36L, 1);
+//
+//		mem.set(ValueLayout.JAVA_FLOAT, 40L, +0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 44L, -0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 52L, 1);
+//
+//		mem.set(ValueLayout.JAVA_FLOAT, 60L, +0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 64L, +0.5f);
+//		mem.set(ValueLayout.JAVA_FLOAT, 72L, 1);
+//		mem.set(ValueLayout.JAVA_FLOAT, 76L, 1);
+//		*/
+//
+//		final ByteBuffer bb = staging.buffer();
+//		data.buffer(bb);
+//
+//		// Create VBO
+//		final var destProperties = new MemoryProperties.Builder<VkBufferUsageFlags>()
+//				.required(VkMemoryPropertyFlags.DEVICE_LOCAL)
+//				.usage(VkBufferUsageFlags.TRANSFER_DST)
+//				.usage(VkBufferUsageFlags.VERTEX_BUFFER)
+//				.build();
+//
+//		final var dest = VulkanBuffer.create(allocator, data.length(), destProperties);
+//
+//		// Copy staging to VBO
+//		final var pool = Command.Pool.create(device, queue);
+//		Work.submit(staging.copy(dest), pool);
+//
+//		staging.destroy();
+//		pool.destroy();
+//
+//		return dest;
+//	}
+//}

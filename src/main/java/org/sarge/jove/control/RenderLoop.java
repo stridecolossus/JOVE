@@ -16,7 +16,7 @@ public class RenderLoop implements AutoCloseable {
 	private final Frame.Tracker tracker;
 	private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 	private ScheduledFuture<?> future;
-	private Consumer<Exception> handler = Exception::printStackTrace;
+	private Consumer<Throwable> handler = Throwable::printStackTrace;
 	private int rate = 60;
 
 	/**
@@ -61,7 +61,7 @@ public class RenderLoop implements AutoCloseable {
 	 * Exceptions are dumped to the error console by default.
 	 * @param handler Exception handler
 	 */
-	public void handler(Consumer<Exception> handler) {
+	public void handler(Consumer<Throwable> handler) {
 		this.handler = requireNonNull(handler);
 	}
 
@@ -82,14 +82,12 @@ public class RenderLoop implements AutoCloseable {
 	 * Runs the task and notifies the elapsed duration.
 	 */
 	private void run() {
-		final Runnable timer = tracker.begin();
-		try {
+		try(final var _ = tracker.timer()) {
 			task.run();
 		}
-		catch(Exception e) {
+		catch(Throwable e) {
 			handler.accept(e);
 		}
-		timer.run();
 	}
 
 	/**
@@ -109,6 +107,7 @@ public class RenderLoop implements AutoCloseable {
 		if(isRunning()) {
 			stop();
 		}
-		executor.shutdownNow();
+		executor.shutdown();
+		executor.awaitTermination(1, TimeUnit.SECONDS);
 	}
 }
