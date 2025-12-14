@@ -1,7 +1,6 @@
 package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.time.*;
 import java.util.*;
@@ -21,30 +20,6 @@ public record Frame(Instant start, Instant end) {
 		 * @param frame Frame
 		 */
 		void frame(Frame frame);
-
-		// TODO - this stinks
-		/**
-		 * Creates an adapter for a frame listener invoked on the expiry of the given duration.
-		 * @param period		Iteration period
-		 * @param delegate		Delegate listener
-		 * @return Periodic listener
-		 */
-		static Listener periodic(Duration period, Listener delegate) {
-			requireOneOrMore(period);
-			requireNonNull(delegate);
-
-			return new Listener() {
-				private Instant end = Instant.now().plus(period);
-
-				@Override
-				public void frame(Frame frame) {
-					if(frame.end.isAfter(end)) {
-						delegate.frame(frame);
-						end = frame.end.plus(period);
-					}
-				}
-			};
-		}
 	}
 
 	/**

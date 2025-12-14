@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
 import java.util.*;
+import java.util.function.IntFunction;
 import java.util.stream.*;
 
 import org.sarge.jove.common.*;
@@ -278,6 +279,22 @@ public class DescriptorSet implements NativeObject {
 	public Command bind(PipelineLayout layout) {
 		return bind(layout, List.of(this));
 	}
+
+	////////////////////
+
+	public static record IndexedCommand(IntFunction<Command> command) implements Command {
+
+		public Command select(int index) {
+			return command.apply(index);
+		}
+
+		@Override
+		public void execute(Buffer buffer) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	////////////////////
 
 	/**
 	 * Creates a bind command for the given descriptor sets.

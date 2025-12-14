@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.*;
 
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.PhysicalDevice;
 import org.sarge.jove.util.EnumMask;
 
 /**
@@ -19,6 +20,7 @@ public class FormatSelector {
 	/**
 	 * Constructor.
 	 * @param provider Format properties provider
+	 * @see PhysicalDevice#properties(VkFormat)
 	 */
 	public FormatSelector(Function<VkFormat, VkFormatProperties> provider) {
 		this.provider = requireNonNull(provider);

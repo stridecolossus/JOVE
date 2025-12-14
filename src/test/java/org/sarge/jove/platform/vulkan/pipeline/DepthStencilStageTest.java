@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.pipeline.DepthStencilStage.*;
+import org.sarge.jove.util.Percentile;
 
 class DepthStencilStageTest {
 	private DepthStencilStage stage;
@@ -20,8 +20,7 @@ class DepthStencilStageTest {
 		final VkPipelineDepthStencilStateCreateInfo result = stage
 				.enable()
 				.compare(VkCompareOp.GREATER)
-				.bounds(0.5f, 1)
-				.write()
+				.bounds(Percentile.HALF, Percentile.ONE)
 				.descriptor();
 
 		// Check descriptor
@@ -32,50 +31,70 @@ class DepthStencilStageTest {
 		assertEquals(0.5f, result.minDepthBounds);
 		assertEquals(1f, result.maxDepthBounds);
 		assertEquals(true, result.depthWriteEnable);
-		//assertEquals(false, result.stencilTestEnable);
+		assertEquals(false, result.stencilTestEnable);
 	}
 
-	@Nested
-	class StencilStateBuilderTests {
-		private StencilStateBuilder state;
+	@Test
+	void defaults() {
+		final VkPipelineDepthStencilStateCreateInfo result = stage.enable().descriptor();
+		assertEquals(0, result.flags);
+		assertEquals(true, result.depthTestEnable);
+		assertEquals(VkCompareOp.LESS, result.depthCompareOp);
+		assertEquals(false, result.depthBoundsTestEnable);
+		assertEquals(0f, result.minDepthBounds);
+		assertEquals(1f, result.maxDepthBounds);
+		assertEquals(true, result.depthWriteEnable);
+		assertEquals(false, result.stencilTestEnable);
+	}
 
-		@BeforeEach
-		void before() {
-			state = new StencilStateBuilder();
-		}
-
-		@Test
-		void build() {
-			final VkStencilOpState result = state
-					.fail(VkStencilOp.REPLACE)
-					.pass(VkStencilOp.INVERT)
-					.depthFail(VkStencilOp.ZERO)
-					.mask(StencilMaskType.COMPARE, 1)
-					.mask(StencilMaskType.WRITE, 2)
-					.mask(StencilMaskType.REFERENCE, 3)
-					.build();
-
-			assertEquals(VkStencilOp.REPLACE, result.failOp);
-			assertEquals(VkStencilOp.INVERT, result.passOp);
-			assertEquals(VkStencilOp.ZERO, result.depthFailOp);
-			assertEquals(1, result.compareMask);
-			assertEquals(2, result.writeMask);
-			assertEquals(3, result.reference);
-		}
-
-		@Test
-		void empty() {
-			final VkStencilOpState result = state.build();
-			assertEquals(VkStencilOp.KEEP, result.failOp);
-			assertEquals(VkStencilOp.KEEP, result.passOp);
-			assertEquals(VkStencilOp.KEEP, result.depthFailOp);
-			assertEquals(0, result.compareMask);
-			assertEquals(0, result.writeMask);
-			assertEquals(0, result.reference);
-		}
+	@Test
+	void disabled() {
+		assertEquals(null, stage.descriptor());
 	}
 }
 
+//
+//	@Nested
+//	class StencilStateBuilderTests {
+//		private StencilStateBuilder state;
+//
+//		@BeforeEach
+//		void before() {
+//			state = new StencilStateBuilder();
+//		}
+//
+//		@Test
+//		void build() {
+//			final VkStencilOpState result = state
+//					.fail(VkStencilOp.REPLACE)
+//					.pass(VkStencilOp.INVERT)
+//					.depthFail(VkStencilOp.ZERO)
+//					.mask(StencilMaskType.COMPARE, 1)
+//					.mask(StencilMaskType.WRITE, 2)
+//					.mask(StencilMaskType.REFERENCE, 3)
+//					.build();
+//
+//			assertEquals(VkStencilOp.REPLACE, result.failOp);
+//			assertEquals(VkStencilOp.INVERT, result.passOp);
+//			assertEquals(VkStencilOp.ZERO, result.depthFailOp);
+//			assertEquals(1, result.compareMask);
+//			assertEquals(2, result.writeMask);
+//			assertEquals(3, result.reference);
+//		}
+//
+//		@Test
+//		void empty() {
+//			final VkStencilOpState result = state.build();
+//			assertEquals(VkStencilOp.KEEP, result.failOp);
+//			assertEquals(VkStencilOp.KEEP, result.passOp);
+//			assertEquals(VkStencilOp.KEEP, result.depthFailOp);
+//			assertEquals(0, result.compareMask);
+//			assertEquals(0, result.writeMask);
+//			assertEquals(0, result.reference);
+//		}
+//	}
+//}
+//
 //
 //	@Nested
 //	class DynamicStateTests {

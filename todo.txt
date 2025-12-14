@@ -14,6 +14,8 @@ also injects superfluous padding
 blog
 - mesh loader very slow with scanner ~20s -> 2s custom
 
+format selector could do with simplifying, see ModelDemo/DepthAttachment
+
 mesh loader still needs custom indexed implementation
 
 can we use same/similar mechanism as mesh loader output file when buffering a mesh?
