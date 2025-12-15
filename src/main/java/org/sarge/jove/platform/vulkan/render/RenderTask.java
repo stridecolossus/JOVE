@@ -24,7 +24,7 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  * </ol>
  * <p>
  * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frames concurrently.
- * The number of in-flight frames can be overridden by the {@link #count(Swapchain)} method.
+ * @see Swapchain#frames()
  * <p>
  * The swapchain and frame buffers are recreated on demand if the swapchain is {@link Invalidated}.
  * <p>
@@ -47,7 +47,7 @@ public class RenderTask implements Runnable, TransientObject {
 		this.manager = requireNonNull(manager);
 		this.factory = requireNonNull(factory);
 		this.composer = requireNonNull(composer);
-		this.iterator = new FrameStateIterator(count(swapchain), swapchain.device());
+		this.iterator = new FrameStateIterator(swapchain);
 		factory.build(swapchain);
 	}
 
@@ -56,16 +56,14 @@ public class RenderTask implements Runnable, TransientObject {
 	 */
 	private static class FrameStateIterator {
 		private final List<FrameState> frames;
-		private int index;
+		private int index = -1;
 
-		/**
-		 * Constructor.
-		 * @param count			Number of in-flight frames
-		 * @param device		Logical device
-		 */
-		public FrameStateIterator(int count, LogicalDevice device) {
+		public FrameStateIterator(Swapchain swapchain) {
+			final int number = requireOneOrMore(swapchain.frames());
+			final LogicalDevice device = swapchain.device();
+
 			this.frames = IntStream
-					.range(0, requireOneOrMore(count))
+					.range(0, number)
 					.mapToObj(_ -> FrameState.create(device))
 					.toList();
 		}
@@ -74,10 +72,10 @@ public class RenderTask implements Runnable, TransientObject {
 		 * @return Next in-flight frame
 		 */
 		public synchronized FrameState next() {
-			if(index == frames.size()) {
+			if(++index == frames.size()) {
 				index = 0;
 			}
-			return frames.get(index++);
+			return frames.get(index);
 		}
 
 		/**
@@ -88,16 +86,6 @@ public class RenderTask implements Runnable, TransientObject {
 				f.destroy();
 			}
 		}
-	}
-
-	/**
-	 * Determines the number of in-flight frames.
-	 * By default this is the same as the {@link Swapchain#count()}.
-	 * @param swapchain Swapchain
-	 * @return Number of in-flight frames
-	 */
-	protected int count(Swapchain swapchain) {
-		return swapchain.count();
 	}
 
 	@Override
@@ -123,7 +111,7 @@ public class RenderTask implements Runnable, TransientObject {
 		final Framebuffer framebuffer = factory.framebuffer(index);
 
 		// Render frame
-		final Buffer sequence = composer.compose(index, framebuffer);
+		final Buffer sequence = composer.compose(iterator.index, framebuffer);
 		frame.render(sequence);
 		// TODO - how/where to record 'latest' COMPLETED framebuffer index? i.e. only ready/valid after render completed (?)
 

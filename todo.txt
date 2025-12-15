@@ -11,8 +11,9 @@ also injects superfluous padding
 
 **********
 
-blog
-- mesh loader very slow with scanner ~20s -> 2s custom
+descriptor set bind command ~ in-flight frame index NOT the framebuffer index (though probably the same)
+what is an descriptor set array used for?
+https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html
 
 mesh loader: 1. still needs custom indexed implementation, 2. nasty ByteBuffer fiddle when writing
 

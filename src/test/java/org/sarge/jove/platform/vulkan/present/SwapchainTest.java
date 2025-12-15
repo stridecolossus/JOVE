@@ -27,16 +27,22 @@ class SwapchainTest {
 
 	@Test
 	void constructor() {
-		assertEquals(2, swapchain.count());
 		assertEquals(VkFormat.B8G8R8A8_UNORM, swapchain.format());
 		assertEquals(new Dimensions(640, 480), swapchain.extents());
 	}
 
 	@Test
-	void views() {
+	void attachments() {
+		assertEquals(2, swapchain.attachments());
 		assertEquals(view, swapchain.attachment(0));
 		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(-1));
 		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(2));
+	}
+
+	@DisplayName("The number of in-flight frames is the same as the number of colour attachments by default")
+	@Test
+	void frames() {
+		assertEquals(2, swapchain.frames());
 	}
 
 	@Test

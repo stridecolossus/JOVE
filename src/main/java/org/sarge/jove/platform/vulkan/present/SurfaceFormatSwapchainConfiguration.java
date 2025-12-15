@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.List;
+
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
@@ -35,8 +37,9 @@ public class SurfaceFormatSwapchainConfiguration implements SwapchainConfigurati
 
 	@Override
 	public void configure(Builder builder, Properties properties) {
+		final List<VkSurfaceFormatKHR> formats = properties.formats();
 		final var selector = new PrioritySelector<VkSurfaceFormatKHR>(format::equals);		// TODO - configurable/protected
-		final VkSurfaceFormatKHR selected = selector.select(properties.formats());
+		final VkSurfaceFormatKHR selected = selector.select(formats);
 		builder.format(selected);
 	}
 }

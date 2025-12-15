@@ -3,6 +3,7 @@
  * <ul>
  * <li>a framework for input events and action bindings</li>
  * <li>components to support animation and playable media</li>
+ * <li>the {@link RenderLoop} that schedules frame rendering tasks</li>
  * <li>various frame tracking utilities</li>
  * </ul>
  */

@@ -182,6 +182,7 @@ public class DescriptorSet implements NativeObject {
 		entries.put(binding, resource);
 		dirty.add(binding);
 	}
+	// TODO - rename apply?
 
 	/**
 	 * Helper.
@@ -194,6 +195,27 @@ public class DescriptorSet implements NativeObject {
 	public static void set(Collection<DescriptorSet> group, Binding binding, Resource resource) {
 		for(DescriptorSet set : group) {
 			set.set(binding, resource);
+		}
+	}
+
+	/**
+	 * Helper.
+	 * Sets the resource elements for a group of descriptor sets.
+	 * This handles the case where an array of resources is applied to a descriptor set that is replicated for each in-flight frame.
+	 * @param group			Descriptor sets
+	 * @param binding		Binding
+	 * @param resources		Resources
+	 */
+	public static void set(List<DescriptorSet> group, Binding binding, List<Resource> resources) {
+		final int size = group.size();
+		if(resources.size() != size) {
+			throw new IllegalArgumentException();
+		}
+
+		for(int n = 0; n < size; ++n) {
+			final DescriptorSet set = group.get(n);
+			final Resource res = resources.get(n);
+			set.set(binding, res);
 		}
 	}
 

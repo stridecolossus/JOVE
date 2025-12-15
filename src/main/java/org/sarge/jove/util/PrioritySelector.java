@@ -26,8 +26,7 @@ public class PrioritySelector<T> {
 	/**
 	 * Constructor.
 	 * @param filter		Filter
-	 * @param fallback		Fallback selector
-	 * @see #first()
+	 * @param fallback		Fallback
 	 */
 	public PrioritySelector(Predicate<T> filter, Function<List<T>, T> fallback) {
 		this.filter = requireNonNull(filter);
@@ -35,7 +34,7 @@ public class PrioritySelector<T> {
 	}
 
 	/**
-	 * Constructor that returns a literal fallback value.
+	 * Constructor for a selector with a literal fallback value.
 	 * @param filter		Filter
 	 * @param fallback		Fallback value
 	 */
@@ -44,9 +43,8 @@ public class PrioritySelector<T> {
 	}
 
 	/**
-	 * Constructor that returns the <b>first</b> entry as a fallback.
+	 * Constructor for a selector using the {@link #first()} candidate as a fallback.
 	 * @param filter Filter
-	 * @see #first()
 	 */
 	public PrioritySelector(Predicate<T> filter) {
 		this(filter, first());
@@ -56,24 +54,14 @@ public class PrioritySelector<T> {
 	 * Selects from the given list of candidates or falls back to the configured default value.
 	 * @param candidates Candidates
 	 * @return Selected value
-	 * @throws NoSuchElementException if {@link #candidates} is empty or the configured fallback returned an empty result
-	 * @see #find(List)
+	 * @throws NoSuchElementException if {@link #candidates} is empty or the configured fallback returns an empty result
 	 */
 	public T select(List<T> candidates) {
-		return find(candidates)
-				.or(() -> Optional.ofNullable(fallback.apply(candidates)))
-				.orElseThrow();
-	}
-
-	/**
-	 * Finds a matching entry from the given list of candidates.
-	 * @param candidates Candidates
-	 * @return Matching value
-	 */
-	protected Optional<T> find(List<T> candidates) {
 		return candidates
 				.stream()
 				.filter(filter)
-				.findAny();
+				.findAny()
+				.or(() -> Optional.ofNullable(fallback.apply(candidates)))
+				.orElseThrow();
 	}
 }

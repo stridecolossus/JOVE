@@ -125,9 +125,22 @@ public class DescriptorSetTest {
 		assertEquals(null, set.get(binding));
 	}
 
+	// TODO - better name: apply, resource?
 	@Test
-	void resource() {
+	void set() {
 		set.set(binding, resource);
+		assertEquals(resource, set.get(binding));
+	}
+
+	@Test
+	void setMultiple() {
+		DescriptorSet.set(List.of(set), binding, resource);
+		assertEquals(resource, set.get(binding));
+	}
+
+	@Test
+	void setArray() {
+		DescriptorSet.set(List.of(set), binding, List.of(resource));
 		assertEquals(resource, set.get(binding));
 	}
 

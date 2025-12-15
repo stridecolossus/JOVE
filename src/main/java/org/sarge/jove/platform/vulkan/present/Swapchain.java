@@ -43,18 +43,18 @@ public class Swapchain extends VulkanObject {
 	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
-	private final List<View> views;
+	private final List<View> attachments;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Swapchain handle
 	 * @param device		Logical device
-	 * @param views			Colour attachment views
+	 * @param views			Colour attachments
 	 */
-	Swapchain(Handle handle, LogicalDevice device, List<View> views) {
+	Swapchain(Handle handle, LogicalDevice device, List<View> attachments) {
 		super(handle, device);
 		this.library = device.library();
-		this.views = List.copyOf(views);
+		this.attachments = List.copyOf(attachments);
 	}
 
 	/**
@@ -75,17 +75,24 @@ public class Swapchain extends VulkanObject {
 	 * @return Image descriptor for the first attachment
 	 */
 	private Image.Descriptor descriptor() {
-		return views
+		return attachments
 				.getFirst()
 				.image()
 				.descriptor();
 	}
 
 	/**
+	 * @return Number of in-flight frames
+	 */
+	public int frames() {
+		return attachments();
+	}
+
+	/**
 	 * @return Number of colour attachments
 	 */
-	public int count() {
-		return views.size();
+	public int attachments() {
+		return attachments.size();
 	}
 
 	/**
@@ -93,10 +100,10 @@ public class Swapchain extends VulkanObject {
 	 * @param index Attachment index
 	 * @return Colour attachment
 	 * @throws IndexOutOfBoundsException for an invalid index
-	 * @see #count()
+	 * @see #attachments()
 	 */
 	public View attachment(int index) {
-		return views.get(index);
+		return attachments.get(index);
 	}
 
 	/**
@@ -173,7 +180,7 @@ public class Swapchain extends VulkanObject {
 
 	@Override
 	protected void release() {
-		for(View view : views) {
+		for(View view : attachments) {
 			view.destroy();
 		}
 	}
@@ -399,11 +406,11 @@ public class Swapchain extends VulkanObject {
 			// Create swapchain
 			final Handle handle = create(device, info);
 
-			// Create colour attachment views
-			final List<View> views = views(device, handle);
+			// Create colour attachments
+			final List<View> attachments = attachments(device, handle);
 
 			// Create swapchain
-			return new Swapchain(handle, device, views);
+			return new Swapchain(handle, device, attachments);
 		}
 
 		/**
@@ -433,9 +440,9 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Creates the colour attachment views.
+		 * Creates the colour attachments.
 		 */
-		private List<View> views(LogicalDevice device, Handle swapchain) {
+		private List<View> attachments(LogicalDevice device, Handle swapchain) {
 			// Retrieve swapchain images
 			final Library library = device.library();
 			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
