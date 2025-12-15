@@ -49,13 +49,12 @@ interface WindowLibrary {
 	 */
 	boolean glfwWindowShouldClose(Window window);
 
-//	/**
-//	 * Sets whether the given window can be closed by the user.
-//	 * @param window		Window
-//	 * @param close			Whether the window can be closed
-//	 * @return Result
-//	 */
-//	int glfwSetWindowShouldClose(Window window, boolean close);
+	/**
+	 * Sets whether the given window can be closed by the user.
+	 * @param window		Window
+	 * @param close			Whether the window can be closed
+	 */
+	void glfwSetWindowShouldClose(Window window, boolean close);
 
 	/**
 	 * Sets the title of the given window.
@@ -96,48 +95,58 @@ interface WindowLibrary {
 //	 * @return Monitor or {@code null} if not full screen
 //	 */
 //	Monitor glfwGetWindowMonitor(Window window);
+// TODO
 
 	/**
 	 * Listener for window events represented by a boolean state, e.g. window focus.
 	 */
 	@FunctionalInterface
-	interface WindowStateListener { // extends Callback
+	interface WindowStateListener extends Callback {
+		/**
+		 * Listener event type.
+		 */
+		enum Type {
+			ENTER,
+			FOCUS,
+			ICONIFIED,
+			CLOSED
+		}
+
 		/**
 		 * Notifies that a window state change.
 		 * @param window		Window
 		 * @param state			State
 		 */
-		void state(MemorySegment window, int state);
+		void state(MemorySegment window, boolean state);
 	}
 
-//	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
-//
-//	/**
-//	 * Sets the focus listener of a window.
-//	 * @param window		Window
-//	 * @param listener		Focus listener
-//	 */
-//	void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
-//
-//	/**
-//	 * Registers a cursor enter/leave listener.
-//	 * @param window		Window
-//	 * @param listener		Cursor listener
-//	 */
-//	void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
-//
-//	/**
-//	 * Sets the iconify listener of a window.
-//	 * @param window		Window
-//	 * @param listener		Iconify listener
-//	 */
-//	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
+	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
 
-// TODO
+	/**
+	 * Sets the focus listener of a window.
+	 * @param window		Window
+	 * @param listener		Focus listener
+	 */
+	void glfwSetWindowFocusCallback(Window window, WindowStateListener listener);
+
+	/**
+	 * Registers a cursor enter/leave listener.
+	 * @param window		Window
+	 * @param listener		Cursor listener
+	 */
+	void glfwSetCursorEnterCallback(Window window, WindowStateListener listener);
+
+	/**
+	 * Sets the iconify listener of a window.
+	 * @param window		Window
+	 * @param listener		Iconify listener
+	 */
+	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
+
 	/**
 	 * Listener for window resize events.
 	 */
-	interface WindowResizeListener { // extends Callback
+	interface WindowResizeListener extends Callback {
 		/**
 		 * Notifies a window resize event.
 		 * @param window		Window
@@ -147,12 +156,12 @@ interface WindowLibrary {
 		void resize(MemorySegment window, int width, int height);
 	}
 
-//	/**
-//	 * Sets the resize listener of a window.
-//	 * @param window		Window
-//	 * @param listener		Resize listener
-//	 */
-//	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
+	/**
+	 * Sets the resize listener of a window.
+	 * @param window		Window
+	 * @param listener		Resize listener
+	 */
+	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
 
 	/**
 	 * Destroys the given window.

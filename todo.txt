@@ -11,11 +11,12 @@ also injects superfluous padding
 
 **********
 
-descriptor set bind command ~ in-flight frame index NOT the framebuffer index (though probably the same)
 what is an descriptor set array used for?
 https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html
 
 mesh loader: 1. still needs custom indexed implementation, 2. nasty ByteBuffer fiddle when writing
+
+blog - add section for minimised/closed windows ~ callbacks, recreation
 
 helper for 'wrappers' that are not native objects (i.e. not destroyed) but compose and optionally destroy their dependencies?
 e.g. VertexBuffer, View

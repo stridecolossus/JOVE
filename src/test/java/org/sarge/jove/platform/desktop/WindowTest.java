@@ -12,6 +12,7 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
 import org.sarge.jove.platform.desktop.Window.Hint;
+import org.sarge.jove.platform.desktop.WindowLibrary.WindowStateListener;
 
 class WindowTest {
 	static class MockWindowLibrary implements WindowLibrary {
@@ -19,6 +20,7 @@ class WindowTest {
 		private Dimensions size = new Dimensions(100, 200);
 		private boolean destroyed;
 		private String title;
+		private WindowStateListener listener;
 
 		@Override
 		public void glfwDefaultWindowHints() {
@@ -83,6 +85,34 @@ class WindowTest {
 			assertEquals(false, destroyed);
 			destroyed = true;
 		}
+
+		@Override
+		public void glfwSetWindowShouldClose(Window window, boolean close) {
+		}
+
+		@Override
+		public void glfwSetWindowCloseCallback(Window window, WindowStateListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public void glfwSetWindowFocusCallback(Window window, WindowStateListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public void glfwSetCursorEnterCallback(Window window, WindowStateListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener) {
+			this.listener = listener;
+		}
+
+		@Override
+		public void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener) {
+		}
 	}
 
 	private Window window;
@@ -137,6 +167,37 @@ class WindowTest {
 			window = new Window(new Handle(1), library);
     		assertThrows(RuntimeException.class, () -> window.surface(new Handle(2)));
     	}
+	}
+
+	@Nested
+	class Listeners {
+		private static class MockWindowStateListener implements WindowStateListener {
+			@Override
+			public void state(MemorySegment window, boolean state) {
+				// Empty
+			}
+		}
+
+		private MockWindowStateListener listener;
+
+		@BeforeEach
+		void before() {
+			listener = new MockWindowStateListener();
+		}
+
+		@ParameterizedTest
+		@EnumSource
+		void add(WindowStateListener.Type type) {
+			window.listener(type, listener);
+			assertEquals(listener, library.listener);
+		}
+
+		@Test
+		void remove() {
+			window.listener(WindowStateListener.Type.ENTER, listener);
+			window.listener(WindowStateListener.Type.ENTER, null);
+			assertEquals(null, library.listener);
+		}
 	}
 
 	@Test

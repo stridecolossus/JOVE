@@ -23,6 +23,7 @@
  * }
  *
  * https://docs.oracle.com/en/java/javase/18/code-snippet/index.html
+ * https://www.baeldung.com/java-doc-code-snippets
  *
  */
 package org.sarge.jove.platform.vulkan.memory;

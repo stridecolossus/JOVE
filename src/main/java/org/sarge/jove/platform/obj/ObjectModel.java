@@ -14,7 +14,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
 class ObjectModel {
 	private final VertexComponentList<Point> positions = new VertexComponentList<>();
 	private final VertexComponentList<Normal> normals = new VertexComponentList<>();
-	private final VertexComponentList<Coordinate2D> coords = new VertexComponentList<>();
+	private final VertexComponentList<Coordinate2D> coordinates = new VertexComponentList<>();
 	private final List<IndexedMesh> meshes = new ArrayList<>();
 	private IndexedMesh current;
 
@@ -36,7 +36,7 @@ class ObjectModel {
 	 * @return Texture coordinates
 	 */
 	public VertexComponentList<Coordinate2D> coordinates() {
-		return coords;
+		return coordinates;
 	}
 
 	/**

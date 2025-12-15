@@ -4,10 +4,12 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
+import org.sarge.jove.platform.desktop.WindowLibrary.*;
 
 /**
  * Native window implemented using GLFW.
@@ -56,21 +58,12 @@ public class Window extends TransientNativeObject {
 		}
 	}
 
-	// TODO - was lazy supplier!!!
 	private final WindowLibrary library;
-//	private final Map<Object, Callback> listeners = new WeakHashMap<>();
-
-//	public enum Type {
-//		ENTER,
-//		FOCUS,
-//		ICONIFIED,
-//		CLOSED
-//	}
 
 	/**
 	 * Constructor.
 	 * @param window	Window handle
-	 * @param desktop	Desktop service
+	 * @param library	Window library
 	 */
 	Window(Handle window, WindowLibrary library) {
 		super(window);
@@ -162,89 +155,34 @@ public class Window extends TransientNativeObject {
 //		// rate can be GLFW_DONTCARE
 //		throw new UnsupportedOperationException();
 //	}
-//
-//	/**
-//	 * Sets the listener for window state changes.
-//	 * @param listener Listener for window state changes or {@code null} to remove the listener
-//	 */
-//	@MainThread
-//	public void listener(WindowListener.Type type, WindowListener listener) {
-//		// Determine listener registration method
-//		final DesktopLibrary lib = desktop.library();
-//		final BiConsumer<Window, WindowStateListener> method = switch(type) {
-//			case ENTER -> lib::glfwSetCursorEnterCallback;
-//			case FOCUS -> lib::glfwSetWindowFocusCallback;
-//			case ICONIFIED -> lib::glfwSetWindowIconifyCallback;
-//			case CLOSED -> lib::glfwSetWindowCloseCallback;
-//		};
-//
-//		// Register listener
-//		final String key = "state";
-//		if(listener == null) {
-//			method.accept(this, null);
-//			remove(key);
-//		}
-//		else {
-//			final WindowStateListener adapter = (ptr, state) -> listener.state(type, NativeBooleanConverter.toBoolean(state));
-//			method.accept(this, adapter);
-////			register(type, adapter);
-//		}
-//	}
-//
-//	/**
-//	 * Sets the listener for window resize events.
-//	 * @param listener Resize listener or {@code null} to remove the listener
-//	 */
-//	@MainThread
-//	public void resize(IntBinaryOperator listener) {
-//		final String key = "resize";
-//		final DesktopLibrary lib = desktop.library();
-//		if(listener == null) {
-//			lib.glfwSetWindowSizeCallback(this, null);
-//			remove(key);
-//		}
-//		else {
-//			final WindowResizeListener adapter = (ptr, w, h) -> listener.applyAsInt(w, h);
-//			lib.glfwSetWindowSizeCallback(this, adapter);
-////			register(key, adapter);
-//		}
-//	}
 
-	///////////////////
+	/**
+	 * Sets the listener for window state changes.
+	 * @param listener Listener for window state changes or {@code null} to remove the listener
+	 */
+	@MainThread
+	public void listener(WindowStateListener.Type type, WindowStateListener listener) {
+		final BiConsumer<Window, WindowStateListener> method = switch(type) {
+			case ENTER			-> library::glfwSetCursorEnterCallback;
+			case FOCUS			-> library::glfwSetWindowFocusCallback;
+			case ICONIFIED		-> library::glfwSetWindowIconifyCallback;
+			case CLOSED			-> library::glfwSetWindowCloseCallback;
+		};
+		method.accept(this, listener);
+	}
 
-//	/**
-//	 * @return Listeners attached to this window
-//	 */
-//	protected Map<Object, Callback> listeners() {
-//		return Collections.unmodifiableMap(listeners);
-//	}
-//
-//	/**
-//	 * Registers a device listener attached to this window.
-//	 * <p>
-//	 * Callbacks are <i>weakly</i> referenced by the given key preventing listeners being garbage collected and thus unregistered by GLFW.
-//	 * <p>
-//	 * @param key			Key
-//	 * @param listener 		Listener
-//	 */
-//	protected void register(Object key, Callback listener) {
-//		requireNonNull(key);
-//		requireNonNull(listener);
-//		listeners.put(key, listener);
-//	}
-//
-//	/**
-//	 * Removes a registry entry.
-//	 * @param key Key
-//	 */
-//	protected void remove(Object key) {
-//		listeners.remove(key);
-//	}
+	/**
+	 * Sets the listener for window resize events.
+	 * @param listener Resize listener or {@code null} to remove the listener
+	 */
+	@MainThread
+	public void resize(WindowResizeListener listener) {
+		library.glfwSetWindowSizeCallback(this, listener);
+	}
 
 	@Override
 	@MainThread
 	protected void release() {
-		//listeners.clear();
 		library.glfwDestroyWindow(this);
 	}
 
