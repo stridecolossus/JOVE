@@ -58,6 +58,14 @@ public class Window extends TransientNativeObject {
 		}
 	}
 
+	/**
+	 * Convenience aggregation of the mouse devices.
+	 */
+	public record Mouse(MouseButtons buttons, MousePointer pointer, MouseWheel wheel) {
+	}
+
+	private final Keyboard keyboard = new Keyboard(this);
+	private final Mouse mouse = new Mouse(new MouseButtons(this), new MousePointer(this), new MouseWheel(this));
 	private final WindowLibrary library;
 
 	/**
@@ -75,6 +83,20 @@ public class Window extends TransientNativeObject {
 	 */
 	WindowLibrary library() {
 		return library;
+	}
+
+	/**
+	 * @return Keyboard device for this window
+	 */
+	public Keyboard keyboard() {
+		return keyboard;
+	}
+
+	/**
+	 * @return Mouse devices for this window
+	 */
+	public Mouse mouse() {
+		return mouse;
 	}
 
 	/**

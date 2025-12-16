@@ -11,16 +11,21 @@ import org.sarge.jove.foreign.Callback;
  */
 public interface Device<E extends Event> {
 	/**
-	 * Binds an event listener to this device.
-	 * @param listener Event listener
-	 * @return Underlying callback
-	 * @throws IllegalStateException if this device is already bound to a listener
+	 * @return Whether this device is currently bound to an event handler
 	 */
-	Callback bind(Consumer<E> listener);
+	boolean isBound();
 
 	/**
-	 * Removes the attached event listener.
-	 * @throws IllegalArgumentException if a listener is not bound to this device
+	 * Binds an event handler to this device.
+	 * @param handler Event handler
+	 * @return Underlying callback
+	 * @throws IllegalStateException if this device is already bound
+	 */
+	Callback bind(Consumer<E> handler);
+
+	/**
+	 * Removes the attached event handler.
+	 * @throws IllegalArgumentException if this device is not bound
 	 */
 	void remove();
 }

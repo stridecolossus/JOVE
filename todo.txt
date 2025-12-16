@@ -11,6 +11,10 @@ also injects superfluous padding
 
 **********
 
+VulkanObject/Transient(?)
+- equals comparing handle? device?
+- no need for custom, e.g. VulkanSemaphore
+
 what is an descriptor set array used for?
 https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html
 

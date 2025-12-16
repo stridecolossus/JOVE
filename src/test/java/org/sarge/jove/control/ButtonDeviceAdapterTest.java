@@ -2,7 +2,7 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -17,6 +17,11 @@ class ButtonDeviceAdapterTest {
 
 	private static class MockButtonDevice implements Device<ButtonEvent> {
 		private Callback callback;
+
+		@Override
+		public boolean isBound() {
+			return Objects.nonNull(callback);
+		}
 
 		@Override
 		public Callback bind(Consumer<ButtonEvent> listener) {

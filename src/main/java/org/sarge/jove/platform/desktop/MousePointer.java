@@ -15,7 +15,7 @@ public class MousePointer extends AbstractWindowDevice<ScreenCoordinate, MouseLi
 	 * Constructor.
 	 * @param window Parent window
 	 */
-	public MousePointer(Window window) {
+	MousePointer(Window window) {
 		super(window);
 	}
 

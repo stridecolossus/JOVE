@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.sarge.jove.common.*;
+import org.sarge.jove.control.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
 import org.sarge.jove.platform.desktop.Window.Hint;
@@ -120,6 +121,7 @@ class WindowTest {
 
 	@BeforeEach
 	void before() {
+		KeyTable.Instance.INSTANCE.table(new KeyTable(Map.of(42, "key")));
 		library = new MockWindowLibrary();
 		window = new Window(new Handle(1), library);
 	}
@@ -128,6 +130,18 @@ class WindowTest {
 	void constructor() {
 		assertEquals(false, library.destroyed);
 		assertEquals(false, window.isDestroyed());
+	}
+
+	@Test
+	void keyboard() {
+		assertEquals(Map.of(42, new Button(42, "key")), window.keyboard().keys());
+	}
+
+	@Test
+	void mouse() {
+		assertNotNull(window.mouse().buttons());
+		assertNotNull(window.mouse().pointer());
+		assertNotNull(window.mouse().wheel());
 	}
 
 	@ParameterizedTest

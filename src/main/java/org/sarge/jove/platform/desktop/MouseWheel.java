@@ -15,7 +15,7 @@ public class MouseWheel extends AbstractWindowDevice<AxisEvent, MouseListener> {
 	 * Constructor.
 	 * @param window Parent window
 	 */
-	public MouseWheel(Window window) {
+	MouseWheel(Window window) {
 		super(window);
 	}
 

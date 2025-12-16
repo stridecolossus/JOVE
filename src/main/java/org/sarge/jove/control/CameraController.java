@@ -3,128 +3,91 @@ package org.sarge.jove.control;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.MathsUtility.*;
 
+import java.util.function.Consumer;
+
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtility;
+import org.sarge.jove.geometry.SphereNormalFactory.DefaultSphereNormalFactory;
+import org.sarge.jove.util.Interpolator;
 
 /**
- * The <i>camera controller</i> rotates the scene about the cameras position, i.e. a free-look controller.
+ * A <i>camera controller</i> rotates the scene about the cameras position, i.e. a free-look controller.
  * @author Sarge
  */
 public class CameraController {
-	protected final Camera cam;
-	private final Dimensions dim;
-	private final NormalFactory factory;
-//	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
-//	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
-	// TODO - make interpolator ranges mutable?
+	private final Camera camera;
+	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
+	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
+	private float dx, dy;
+	private SphereNormalFactory sphere = new DefaultSphereNormalFactory().rotate();
+
+	// TODO
+	// - constraints on interpolation, i.e. sort of FOV, e.g. H = left -> right, V = +/- 45 degrees
+	// - either FOV | constrained dimensions, e.g. 640,480 -> 320,240 | fiddle angles
+	// - replace dx/dy with interpolator pair
+	// - use compound interpolators?
+	// - gimbal locking
 
 	/**
 	 * Constructor.
-	 * @param camera 	Camera
-	 * @param dim 		View dimensions
-	 * @param factory	Sphere normals factory
+	 * @param camera 		Camera
+	 * @param dimensions	View dimensions
 	 */
-	public CameraController(Camera camera, Dimensions dim, NormalFactory factory) {
-		this.cam = requireNonNull(camera);
-		this.dim = requireNonNull(dim);
-		this.factory = factory.rotate();
+	public CameraController(Camera camera, Dimensions dimensions) {
+		this.camera = requireNonNull(camera);
+		dimensions(dimensions);
 	}
 
-	public CameraController(Camera camera, Dimensions dim) {
-		this(camera, dim, new NormalFactory());
+	/**
+	 * @return Camera
+	 */
+	protected Camera camera() {
+		return camera;
+	}
+
+	/**
+	 * Sets the normal factory for the unit-sphere.
+	 * @param sphere Sphere normal factory
+	 */
+	public void sphere(SphereNormalFactory sphere) {
+		this.sphere = requireNonNull(sphere);
+	}
+
+	/**
+	 * Sets the view dimensions.
+	 * @param dimensions View dimensions
+	 */
+	public void dimensions(Dimensions dimensions) {
+		this.dx = 1f / dimensions.width();
+		this.dy = 1f / dimensions.height();
+	}
+
+	/**
+	 * Helper.
+	 * Creates an event handler bind-point for this controller.
+	 * @return Event handler
+	 * @see #update(float, float)
+	 */
+	public Consumer<ScreenCoordinate> position() {
+		return coordinate -> update(coordinate.x(), coordinate.y());
 	}
 
 	/**
 	 * Updates the camera for the given view coordinates.
 	 * @see #update(Normal)
 	 */
-	public void update(float x, float y) {
-// TODO - prepare inverse and multiply, move to helper?
-//		final float yaw = horizontal.apply(x / dim.width());
-//		final float pitch = vertical.apply(y / dim.height());
-		final float yaw = lerp(x, 0, TWO_PI);
-		final float pitch = lerp(y, -HALF_PI, +HALF_PI);
-		final Vector vec = factory.vector(yaw, pitch);
-		update(new Normal(vec));
+	protected final void update(float x, float y) {
+		final float yaw = horizontal.interpolate(x * dx);
+		final float pitch = vertical.interpolate(y * dy);
+		final Normal normal = sphere.normal(yaw, pitch);
+		update(normal);
 	}
-
-	// TODO
-	static float lerp(float t, float start, float end) {
-		// TODO - Math.fma(end - start, t, start);
-		return start + (end - start) * t;
-	}
-
-//	/**
-//	 * Updates the camera for the given position.
-//	 * @param pos Position
-//	 */
-//	public void update(Position pos) {
-//		update(pos.x(), pos.y());
-//	}
-//	// TODO - remove to bindings
 
 	/**
 	 * Updates the camera.
-	 * @param dir View direction
+	 * @param direction View direction
 	 */
-	protected void update(Normal dir) {
-		cam.direction(dir);
-	}
-
-	// TODO... [move]
-
-	/**
-	 * The <i>sphere normal factory</i> generates surface normals on the unit sphere.
-	 */
-	public static class NormalFactory {
-		private final Cosine.Provider provider;
-
-		/**
-		 * Default constructor.
-		 */
-		public NormalFactory() {
-			this(Cosine.Provider.DEFAULT);
-		}
-
-		/**
-		 * Constructor.
-		 * @param provider Cosine function
-		 */
-		public NormalFactory(Cosine.Provider provider) {
-			this.provider = requireNonNull(provider);
-		}
-
-		/**
-		 * Calculates the vector to the point on the unit-sphere for the given rotation angles (radians, counter-clockwise).
-		 * <p>
-		 * Note that by default a {@link #yaw} of zero is in the direction of the X axis.
-		 * The sphere can be 'rotated' to point in the -Z direction by the {@link #rotate()} adapter method.
-		 * <p>
-		 * @param yaw		Horizontal angle in the range zero to {@link MathsUtility#TWO_PI}
-		 * @param pitch		Vertical angle in the range +/- {@link MathsUtility#HALF_PI}
-		 * @return Unit-sphere surface vector
-		 */
-		public Normal vector(float yaw, float pitch) {
-			final Cosine theta = provider.cosine(yaw);
-			final Cosine phi = provider.cosine(pitch);
-			final float x = theta.cos() * phi.cos();
-			final float y = phi.sin();
-			final float z = theta.sin() * phi.cos();
-			return new Normal(new Vector(x, y, z));
-		}
-
-		/**
-		 * Adapts this factory by rotating the <i>yaw</i> angle to point in the -Z direction.
-		 * @return Rotated vector factory
-		 */
-		public NormalFactory rotate() {
-			return new NormalFactory(provider) {
-				@Override
-				public Normal vector(float theta, float phi) {
-					return super.vector(theta - MathsUtility.HALF_PI, phi);
-				}
-			};
-		}
+	protected void update(Normal direction) {
+		camera.direction(direction);
 	}
 }

@@ -76,7 +76,7 @@ public class NativeLibraryFactory {
 		// Enumerate API methods
 		final Map<Method, NativeMethod> methods = api
     			.stream()
-    			.peek(NativeLibraryFactory::validate)
+    			.peek(NativeLibraryFactory::validate)		// TODO - bad
     			.map(Class::getMethods)
     			.flatMap(Arrays::stream)
     			.filter(NativeLibraryFactory::isNativeMethod)

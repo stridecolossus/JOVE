@@ -33,6 +33,6 @@ class MouseWheelTest {
 	void remove() {
 		wheel.bind(listener);
 		wheel.remove();
-		assertEquals(null, wheel.listener());
+		assertEquals(false, wheel.isBound());
 	}
 }

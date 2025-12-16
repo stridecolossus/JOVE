@@ -4,30 +4,33 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
-import org.sarge.jove.geometry.*;
+import org.sarge.jove.geometry.Axis;
 
-public class CameraControllerTest {
-	private Camera cam;
+class CameraControllerTest {
+	private Camera camera;
 	private CameraController controller;
 
 	@BeforeEach
 	void before() {
-		cam = new Camera();
-		controller = new CameraController(cam, new Dimensions(2, 2));
-	}
-
-	@Disabled // TODO
-	@Test
-	void update() {
-		controller.update(1, 1);
-		assertEquals(Axis.Z, cam.direction());
-		assertEquals(Point.ORIGIN, cam.position());
+		camera = new Camera();
+		controller = new CameraController(camera, new Dimensions(640, 480));
 	}
 
 	@Test
-	void position() {
-//		controller.update(new Position(1, 1));
-		assertEquals(Axis.Z, cam.direction());
-		assertEquals(Point.ORIGIN, cam.position());
+	void ahead() {
+		controller.update(320, 240);
+		assertEquals(Axis.Z, camera.direction());
+	}
+
+	@Test
+	void behind() {
+		controller.update(0, 240);
+		assertEquals(Axis.Z.invert(), camera.direction());
+	}
+
+	@Test
+	void handler() {
+		controller.position().accept(new ScreenCoordinate(320, 240));
+		assertEquals(Axis.Z, camera.direction());
 	}
 }

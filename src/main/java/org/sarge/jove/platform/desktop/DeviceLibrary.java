@@ -8,7 +8,6 @@ import org.sarge.jove.foreign.Callback;
  * GLFW device API.
  * @author Sarge
  */
-public
 interface DeviceLibrary {
 	/**
 	 * Processes pending events.

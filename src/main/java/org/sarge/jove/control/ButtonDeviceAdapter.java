@@ -34,6 +34,11 @@ public class ButtonDeviceAdapter {
 	public Device<ButtonEvent> button(int index) {
 		return new Device<>() {
 			@Override
+			public boolean isBound() {
+				return Objects.nonNull(callback);
+			}
+
+			@Override
 			public Callback bind(Consumer<ButtonEvent> listener) {
 				// Validate
 				if(handlers.containsKey(index)) {

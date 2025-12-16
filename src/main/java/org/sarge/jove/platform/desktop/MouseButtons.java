@@ -23,7 +23,7 @@ public class MouseButtons extends AbstractWindowDevice<ButtonEvent, MouseButtonL
 	 * Constructor.
 	 * @param window Parent window
 	 */
-	public MouseButtons(Window window) {
+	MouseButtons(Window window) {
 		super(window);
 	}
 
@@ -33,6 +33,7 @@ public class MouseButtons extends AbstractWindowDevice<ButtonEvent, MouseButtonL
 	public static int number() {
 		return MouseInfo.getNumberOfButtons();
 	}
+	// TODO - how to do this without AWT? (does not look like GLFW provides this)
 
 	@Override
 	protected MouseButtonListener callback(Window window, Consumer<ButtonEvent> listener) {

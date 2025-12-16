@@ -44,13 +44,13 @@ class AbstractWindowDeviceTest {
 
 	@Test
 	void none() {
-		assertEquals(null, device.listener());
+		assertEquals(false, device.isBound());
 	}
 
 	@Test
 	void bind() {
 		final var callback = device.bind(listener::set);
-		assertNotNull(device.listener());
+		assertEquals(true, device.isBound());
 		callback.event(null, 0, 1);
 		assertEquals(new AxisEvent(1), listener.get());
 	}
@@ -65,7 +65,7 @@ class AbstractWindowDeviceTest {
 	void remove() {
 		device.bind(listener::set);
 		device.remove();
-		assertEquals(null, device.listener());
+		assertEquals(false, device.isBound());
 	}
 
 	@Test

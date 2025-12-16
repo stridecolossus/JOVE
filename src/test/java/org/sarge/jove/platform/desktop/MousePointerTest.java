@@ -33,6 +33,6 @@ class MousePointerTest {
 	void remove() {
 		pointer.bind(listener);
 		pointer.remove();
-		assertEquals(null, pointer.listener());
+		assertEquals(false, pointer.isBound());
 	}
 }

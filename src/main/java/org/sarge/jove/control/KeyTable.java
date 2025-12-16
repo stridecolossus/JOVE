@@ -1,5 +1,6 @@
-package org.sarge.jove.platform.desktop;
+package org.sarge.jove.control;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.*;
 
 import java.io.*;
@@ -82,11 +83,32 @@ public class KeyTable {
 	 */
 	public static KeyTable defaultKeyTable() {
 		final var loader = new Loader();
-		try(final var in = KeyTable.class.getResourceAsStream("key.table.txt")) {
+		try(final var in = KeyTable.class.getClassLoader().getResourceAsStream("key.table.txt")) {
 			return loader.load(in);
 		}
 		catch(IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * TODO - JDK26 lazy construction
+	 * TODO - how to specify use specific rather than default? system property?
+	 */
+	public enum Instance {
+		INSTANCE;
+
+		private KeyTable table;
+
+		public synchronized KeyTable table() {
+			if(table == null) {
+				table = defaultKeyTable();
+			}
+			return table;
+		}
+
+		public void table(KeyTable table) {
+			this.table = requireNonNull(table);
 		}
 	}
 

@@ -42,6 +42,6 @@ class MouseButtonsTest {
 	void remove() {
 		buttons.bind(listener);
 		buttons.remove();
-		assertEquals(null, buttons.listener());
+		assertEquals(false, buttons.isBound());
 	}
 }

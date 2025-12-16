@@ -58,8 +58,7 @@ public class VulkanIntegrationDemo {
 		//////////////////
 
 		final var running = new AtomicBoolean(true);
-		final var keyboard = new KeyboardDevice(window);
-		keyboard.bind(_ -> running.set(false));
+		window.keyboard().bind(_ -> running.set(false));
 
 		//////////////////
 

@@ -14,6 +14,11 @@ class ActionBindingsTest {
 		private Consumer<AxisEvent> listener;
 
 		@Override
+		public boolean isBound() {
+			return listener != null;
+		}
+
+		@Override
 		public Callback bind(Consumer<AxisEvent> listener) {
 			assertEquals(null, this.listener);
 			this.listener = listener;
