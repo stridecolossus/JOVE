@@ -104,7 +104,7 @@ public class RenderPass extends VulkanObject {
 					.stream()
 					.map(Subpass::references)
 					.flatMap(List::stream)
-					.map(AttachmentReference::attachment)
+					.map(Attachment.Reference::attachment)
 					.distinct()
 					.toList();
 

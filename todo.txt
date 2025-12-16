@@ -11,10 +11,6 @@ also injects superfluous padding
 
 **********
 
-VulkanObject/Transient(?)
-- equals comparing handle? device?
-- no need for custom, e.g. VulkanSemaphore
-
 what is an descriptor set array used for?
 https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html
 
@@ -40,8 +36,6 @@ call back is OK but structure cannot be unmarshalled
 README.md
 - summary
 - link to blog
-
-devices are public - could lead to multiple binds for same callback-listener! => enforce max one per window?
 
 MemorySegment -> supported transformer type?
 - IdentityTransformer
@@ -78,7 +72,6 @@ text
 
 features todo
 - enhance Work to chain sequences + sync, e.g. for loading a texture, Q - use semaphores, or fence for each step, both?
-- custom application properties? using Jackson, or SnakeYAML, JSON, etc
 - degenerate triangles for strip?
 - normals via geometry shader
 - mesh shader
@@ -88,7 +81,6 @@ features todo
 
 improvements
 - pipeline cache could use Java prefs? and/or user home folder?
-- interpolator revamp
 - joystick from desktop service
 
 particles

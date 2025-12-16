@@ -1,13 +1,13 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.util.Validation.requireNotEmpty;
+import static org.sarge.jove.util.Validation.*;
 
 import java.util.Objects;
 import java.util.function.IntFunction;
 
 import org.sarge.jove.common.Colour;
-import org.sarge.jove.platform.vulkan.VkImageLayout;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.util.Percentile;
@@ -129,15 +129,44 @@ public class Attachment {
 	}
 
 	/**
+	 * An <i>attachment reference</i> configures this attachment for use in a subpass.
+	 */
+	public record Reference(Attachment attachment, VkImageLayout layout) {
+		/**
+		 * Constructor.
+		 * @param attachment		Attachment
+		 * @param layout			Image layout used during this subpass
+		 */
+		public Reference {
+			requireNonNull(attachment);
+			requireNonNull(layout);
+		}
+		// TODO - validate layout valid for attachment?
+
+		/**
+		 * Builds the descriptor for this reference.
+		 * @param index Attachment index
+		 * @return Attachment reference descriptor
+		 */
+		VkAttachmentReference descriptor(int index) {
+			final var descriptor = new VkAttachmentReference();
+			descriptor.layout = layout;
+			descriptor.attachment = requireZeroOrMore(index);
+			return descriptor;
+		}
+	}
+
+	/**
+	 * Helper.
 	 * Creates a reference for this attachment with a default image layout.
 	 * @return Attachment reference
 	 */
-	public AttachmentReference reference() {
+	public Reference reference() {
 		final VkImageLayout layout = switch(type) {
 			case COLOUR -> VkImageLayout.COLOR_ATTACHMENT_OPTIMAL;
 			case DEPTH	-> VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		};
-		return new AttachmentReference(this, layout);
+		return new Reference(this, layout);
 	}
 
 	@Override

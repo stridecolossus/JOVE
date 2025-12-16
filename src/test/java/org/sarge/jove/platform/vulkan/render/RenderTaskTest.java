@@ -16,10 +16,11 @@ import org.sarge.jove.platform.vulkan.present.*;
 class RenderTaskTest {
 	private static class MockRenderTaskLibrary extends MockSwapchainLibrary {
 		private VkResult result = VkResult.VK_SUCCESS;
+		private long handle = 4;
 
 		@Override
 		public VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore) {
-			pSemaphore.set(MemorySegment.ofAddress(4));
+			pSemaphore.set(MemorySegment.ofAddress(handle++));
 			return null;
 		}
 

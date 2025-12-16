@@ -5,14 +5,14 @@ import static java.util.stream.Collectors.groupingBy;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
+import org.sarge.jove.platform.vulkan.render.Attachment.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
  * A <i>subpass</i> configures a stage of a {@link RenderPass}.
  * @author Sarge
  */
-public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<AttachmentReference> references) {
+public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<Reference> references) {
 	/**
 	 * Constructor.
 	 * @param flags			Subpass flags
@@ -32,7 +32,7 @@ public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<AttachmentRefer
 	VkSubpassDescription description(List<Attachment> aggregated) {
 		// Determines the index of an attachment reference
 		final var indexer = new Object() {
-			VkAttachmentReference reference(AttachmentReference reference) {
+			VkAttachmentReference reference(Reference reference) {
 				final int index = aggregated.indexOf(reference.attachment());
 				return reference.descriptor(index);
 			}
@@ -44,12 +44,12 @@ public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<AttachmentRefer
 		description.pipelineBindPoint = VkPipelineBindPoint.GRAPHICS;
 
 		// Order attachments by type
-		final Map<AttachmentType, List<AttachmentReference>> attachments = references
+		final Map<AttachmentType, List<Reference>> attachments = references
 				.stream()
 				.collect(groupingBy(ref -> ref.attachment().type()));
 
 		// Add colour attachments
-		final List<AttachmentReference> colour = attachments.getOrDefault(AttachmentType.COLOUR, List.of());
+		final List<Reference> colour = attachments.getOrDefault(AttachmentType.COLOUR, List.of());
 		description.colorAttachmentCount = colour.size();
 		description.pColorAttachments = colour
 				.stream()
@@ -57,9 +57,9 @@ public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<AttachmentRefer
 				.toArray(VkAttachmentReference[]::new);
 
 		// Add optional depth-stencil attachment
-		final List<AttachmentReference> depth = attachments.get(AttachmentType.DEPTH);
+		final List<Reference> depth = attachments.get(AttachmentType.DEPTH);
 		if(depth != null) {
-			description.pDepthStencilAttachment = indexer.reference(depth.getFirst()); // TODO - illogical to have > 1?
+			description.pDepthStencilAttachment = indexer.reference(depth.getFirst());
 		}
 
 		return description;

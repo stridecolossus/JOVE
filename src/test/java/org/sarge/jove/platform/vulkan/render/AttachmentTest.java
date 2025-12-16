@@ -8,7 +8,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
+import org.sarge.jove.platform.vulkan.render.Attachment.*;
 import org.sarge.jove.util.Percentile;
 
 class AttachmentTest {
@@ -46,7 +46,7 @@ class AttachmentTest {
 
 		@Test
 		void reference() {
-			assertEquals(new AttachmentReference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL), colour.reference());
+			assertEquals(new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL), colour.reference());
 		}
 
 		@Test
@@ -87,7 +87,17 @@ class AttachmentTest {
 
 		@Test
 		void reference() {
-			assertEquals(new AttachmentReference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL), depth.reference());
+			assertEquals(new Reference(depth, VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL), depth.reference());
 		}
+	}
+
+	@Test
+	void reference() {
+		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
+		final var colour = new Attachment(AttachmentType.COLOUR, description, _ -> null);
+		final var reference = new Reference(colour, VkImageLayout.COLOR_ATTACHMENT_OPTIMAL);
+		final VkAttachmentReference descriptor = reference.descriptor(3);
+		assertEquals(3, descriptor.attachment);
+		assertEquals(VkImageLayout.COLOR_ATTACHMENT_OPTIMAL, descriptor.layout);
 	}
 }
