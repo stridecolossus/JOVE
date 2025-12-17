@@ -14,8 +14,7 @@ import org.sarge.jove.util.MathsUtility;
  * where {@code n = (a, b, c)} is the plane normal and {@code d} is the distance of the plane from the origin.
  * <p>
  * Note that the distance increases in the <i>opposite</i> direction to the normal vector.
- * <br>
- * For example {@code Plane(Axis.Y, 1)} defines X-Z plane at Y = <b>minus</b> one.
+ * For example {@code Plane(Axis.Y, 1)} defines a plane in X-Z at Y = <b>minus</b> one.
  * <p>
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge

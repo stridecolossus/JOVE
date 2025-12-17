@@ -251,9 +251,9 @@ public class LogicalDevice extends TransientNativeObject {
 
 		/**
 		 * Adds a required work queue for this device.
+		 * Ignores a required queue with a family that has already been added.
 		 * @param queue Required queue
 		 * @throws IllegalArgumentException if the queue family is not a member of the parent physical device
-		 * @throws IllegalArgumentException if a queue with the same family has already been configured
 		 */
 		public Builder queue(RequiredQueue queue) {
 			// Check queue family is a member of the physical device

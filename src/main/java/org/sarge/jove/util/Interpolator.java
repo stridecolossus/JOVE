@@ -1,7 +1,13 @@
 package org.sarge.jove.util;
 
+import static org.sarge.jove.util.MathsUtility.HALF;
+
 /**
  * An <i>interpolator</i> is a floating-point function applied to a percentile value, used for animation, easing, etc.
+ * TODO
+ * - ease in ~ f(x)
+ * - ease out ~ inverse
+ * - in-out
  * @author Sarge
  */
 @FunctionalInterface
@@ -35,8 +41,10 @@ public interface Interpolator {
 	 * @return Inverse of this interpolator
 	 */
 	default Interpolator invert() {
-		return value -> 1 - interpolate(value);
+		return value -> 1 - interpolate(1 - value);
 	}
+	// TODO - was just -> 1 - value
+	// TODO ? EaseOut(t) = Flip(Square(Flip(t)))
 
 	/**
 	 * Combines this and the given interpolator.
@@ -84,22 +92,23 @@ public interface Interpolator {
 	static Interpolator mix(Interpolator start, Interpolator end, Percentile weight) {
 		return value -> (1 - weight.value()) * start.interpolate(value) + weight.value() * end.interpolate(value);
 	}
+	// TODO - ? equivalent to: EaseInOut(t) = Lerp(EaseIn(t), EaseOut(t), t)
+
+	static Interpolator mirror(Interpolator delegate) {
+		return value -> {
+			if(value < HALF) {
+				return delegate.interpolate(2 * value) * HALF;
+			}
+			else {
+				return (2 - delegate.interpolate(2 * (1 - value))) * HALF;
+			}
+		};
+	}
+	// TODO - ? equivalent to: Spike/Mirror(t) = if(t < half) EaseIn(t / half) else EaseIn(Flip(t) / half);
 }
 
-//
-//	// https://github.com/jMonkeyEngine/jmonkeyengine/blob/master/jme3-core/src/main/java/com/jme3/math/Easing.java
-//
-//	/**
-//	 * Mirrors this interpolator.
-//	 * @return Mirror interpolator
-//	 */
-//	default Interpolator mirror() {
-//		return t -> {
-//			if(t <= MathsUtility.HALF) {
-//				return apply(t * 2);
-//			}
-//			else {
-//				return apply((1 - t) * 2);
-//			}
-//		};
-//	}
+// https://nicmulvaney.com/easing/?ref=blog.febucci.com#easeInQuad
+// https://gist.github.com/Fonserbc/3d31a25e87fdaa541ddf?ref=blog.febucci.com
+// https://easings.net/
+// https://blog.febucci.com/2018/08/easing-functions/
+

@@ -69,7 +69,7 @@ public class VulkanBuffer extends VulkanObject {
 
 	/**
 	 * Helper.
-	 * Determines the maximum length of a buffer.
+	 * Determines the maximum supported length of a buffer with the given usage.
 	 * @param usage		Buffer usage
 	 * @param limits	Device limits
 	 * @return Maximum length

@@ -10,6 +10,7 @@ import org.sarge.jove.platform.vulkan.VkQueueFlags;
 
 /**
  * A <i>work queue</i> is used to submit tasks to the hardware.
+ * @see Work
  * @author Sarge
  */
 public record WorkQueue(Handle handle, Family family) implements NativeObject {

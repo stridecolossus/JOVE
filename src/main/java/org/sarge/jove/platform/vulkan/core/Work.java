@@ -17,7 +17,7 @@ import org.sarge.jove.util.EnumMask;
  * <ul>
  * <li>one-or-more command buffers</li>
  * <li>a set of <i>wait</i> semaphores specifying when the work can begin</li>
- * <li>a set of <i>signal</i> semaphores that indicate when <b>all</b> buffers have been executed</li>
+ * <li>a set of <i>signal</i> semaphores that are notified when <b>all</b> buffers have been executed</li>
  * </ul>
  * <p>
  * Note that <b>all</b> command buffers in a work submission <b>must</b> be allocated from pools with the same queue family.
