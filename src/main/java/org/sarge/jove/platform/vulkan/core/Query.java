@@ -1,7 +1,10 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.util.Validation.requireOneOrMore;
+import static org.sarge.jove.util.Validation.*;
+
+import java.lang.foreign.MemorySegment;
+import java.util.Set;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -18,14 +21,14 @@ import org.sarge.jove.util.EnumMask;
  * Queries are allocated as <i>slots</i> from a {@link Pool} created via the {@link Pool#create(DeviceContext, VkQueryType, int, VkQueryPipelineStatisticFlag...)} factory method.
  * Note that a query pool <b>must</b> be reset before each sample <b>outside</b> the render pass.
  * <p>
- * The {@link ResultBuilder} is used to configure the results of a query and to write the data to a destination buffer.
+ * The {@link QueryResult} configures the mechanism to retrieve the results of a query.
  * <p>
  * Example for an occlusion query:
  * <p>
  * {@snippet :
  * // Create an occlusion query pool with two slots
- * LogicalDevice dev = ...
- * Pool pool = Pool.create(dev, VkQueryType.OCCLUSION, 2);
+ * LogicalDevice device = ...
+ * Pool pool = Pool.create(device, VkQueryType.OCCLUSION, 2);
  *
  * // Allocate a query for the second slot
  * DefaultQuery query = pool.query(1);
@@ -35,36 +38,21 @@ import org.sarge.jove.util.EnumMask;
  * Command.Buffer buffer = ...
  * buffer								// @highlight region substring="query" type=highlighted
  *     .add(query.reset())
- *     .add(frame.begin())
+ *     .add(framebuffer.begin())
  *         .add(query.begin())
  *             ...
  *         .add(query.end())
- *     .add(FrameBuffer#END);			// @end
+ *     .add(framebuffer,end());			// @end
  *
  * // Retrieve the query results
- * ByteBuffer results = ...
- * pool.result().build().accept(results);
+ * QueryResult results = new QueryResults(pool);
+ * MemorySegment memory = ...
+ * results.get(memory);
  * }
  * <p>
  * @author Sarge
  */
-
-
-/**
- * TODO
- * @author Sarge
- */
 public interface Query {
-//	/**
-//	 * Query lifecycle states.
-//	 */
-//	enum State {
-//		UNINITIALIZED,
-//		UNAVAILABLE,
-//		ACTIVE,
-//		AVAILABLE
-//	}
-
 	/**
 	 * Creates a command to begin a measurement query.
 	 * @param flags Control flags
@@ -82,7 +70,7 @@ public interface Query {
     Command end();
 
 	/**
-	 *
+	 * A <i>query pool</i> allocates measurement and timestamp queries from an array of available <i>slots</i>.
 	 */
 	class Pool extends VulkanObject {
 		/**
@@ -92,7 +80,7 @@ public interface Query {
 		 * @param slots				Number of slots
 		 * @param statistics		Pipeline statistics for a {@link VkQueryType#PIPELINE_STATISTICS} query
 		 * @return Query pool
-		 * @throws IllegalArgumentException TODO
+		 * @throws IllegalArgumentException if {@link #statistics} is empty for a {@link VkQueryType#PIPELINE_STATISTICS} query
 		 */
 		public static Pool create(LogicalDevice device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
 			// Validate
@@ -223,174 +211,104 @@ public interface Query {
 		}
 	}
 
-//
-//	/**
-//	 * A <i>result builder</i> is used to configure and retrieve the results of a query.
-//	 * <p>
-//	 * The results are written to a data buffer which is essentially an array divided into the configured number of {@link ResultBuilder#stride(long)} bytes.
-//	 * <p>
-//	 * Note that by default the results have an <b>integer</b> data type with contiguous values.
-//	 * The {@link VkQueryResultFlag#LONG} flag is used to specify a query with a {@code long} data type.
-//	 * Additionally the convenience {@link ResultBuilder#longs()} method configures a query result for {@code long} values with an appropriate stride.
-//	 * <p>
-//	 * Note this builder provides <b>two</b> build methods variants:
-//	 * <ul>
-//	 * <li>{@link ResultBuilder#build()} creates an accessor to retrieve query results to an on-demand consumer</li>
-//	 * <li>{@link ResultBuilder#build(VulkanBuffer, long)} creates a command that asynchronously writes the results to a destination Vulkan buffer</li>
-//	 * </ul>
-//	 * <p>
-//	 * Example usage for an on-demand buffer:
-//	 * <pre>
-//	 * // Create a result builder
-//	 * ResultBuilder builder = pool.result();
-//	 *
-//	 * // Construct the accessor
-//	 * Consumer&lt;ByteBuffer&gt; accessor = builder
-//	 * 	.start(1)
-//	 * 	.count(2)
-//	 * 	.flag(VkQueryResultFlag.WAIT)
-//	 * 	.build();
-//	 *
-//	 * // Copy query results to a buffer
-//	 * ByteBuffer bb = ...
-//	 * accessor.accept(bb);
-//	 * </pre>
-//	 */
-//	class ResultBuilder {
-//		private final Pool pool;
-//		private int start;
-//		private int count;
-//		private long stride = Integer.BYTES;
-//		private final Set<VkQueryResultFlag> flags = new HashSet<>();
-//
-//		private ResultBuilder(Pool pool) {
-//			this.pool = pool;
-//			this.count = pool.slots;
-//		}
-//
-//		/**
-//		 * Sets the starting slot (default is the <i>first</i> slot).
-//		 * @param start Starting slot
-//		 * @throws IllegalArgumentException if {@code start} exceeds the number of query slots
-//		 */
-//		public ResultBuilder start(int start) {
-//			pool.validate(start);
-//			this.start = requireZeroOrMore(start);
-//			return this;
-//		}
-//
-//		/**
-//		 * Sets the number of query slots to retrieve (default is <b>all</b> slots in this pool).
-//		 * @param count Number of slots
-//		 * @throws IllegalArgumentException if {@code count} exceeds the number of query slots
-//		 */
-//		public ResultBuilder count(int count) {
-//			pool.validate(count);
-//			this.count = requireOneOrMore(count);
-//			return this;
-//		}
-//
-//		/**
-//		 * Sets the stride between results within the buffer (default is {@link Integer#BYTES}).
-//		 * @param stride Results stride (bytes)
-//		 */
-//		public ResultBuilder stride(long stride) {
-//			this.stride = requireOneOrMore(stride);
-//			return this;
-//		}
-//
-//		/**
-//		 * Adds a flag to this query.
-//		 * @param flag Query flag
-//		 */
-//		public ResultBuilder flag(VkQueryResultFlag flag) {
-//			flags.add(requireNonNull(flag));
-//			return this;
-//		}
-//
-//		/**
-//		 * Convenience method to configure this builder to retrieve {@code long} query results with a stride of {@link Long#BYTES}.
-//		 */
-//		public ResultBuilder longs() {
-//			flag(VkQueryResultFlag.LONG);
-//			stride(Long.BYTES);
-//			return this;
-//		}
-//
-//		/**
-//		 * Constructs an accessor that retrieves the query results on-demand.
-//		 * @return Query results accessor
-//		 * @throws IllegalArgumentException if the query range is invalid for this pool
-//		 * @throws IllegalArgumentException if the stride is not a multiple of the data type of this query
-//		 * @throws IllegalArgumentException if the buffer is too small for this query
-//		 */
-//		public Consumer<ByteBuffer> build() {
-//			// Validate query result
-//			final EnumMask<VkQueryResultFlag> mask = validate();
-//
-//			// Init library
-//			final DeviceContext dev = pool.device();
-//			final Library lib = dev.vulkan().library();
-//
-//			// Create accessor
-//			return buffer -> {
-//				// Validate buffer
-//				final int size = buffer.remaining();
-//				if(count * stride > size) throw new IllegalStateException(String.format("Insufficient buffer space for query: query=%s buffer=%s", ResultBuilder.this, buffer));
-//				pool.validate(start + count - 1);
-//
-//				// Execute query
-//				lib.vkGetQueryPoolResults(dev, pool, start, count, size, null /* TODO buffer*/, stride, mask);
-//			};
-//		}
-//
-//		/**
-//		 * Constructs a command that asynchronously copies query results to the given buffer.
-//		 * @param buffer 		Vulkan buffer
-//		 * @param offset		Buffer offset
-//		 * @return Query results command
-//		 * @throws IllegalArgumentException if the query range is invalid for this pool
-//		 * @throws IllegalArgumentException if the stride is not a multiple of the data type of this query
-//		 * @throws IllegalStateException if the {@link #offset} is invalid for the given buffer
-//		 * @throws IllegalStateException if {@link #buffer} is not a {@link VkBufferUsageFlag#TRANSFER_DST}
-//		 */
-//		public Command build(VulkanBuffer buffer, long offset) {
-//			// Validate buffer
-//			requireNonNull(buffer);
-//			requireZeroOrMore(offset);
-//			buffer.require(VkBufferUsageFlag.TRANSFER_DST);
-//			buffer.checkOffset(offset - 1 + count * stride);
-//
-//			// Validate query result
-//			final EnumMask<VkQueryResultFlag> mask = validate();
-//
-//			// Create results command
-//			return (lib, cmd) -> {
-//				// TODO - rewind?
-//				lib.vkCmdCopyQueryPoolResults(cmd, pool, start, count, buffer, offset, stride, mask);
-//			};
-//		}
-//
-//		/**
-//		 * Validates this query result.
-//		 * @return Flags bit-field
-//		 */
-//		private EnumMask<VkQueryResultFlag> validate() {
-//			// Validate query range
-//			if(start + count > pool.slots) {
-//				throw new IllegalArgumentException(String.format("Invalid query slot range: start=%d count=%d pool=%s", start, count, pool));
-//			}
-//
-//			// Validate stride
-//			final long multiple = flags.contains(VkQueryResultFlag.LONG) ? Long.BYTES : Integer.BYTES;
-//			if((stride % multiple) != 0) {
-//				throw new IllegalArgumentException(String.format("Stride must be a multiple of the data type for this query: multiple=%d stride=%d", multiple, stride));
-//			}
-//
-//			// Build flags mask
-//			return new EnumMask<>(flags);
-//		}
-//	}
+	/**
+	 * The <i>query result</i> configures the retrieval of query results.
+	 * <p>
+	 * Query results can either be copied directly to memory on-demand using {@link QueryResult#get(MemorySegment)}
+	 * or retrieved asynchronously to a buffer via a {@link QueryResult#buffer(VulkanBuffer, long)} command.
+	 */
+	record QueryResult(Pool pool, int start, int slots, Set<VkQueryResultFlags> flags) {
+		/**
+		 * Constructor.
+		 * @param pool		Query pool
+		 * @param start		Starting slot
+		 * @param slots		Number of slots
+		 * @param flags		Flags
+		 * @throws IndexOutOfBoundsException if the number of slots is invalid for the pool
+		 */
+		public QueryResult {
+			requireNonNull(pool);
+			requireZeroOrMore(start);
+			requireOneOrMore(slots);
+			pool.validate(start + slots - 1);
+			flags = Set.copyOf(flags);
+		}
+
+		/**
+		 * Convenience constructor for all slots in the given slots.
+		 * @param pool		Query pool
+		 * @param flags		Flags
+		 */
+		public QueryResult(Pool pool, Set<VkQueryResultFlags> flags) {
+			this(pool, 0, pool.slots(), flags);
+		}
+
+		/**
+		 * @return Results stride (bytes)
+		 */
+		public long stride() {
+			if(flags.contains(VkQueryResultFlags.RESULT_64)) {
+				return Long.BYTES;
+			}
+			else {
+				return Integer.BYTES;
+			}
+		}
+
+		/**
+		 * TODO - MemorySegment transformer
+		 * Retrieves query results to the given memory.
+		 * @param results Results memory
+		 */
+		public void get(MemorySegment results) {
+			final long stride = this.stride();
+			final long length = slots * stride;
+			if(results.byteSize() < length) {
+				throw new IllegalArgumentException("Insufficient results size: " + results);
+			}
+
+			final var mask = new EnumMask<>(flags);
+
+			pool.library.vkGetQueryPoolResults(
+					pool.device(),
+					pool,
+					start,
+					slots,
+					length,
+					results,
+					stride,
+					mask
+			);
+		}
+
+		/**
+		 * Creates a command that asynchronously copies query results to the given buffer.
+		 * @param buffer		Results buffer
+		 * @param offset		Buffer offset
+		 * @return Asynchronous results command
+		 * @throws IllegalStateException if the buffer is not a {@link VkBufferUsageFlags#TRANSFER_DST}
+		 * @throws IllegalArgumentException if the buffer is too small for the results
+		 */
+		public Command buffer(VulkanBuffer buffer, long offset) {
+			final long stride = this.stride();
+			requireZeroOrMore(offset);
+			buffer.require(VkBufferUsageFlags.TRANSFER_DST);
+			buffer.checkOffset(offset - 1 + slots * stride);
+
+			final var mask = new EnumMask<>(flags);
+
+			return commandBuffer -> pool.library.vkCmdCopyQueryPoolResults(
+					commandBuffer,
+					pool,
+					start,
+					slots,
+					buffer,
+					offset,
+					stride,
+					mask
+			);
+		}
+	}
 
 	/**
 	 * Query API.
@@ -402,7 +320,6 @@ public interface Query {
 		 * @param pCreateInfo		Create descriptor
 		 * @param pAllocator		Allocator
 		 * @param pQueryPool		Returned query pool handle
-		 * @return Result
 		 */
 		VkResult vkCreateQueryPool(LogicalDevice device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool);
 
@@ -459,9 +376,9 @@ public interface Query {
 		 * @param pData				Data buffer
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
-		 * @return Result
 		 */
-		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, Pointer pData, long stride, EnumMask<VkQueryResultFlags> flags);
+		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, MemorySegment pData, long stride, EnumMask<VkQueryResultFlags> flags);
+		// TODO - MemorySegment transformer
 
 		/**
 		 * Writes query results to a Vulkan buffer.
