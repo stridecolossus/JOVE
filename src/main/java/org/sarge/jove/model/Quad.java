@@ -18,7 +18,7 @@ public class Quad {
 	 * Quad vertices are assumed to be arranged as follows (from the perspective of the viewer):
 	 * <pre>
 	 * 0 - 2
-	 * |   |
+	 * | / |
 	 * 1 - 3
 	 * </pre>
 	 */
@@ -61,4 +61,6 @@ public class Quad {
 
 		return mesh;
 	}
+
+	// TODO - helper, transform to rotate quad to face viewer?
 }

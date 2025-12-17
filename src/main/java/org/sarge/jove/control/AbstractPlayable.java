@@ -1,38 +1,41 @@
 package org.sarge.jove.control;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Skeleton implementation.
  * @author Sarge
  */
 public abstract class AbstractPlayable implements Playable {
-	private boolean playing;
+	private State state = State.STOPPED;
 
 	@Override
+	public State state() {
+		return state;
+	}
+
+	/**
+	 * @return Whether currently playing
+	 */
 	public boolean isPlaying() {
-		return playing;
+		return state == State.PLAYING;
 	}
 
 	@Override
-	public void play() {
-		if(playing) {
-			throw new IllegalStateException("Already playing: " + this);
+	public void state(State state) {
+		if(state == this.state) {
+			throw new IllegalStateException("Duplicate state %s for %s".formatted(state, this));
 		}
-		playing = true;
-	}
 
-	@Override
-	public void pause() {
-		if(!playing) {
+		if((state == State.PAUSED) && (this.state != State.PLAYING)) {
 			throw new IllegalStateException("Not playing: " + this);
 		}
-		playing = false;
+
+		this.state = requireNonNull(state);
 	}
 
 	@Override
-	public void stop() {
-		if(!playing) {
-			throw new IllegalStateException("Not playing: " + this);
-		}
-		playing = false;
+	public String toString() {
+		return String.format("Playable[%s]", state);
 	}
 }

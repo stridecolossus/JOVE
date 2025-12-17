@@ -44,6 +44,7 @@ public record Button(int index, String name) {
 				default -> throw new IllegalArgumentException("Invalid action code: " + action);
 			};
 		}
+		// TODO - move back to GLFW?
 	}
 
 	/**
@@ -57,6 +58,7 @@ public record Button(int index, String name) {
 		CAPS_LOCK(0x010),
 		NUM_LOCK(0x020);
 
+		// TODO - GLFW specific
 		private static final ReverseMapping<ModifierKey> MAPPING = ReverseMapping.mapping(ModifierKey.class);
 
 		private final int bit;

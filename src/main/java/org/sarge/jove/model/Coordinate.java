@@ -85,7 +85,7 @@ public sealed interface Coordinate extends Bufferable {
 		}
 
 		/**
-		 * A pair of <i>corners</i> define a texture coordinate rectangle.
+		 * A pair of <i>corners</i> defines a texture coordinate rectangle.
 		 */
 		public record Corners(Coordinate2D topLeft, Coordinate2D bottomRight) {
 			/**
@@ -105,6 +105,7 @@ public sealed interface Coordinate extends Bufferable {
 				this(TOP_LEFT, BOTTOM_RIGHT);
 			}
 		}
+		// TODO - only used by glyphs?
 	}
 
 	/**

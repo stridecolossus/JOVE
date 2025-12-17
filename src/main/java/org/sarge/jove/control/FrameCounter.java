@@ -47,6 +47,6 @@ public class FrameCounter implements Frame.Listener {
 
 	@Override
 	public String toString() {
-		return String.format("FrameCounter[fps=%d]", count());
+		return String.format("FrameCounter[fps=%d]", history.size());
 	}
 }

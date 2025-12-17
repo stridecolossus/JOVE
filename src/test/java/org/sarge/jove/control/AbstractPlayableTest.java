@@ -1,6 +1,7 @@
 package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.sarge.jove.control.Playable.State.*;
 
 import org.junit.jupiter.api.*;
 
@@ -26,20 +27,20 @@ class AbstractPlayableTest {
 		@DisplayName("can be played")
 		@Test
 		void play() {
-			playable.play();
+			playable.state(PLAYING);
 			assertEquals(true, playable.isPlaying());
 		}
 
 		@DisplayName("cannot be paused")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.pause());
+			assertThrows(IllegalStateException.class, () -> playable.state(PAUSED));
 		}
 
 		@DisplayName("cannot be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.stop());
+			assertThrows(IllegalStateException.class, () -> playable.state(STOPPED));
 		}
 	}
 
@@ -48,7 +49,7 @@ class AbstractPlayableTest {
 	class Playing {
 		@BeforeEach
 		void before() {
-			playable.play();
+			playable.state(PLAYING);
 		}
 
 		@DisplayName("is playing")
@@ -60,20 +61,20 @@ class AbstractPlayableTest {
 		@DisplayName("cannot be played again")
 		@Test
 		void play() {
-			assertThrows(IllegalStateException.class, () -> playable.play());
+			assertThrows(IllegalStateException.class, () -> playable.state(PLAYING));
 		}
 
 		@DisplayName("can be paused")
 		@Test
 		void pause() {
-			playable.pause();
+			playable.state(PAUSED);
 			assertEquals(false, playable.isPlaying());
 		}
 
 		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			playable.stop();
+			playable.state(STOPPED);
 			assertEquals(false, playable.isPlaying());
 		}
 	}
@@ -83,8 +84,8 @@ class AbstractPlayableTest {
 	class Paused {
 		@BeforeEach
 		void before() {
-			playable.play();
-			playable.pause();
+			playable.state(PLAYING);
+			playable.state(PAUSED);
 		}
 
 		@DisplayName("is not playing")
@@ -96,20 +97,20 @@ class AbstractPlayableTest {
 		@DisplayName("can be restarted")
 		@Test
 		void play() {
-			playable.play();
+			playable.state(PLAYING);
 			assertEquals(true, playable.isPlaying());
 		}
 
 		@DisplayName("cannot be paused again")
 		@Test
 		void pause() {
-			assertThrows(IllegalStateException.class, () -> playable.pause());
+			assertThrows(IllegalStateException.class, () -> playable.state(PAUSED));
 		}
 
-		@DisplayName("cannot be stopped")
+		@DisplayName("can be stopped")
 		@Test
 		void stop() {
-			assertThrows(IllegalStateException.class, () -> playable.pause());
+			playable.state(STOPPED);
 		}
 	}
 }

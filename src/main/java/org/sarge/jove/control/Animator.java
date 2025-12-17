@@ -114,7 +114,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 			}
 			else {
 				time = duration;
-				stop();
+				state(State.STOPPED);
 			}
 		}
 		else {

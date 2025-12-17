@@ -2,7 +2,7 @@ package org.sarge.jove.platform.vulkan.common;
 
 import static java.util.stream.Collectors.*;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
@@ -60,7 +60,7 @@ public record DeviceFeatures(Set<String> features) {
 	public static DeviceFeatures of(VkPhysicalDeviceFeatures features) {
 		return Arrays
 				.stream(VkPhysicalDeviceFeatures.class.getFields())
-				.filter(field -> !Modifier.isStatic(field.getModifiers()))
+				.filter(field -> field.getType() == boolean.class)
 				.filter(field -> isEnabled(features, field))
 				.map(Field::getName)
 				.collect(collectingAndThen(toSet(), DeviceFeatures::new));

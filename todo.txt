@@ -14,6 +14,8 @@ https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management
 
 mesh loader: 1. still needs custom indexed implementation, 2. nasty ByteBuffer fiddle when writing
 
+interpolation expansion: colours, vector, quaternion, etc?
+
 helper for 'wrappers' that are not native objects (i.e. not destroyed) but compose and optionally destroy their dependencies?
 e.g. VertexBuffer, View
 
@@ -50,6 +52,7 @@ demo
 scene
 - picking, rays, etc
 - culling, frustum, custom (e.g. terrain blocks)
+- lighting: light node? support for uniform -> shader, colour/position animation, etc
 - composite object for near/far plane distances, FOV, projection matrix, i.e. stuff used in scene? or Scene object?
 - node inheritance? e.g. transform change propagates up, volume change down, etc?
 - should volumes enforce intersect(sphere) and intersect(extents)? or ABC? or leave as-is? should frustum really be a volume?

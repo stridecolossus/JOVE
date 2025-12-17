@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  * A <i>player</i> is an adapter for a {@link Playable} that notifies interested listeners on state transitions.
  * @author Sarge
  */
-public class Player implements Playable {
+public class Player extends AbstractPlayable {
 	private final Playable playable;
 	private final Collection<Consumer<Player>> listeners = new HashSet<>();
 
@@ -29,25 +29,13 @@ public class Player implements Playable {
 	}
 
 	@Override
-	public boolean isPlaying() {
-		return playable.isPlaying();
+	public State state() {
+		return playable.state();
 	}
 
 	@Override
-	public void play() {
-		playable.play();
-		update();
-	}
-
-	@Override
-	public void pause() {
-		playable.pause();
-		update();
-	}
-
-	@Override
-	public void stop() {
-		playable.stop();
+	public void state(State state) {
+		playable.state(state);
 		update();
 	}
 
