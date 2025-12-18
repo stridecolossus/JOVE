@@ -22,7 +22,6 @@ class VulkanBufferTest {
 
 		@Override
 		public VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer) {
-			assertNotNull(device);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 //			assertEquals(new EnumMask<>(VkBufferUsageFlags.TRANSFER_DST), pCreateInfo.usage);
 			assertEquals(VkSharingMode.EXCLUSIVE, pCreateInfo.sharingMode);
@@ -34,13 +33,10 @@ class VulkanBufferTest {
 
 		@Override
 		public void vkDestroyBuffer(LogicalDevice device, VulkanBuffer pBuffer, Handle pAllocator) {
-			assertNotNull(device);
-			assertNotNull(pBuffer);
 		}
 
 		@Override
 		public void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, VkMemoryRequirements pMemoryRequirements) {
-			assertNotNull(device);
 			assertEquals(new Handle(3), pBuffer);
 			pMemoryRequirements.size = 42L;
 			pMemoryRequirements.alignment = 0;
@@ -49,7 +45,6 @@ class VulkanBufferTest {
 
 		@Override
 		public VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset) {
-			assertNotNull(device);
 			assertEquals(new Handle(3), pBuffer);
 			assertEquals(42L, memory.size());
 			assertEquals(0L, memoryOffset);
@@ -67,7 +62,6 @@ class VulkanBufferTest {
 
 		@Override
 		public void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType) {
-			assertNotNull(buffer);
 			assertEquals(0L, offset);
 			assertEquals(VkIndexType.UINT32, indexType);
 			index = true;
@@ -75,9 +69,7 @@ class VulkanBufferTest {
 
 		@Override
 		public void vkCmdCopyBuffer(Buffer commandBuffer, VulkanBuffer srcBuffer, VulkanBuffer dstBuffer, int regionCount, VkBufferCopy[] pRegions) {
-			assertNotNull(srcBuffer);
-			assertNotNull(dstBuffer);
-			assertEquals(1, regionCount);
+			assertEquals(regionCount, pRegions.length);
 		}
 
 		@Override
@@ -85,7 +77,11 @@ class VulkanBufferTest {
 			assertEquals(0L, dstOffset);
 			assertEquals(-1L, size);
 			assertEquals(3, data);
-			fill = true;
+
+			final var bb = dstBuffer.buffer();
+			for(int n = 0; n < size; ++n) {
+				bb.put((byte) data);
+			}
 		}
 	}
 

@@ -8,8 +8,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.common.*;
 
 /**
  * Default implementation that essentially wraps an FFM memory segment.
@@ -27,7 +26,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 * @param type			Type of memory
 	 * @param size			Size of this memory (bytes)
 	 */
-	DefaultDeviceMemory(Handle handle, LogicalDevice device, MemoryType type, long size) {
+	DefaultDeviceMemory(Handle handle, DeviceContext device, MemoryType type, long size) {
 		super(handle, device);
 		this.type = requireNonNull(type);
 		this.size = requireOneOrMore(size);
@@ -81,7 +80,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 			checkMapped();
 
 			// Release mapping
-			final LogicalDevice device = device();
+			final DeviceContext device = device();
 			final MemoryLibrary library = device.library();
 			library.vkUnmapMemory(device, DefaultDeviceMemory.this);
 
@@ -125,7 +124,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		}
 
 		// Map memory
-		final LogicalDevice device = this.device();
+		final DeviceContext device = this.device();
 		final MemoryLibrary library = device.library();
 		final var pointer = new Pointer(size);
 		library.vkMapMemory(device, this, offset, size, 0, pointer);

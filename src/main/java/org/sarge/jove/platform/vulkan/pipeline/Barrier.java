@@ -8,6 +8,7 @@ import java.util.*;
 
 import org.sarge.jove.foreign.NativeStructure;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -129,7 +130,7 @@ public class Barrier implements Command {
 		 * @param library Pipeline library
 		 * @return New barrier
 		 */
-		public Barrier build(LogicalDevice device) {
+		public Barrier build(DeviceContext device) {
 			return new Barrier(
 					device.library(),
 					source,

@@ -5,7 +5,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.EnumMask;
@@ -25,7 +25,7 @@ public class RenderPass extends VulkanObject {
 	 * @param device			Logical device
 	 * @param attachments		Attachments used by this render pass
 	 */
-	RenderPass(Handle handle, LogicalDevice device, List<Attachment> attachments) {
+	RenderPass(Handle handle, DeviceContext device, List<Attachment> attachments) {
 		super(handle, device);
 		this.attachments = List.copyOf(attachments);
 		this.library = device.library();
@@ -166,9 +166,8 @@ public class RenderPass extends VulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pRenderPass		Returned render pass handle
-		 * @return Result
 		 */
-		VkResult vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass);
+		VkResult vkCreateRenderPass(DeviceContext device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass);
 
 		/**
 		 * Destroys a render pass.
@@ -176,7 +175,7 @@ public class RenderPass extends VulkanObject {
 		 * @param renderPass		Render pass
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyRenderPass(LogicalDevice device, RenderPass renderPass, Handle pAllocator);
+		void vkDestroyRenderPass(DeviceContext device, RenderPass renderPass, Handle pAllocator);
 
 		/**
 		 * Starts the next sub-pass.
@@ -191,7 +190,7 @@ public class RenderPass extends VulkanObject {
 		 * @param renderPass			Render pass
 		 * @param pGranularity			Returned render area granularity
 		 */
-		void vkGetRenderAreaGranularity(LogicalDevice dev, RenderPass renderPass, @Updated VkExtent2D pGranularity);
+		void vkGetRenderAreaGranularity(DeviceContext dev, RenderPass renderPass, @Updated VkExtent2D pGranularity);
 
 		/**
 		 * Clears attachments in this render pass.

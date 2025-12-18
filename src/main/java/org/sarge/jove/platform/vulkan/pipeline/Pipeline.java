@@ -5,8 +5,8 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Updated;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.core.Command;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;
 
@@ -27,7 +27,7 @@ public class Pipeline extends VulkanObject {
 	 * @param layout		Pipeline layout
 	 * @param parent		Whether this is a parent pipeline
 	 */
-	Pipeline(Handle handle, LogicalDevice device, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
+	Pipeline(Handle handle, DeviceContext device, VkPipelineBindPoint type, PipelineLayout layout, boolean parent) {
 		super(handle, device);
 		this.type = requireNonNull(type);
 		this.layout = requireNonNull(layout);
@@ -83,9 +83,8 @@ public class Pipeline extends VulkanObject {
 		 * @param pCreateInfos		Descriptor(s)
 		 * @param pAllocator		Allocator
 		 * @param pPipelines		Returned pipeline(s)
-		 * @return Result
 		 */
-		VkResult vkCreateGraphicsPipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
+		VkResult vkCreateGraphicsPipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkGraphicsPipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
 
 		/**
 		 * Creates an array of compute pipelines.
@@ -95,9 +94,8 @@ public class Pipeline extends VulkanObject {
 		 * @param pCreateInfos		Descriptor(s)
 		 * @param pAllocator		Allocator
 		 * @param pPipelines		Returned pipeline(s)
-		 * @return Result
 		 */
-		//VkResult vkCreateComputePipelines(LogicalDevice device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
+		//VkResult vkCreateComputePipelines(DeviceContext device, PipelineCache pipelineCache, int createInfoCount, VkComputePipelineCreateInfo[] pCreateInfos, Handle pAllocator, @Updated Handle[] pPipelines);
 
 		/**
 		 * Destroys a pipeline.
@@ -105,7 +103,7 @@ public class Pipeline extends VulkanObject {
 		 * @param pipeline			Pipeline
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipeline(LogicalDevice device, Pipeline pipeline, Handle pAllocator);
+		void vkDestroyPipeline(DeviceContext device, Pipeline pipeline, Handle pAllocator);
 
 		/**
 		 * Binds a pipeline to the render sequence.

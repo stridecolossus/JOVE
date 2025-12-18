@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
@@ -28,11 +28,11 @@ public class PipelineLayout extends VulkanObject {
 	 * @param constant		Optional push constant
 	 * @throws IllegalArgumentException if any range of the push constant exceeds the maximum for the device
 	 */
-	PipelineLayout(Handle handle, LogicalDevice device, PushConstant constant) {
+	PipelineLayout(Handle handle, DeviceContext device, PushConstant constant) {
 		super(handle, device);
 		this.constant = constant;
 		if(constant != null) {
-			constant.validate(device);
+			constant.validate((LogicalDevice) device);
 		}
 	}
 
@@ -120,9 +120,8 @@ public class PipelineLayout extends VulkanObject {
 		 * @param pCreateInfo		Pipeline layout descriptor
 		 * @param pAllocator		Allocator
 		 * @param pPipelineLayout	Returned pipeline layout
-		 * @return Result
 		 */
-		VkResult vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout);
+		VkResult vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -130,7 +129,7 @@ public class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Pipeline layout
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Handle pAllocator);
+		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Handle pAllocator);
 
 		/**
 		 * Updates a push constant range.

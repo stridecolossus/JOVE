@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.EnumMask;
 
@@ -183,7 +184,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public static void submit(Buffer buffer) {
 		// Create bounding fence
-		final LogicalDevice device = buffer.pool().device();
+		final DeviceContext device = buffer.pool().device();
 		final Fence fence = Fence.create(device);
 
 		// Create work instance

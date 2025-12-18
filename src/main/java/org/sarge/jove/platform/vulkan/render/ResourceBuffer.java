@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
+import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * A <i>resource buffer</i> is an adapter for a buffer used as a descriptor resource, e.g. a {@link VkBufferUsageFlag#UNIFORM_BUFFER}.
@@ -38,7 +38,8 @@ public record ResourceBuffer(VkDescriptorType type, long offset, VulkanBuffer bu
 		buffer.require(usage);
 
 		// Check length
-		final int max = VulkanBuffer.maximum(usage, buffer.device().limits());
+		final var device = (LogicalDevice) buffer.device();
+		final int max = VulkanBuffer.maximum(usage, device.limits());
 		if(buffer.length() > max) {
 			throw new IllegalStateException("Buffer too large: limit=%d buffer=%s".formatted(max, buffer));
 		}

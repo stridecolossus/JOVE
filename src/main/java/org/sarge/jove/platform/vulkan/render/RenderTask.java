@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.present.*;
@@ -60,7 +61,7 @@ public class RenderTask implements Runnable, TransientObject {
 
 		public FrameStateIterator(Swapchain swapchain) {
 			final int number = requireOneOrMore(swapchain.frames());
-			final LogicalDevice device = swapchain.device();
+			final DeviceContext device = swapchain.device();
 
 			this.frames = IntStream
 					.range(0, number)
@@ -124,7 +125,7 @@ public class RenderTask implements Runnable, TransientObject {
 	 */
 	private void recreate() {
 		// Wait for pending rendering tasks
-		final LogicalDevice device = manager.swapchain().device();
+		final var device = (LogicalDevice) manager.swapchain().device();
 		device.waitIdle();
 
 		// Recreate the swapchain

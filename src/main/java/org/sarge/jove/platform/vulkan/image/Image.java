@@ -8,7 +8,9 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
 /**
@@ -161,9 +163,8 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pImage			Returned image handle
-		 * @return Result
 		 */
-		VkResult vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage);
+		VkResult vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage);
 
 		/**
 		 * Destroys an image.
@@ -171,7 +172,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param image				Image
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyImage(LogicalDevice device, Image image, Handle pAllocator);
+		void vkDestroyImage(DeviceContext device, Image image, Handle pAllocator);
 
 		/**
 		 * Retrieves the memory requirements for the given image.
@@ -179,7 +180,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param image					Image
 		 * @param pMemoryRequirements	Returned memory requirements
 		 */
-		void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, @Updated VkMemoryRequirements pMemoryRequirements);
+		void vkGetImageMemoryRequirements(DeviceContext device, Handle image, @Updated VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds image memory.
@@ -187,9 +188,8 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param image				Image
 		 * @param memory			Image memory
 		 * @param memoryOffset		Offset
-		 * @return Result
 		 */
-		VkResult vkBindImageMemory(LogicalDevice device, Handle image, DeviceMemory memory, long memoryOffset);
+		VkResult vkBindImageMemory(DeviceContext device, Handle image, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Copies an image.
@@ -201,7 +201,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param regionCount		Number of regions
 		 * @param pRegions			Regions
 		 */
-		void vkCmdCopyImage(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions);
+		void vkCmdCopyImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageCopy[] pRegions);
 
 		/**
 		 * Copies a buffer to an image.
@@ -212,7 +212,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param regionCount		Number of regions
 		 * @param pRegions			Regions
 		 */
-		void vkCmdCopyBufferToImage(Command.Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
+		void vkCmdCopyBufferToImage(Buffer commandBuffer, VulkanBuffer srcBuffer, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkBufferImageCopy[] pRegions);
 
 		/**
 		 * Copies an image to a buffer.
@@ -223,7 +223,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param regionCount		Number of regions
 		 * @param pRegions			Regions
 		 */
-		void vkCmdCopyImageToBuffer(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
+		void vkCmdCopyImageToBuffer(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, VulkanBuffer dstBuffer, int regionCount, VkBufferImageCopy[] pRegions);
 
 		/**
 		 * Performs an image blit operation.
@@ -236,6 +236,6 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param pRegions			Copy regions
 		 * @param filter			Filtering option
 		 */
-		void vkCmdBlitImage(Command.Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter);
+		void vkCmdBlitImage(Buffer commandBuffer, Image srcImage, VkImageLayout srcImageLayout, Image dstImage, VkImageLayout dstImageLayout, int regionCount, VkImageBlit[] pRegions, VkFilter filter);
 	}
 }

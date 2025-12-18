@@ -71,7 +71,8 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 		}
 
 		// Ignore if unlimited
-		final int max = buffer.device().limits().get("maxDrawIndexedIndexValue");
+		final var device = (LogicalDevice) buffer.device();
+		final int max = device.limits().get("maxDrawIndexedIndexValue");
 		if(max == -1) {
 			return;
 		}

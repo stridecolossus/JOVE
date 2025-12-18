@@ -9,7 +9,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.util.EnumMask;
 
@@ -240,7 +240,7 @@ public interface Command {
 		 * @param queue			Work queue
 		 * @param flags			Creation flags
 		 */
-		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
+		public static Pool create(DeviceContext device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.sType = VkStructureType.COMMAND_POOL_CREATE_INFO;
@@ -266,7 +266,7 @@ public interface Command {
 		 * @param device		Logical device
 		 * @param queue			Work queue
 		 */
-		Pool(Handle handle, LogicalDevice device, WorkQueue queue) {
+		Pool(Handle handle, DeviceContext device, WorkQueue queue) {
 			super(handle, device);
 			this.queue = requireNonNull(queue);
 			this.library = device.library();
@@ -373,7 +373,7 @@ public interface Command {
 		 * @param pCommandPool		Returned command pool handle
 		 * @return Result
 		 */
-		VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool);
+		VkResult vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -381,7 +381,7 @@ public interface Command {
 		 * @param commandPool		Command pool
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Handle pAllocator);
+		void vkDestroyCommandPool(DeviceContext device, Pool commandPool, Handle pAllocator);
 
 		/**
 		 * Resets a command pool.
@@ -390,7 +390,7 @@ public interface Command {
 		 * @param flags				Flags
 		 * @return Result
 		 */
-		VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags);
+		VkResult vkResetCommandPool(DeviceContext device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags);
 
 		/**
 		 * Allocates a number of command buffers.
@@ -399,7 +399,7 @@ public interface Command {
 		 * @param pCommandBuffers	Returned buffer handles
 		 * @return Result
 		 */
-		VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
+		VkResult vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.
@@ -408,7 +408,7 @@ public interface Command {
 		 * @param commandBufferCount	Number of buffers
 		 * @param pCommandBuffers		Command buffers
 		 */
-		void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
+		void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
 		/**
 		 * Starts recording.

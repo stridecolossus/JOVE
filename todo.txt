@@ -7,6 +7,8 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+blog - physical device refers to NativeParameter
+
 blog - add section for minimised/closed windows ~ callbacks, recreation
 
 what is an descriptor set array used for?

@@ -8,7 +8,7 @@ import java.nio.file.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
@@ -22,7 +22,7 @@ public class Shader extends VulkanObject {
 	 * @param code		Shader SPIV code
 	 * @return New shader
 	 */
-	public static Shader create(LogicalDevice device, byte[] code) {
+	public static Shader create(DeviceContext device, byte[] code) {
 		// Create descriptor
 		final var info = new VkShaderModuleCreateInfo();
 		info.sType = VkStructureType.SHADER_MODULE_CREATE_INFO;
@@ -43,7 +43,7 @@ public class Shader extends VulkanObject {
 	 * @param handle 		Shader module
 	 * @param device		Logical device
 	 */
-	Shader(Handle handle, LogicalDevice device) {
+	Shader(Handle handle, DeviceContext device) {
 		super(handle, device);
 	}
 
@@ -91,7 +91,7 @@ public class Shader extends VulkanObject {
 		 * @param shader			Returned shader module handle
 		 * @return Result
 		 */
-		VkResult vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader);
+		VkResult vkCreateShaderModule(DeviceContext device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader);
 
 		/**
 		 * Destroys a shader.
@@ -99,6 +99,6 @@ public class Shader extends VulkanObject {
 		 * @param shader			Shader module
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator);
+		void vkDestroyShaderModule(DeviceContext device, Shader shader, Handle pAllocator);
 	}
 }

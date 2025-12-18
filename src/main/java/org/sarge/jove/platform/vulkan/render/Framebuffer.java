@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -180,7 +180,7 @@ public class Framebuffer extends VulkanObject {
 			info.layers = 1; // TODO - layers?
 
 			// Allocate frame buffer
-			final LogicalDevice device = pass.device();
+			final DeviceContext device = pass.device();
 			final Library library = device.library();
 			final Pointer pointer = new Pointer();
 			library.vkCreateFramebuffer(device, info, null, pointer);
@@ -208,9 +208,8 @@ public class Framebuffer extends VulkanObject {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pFramebuffer		Returned frame buffer handle
-		 * @return Result
 		 */
-		VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer);
+		VkResult vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer);
 
 		/**
 		 * Destroys a frame buffer.
@@ -218,7 +217,7 @@ public class Framebuffer extends VulkanObject {
 		 * @param framebuffer		Frame buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator);
+		void vkDestroyFramebuffer(DeviceContext device, Framebuffer framebuffer, Handle pAllocator);
 
 		/**
 		 * Begins a render pass.

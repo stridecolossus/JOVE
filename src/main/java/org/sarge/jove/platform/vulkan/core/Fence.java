@@ -19,7 +19,7 @@ public class Fence extends VulkanObject {
 	 * @param flags			Creation flags
 	 * @return Fence
 	 */
-	public static Fence create(LogicalDevice device, VkFenceCreateFlags... flags) {
+	public static Fence create(DeviceContext device, VkFenceCreateFlags... flags) {
 		// Init descriptor
 		final var info = new VkFenceCreateInfo();
 		info.sType = VkStructureType.FENCE_CREATE_INFO;
@@ -41,7 +41,7 @@ public class Fence extends VulkanObject {
 	 * @param handle		Fence handle
 	 * @param device		Logical device
 	 */
-	protected Fence(Handle handle, LogicalDevice device) {
+	protected Fence(Handle handle, DeviceContext device) {
 		super(handle, device);
 		this.library = device.library();
 	}
@@ -80,7 +80,7 @@ public class Fence extends VulkanObject {
 			return;
 		}
 		final Fence[] array = fences.toArray(Fence[]::new);
-		final LogicalDevice device = array[0].device();
+		final DeviceContext device = array[0].device();
 		final Library library = array[0].library;
 		library.vkResetFences(device, array.length, array);
 	}
@@ -105,7 +105,7 @@ public class Fence extends VulkanObject {
 			return;
 		}
 		final Fence[] array = fences.toArray(Fence[]::new);
-		final LogicalDevice device = array[0].device();
+		final DeviceContext device = array[0].device();
 		final Library library = array[0].library;
 		library.vkWaitForFences(device, array.length, array, all, timeout);
 	}
@@ -127,7 +127,7 @@ public class Fence extends VulkanObject {
 		 * @param pFence			Returned fence
 		 * @return Result
 		 */
-		VkResult vkCreateFence(LogicalDevice device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence);
+		VkResult vkCreateFence(DeviceContext device, VkFenceCreateInfo pCreateInfo, Handle pAllocator, Pointer pFence);
 
 		/**
 		 * Destroys a fence.
@@ -135,7 +135,7 @@ public class Fence extends VulkanObject {
 		 * @param fence				Fence
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFence(LogicalDevice device, Fence fence, Handle pAllocator);
+		void vkDestroyFence(DeviceContext device, Fence fence, Handle pAllocator);
 
 		/**
 		 * Resets a number of fences.
@@ -144,7 +144,7 @@ public class Fence extends VulkanObject {
 		 * @param pFences			Fences
 		 * @return Result
 		 */
-		VkResult vkResetFences(LogicalDevice device, int fenceCount, Fence[] pFences);
+		VkResult vkResetFences(DeviceContext device, int fenceCount, Fence[] pFences);
 
 		/**
 		 * Retrieves the status of a given fence.
@@ -154,7 +154,7 @@ public class Fence extends VulkanObject {
 		 * @return Fence status flag
 		 * @implNote Returns {@code int} since this method has multiple success codes
 		 */
-		int vkGetFenceStatus(LogicalDevice device, Fence fence);
+		int vkGetFenceStatus(DeviceContext device, Fence fence);
 
 		/**
 		 * Waits for a number of fences.
@@ -165,6 +165,6 @@ public class Fence extends VulkanObject {
 		 * @param timeout			Timeout or {@link Long#MAX_VALUE} (nanoseconds)
 		 * @return Result
 		 */
-		VkResult vkWaitForFences(LogicalDevice device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
+		VkResult vkWaitForFences(DeviceContext device, int fenceCount, Fence[] pFences, boolean waitAll, long timeout);
 	}
 }

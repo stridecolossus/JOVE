@@ -39,7 +39,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param memory		Buffer memory
 	 * @param length		Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlags> usage, DeviceMemory memory, long length) {
+	VulkanBuffer(Handle handle, DeviceContext device, Set<VkBufferUsageFlags> usage, DeviceMemory memory, long length) {
 		super(handle, device);
 		this.usage = Set.copyOf(usage);
 		this.memory = requireNonNull(memory);
@@ -293,7 +293,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Returned buffer handle
 		 * @return Result
 		 */
-		VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer);
+		VkResult vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer);
 
 		/**
 		 * Destroys a buffer.
@@ -301,7 +301,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyBuffer(LogicalDevice device, VulkanBuffer pBuffer, Handle pAllocator);
+		void vkDestroyBuffer(DeviceContext device, VulkanBuffer pBuffer, Handle pAllocator);
 
 		/**
 		 * Queries the memory requirements of the given buffer.
@@ -309,7 +309,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, @Updated VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(DeviceContext device, Handle pBuffer, @Updated VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.
@@ -319,7 +319,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param memoryOffset		Offset
 		 * @return Result
 		 */
-		VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset);
+		VkResult vkBindBufferMemory(DeviceContext device, Handle pBuffer, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Binds a vertex buffer.

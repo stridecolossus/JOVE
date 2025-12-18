@@ -9,7 +9,7 @@ import java.util.Set;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;
 
@@ -82,7 +82,7 @@ public interface Query {
 		 * @return Query pool
 		 * @throws IllegalArgumentException if {@link #statistics} is empty for a {@link VkQueryType#PIPELINE_STATISTICS} query
 		 */
-		public static Pool create(LogicalDevice device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
+		public static Pool create(DeviceContext device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
 			// Validate
 			requireOneOrMore(slots);
 			if((type == VkQueryType.PIPELINE_STATISTICS) ^ (statistics.length == 0)) {
@@ -116,7 +116,7 @@ public interface Query {
 		 * @param slots			Number of slots
 		 * @param library		Query pool API
 		 */
-		Pool(Handle handle, LogicalDevice device, VkQueryType type, int slots, Library library) {
+		Pool(Handle handle, DeviceContext device, VkQueryType type, int slots, Library library) {
 			super(handle, device);
 			this.type = requireNonNull(type);
 			this.slots = requireOneOrMore(slots);
@@ -321,7 +321,7 @@ public interface Query {
 		 * @param pAllocator		Allocator
 		 * @param pQueryPool		Returned query pool handle
 		 */
-		VkResult vkCreateQueryPool(LogicalDevice device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool);
+		VkResult vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool);
 
 		/**
 		 * Destroys a query pool.
@@ -329,7 +329,7 @@ public interface Query {
 		 * @param queryPool			Query pool to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyQueryPool(LogicalDevice device, Pool queryPool, Handle pAllocator);
+		void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Handle pAllocator);
 
 		/**
 		 * Command to reset a query pool.
@@ -377,7 +377,7 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, MemorySegment pData, long stride, EnumMask<VkQueryResultFlags> flags);
+		VkResult vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, MemorySegment pData, long stride, EnumMask<VkQueryResultFlags> flags);
 		// TODO - MemorySegment transformer
 
 		/**

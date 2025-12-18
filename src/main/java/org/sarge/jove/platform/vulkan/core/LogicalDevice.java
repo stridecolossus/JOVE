@@ -19,7 +19,7 @@ import org.sarge.jove.util.*;
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends TransientNativeObject {
+public class LogicalDevice extends TransientNativeObject implements DeviceContext {
 	private final Library library;
 	private final Map<Family, List<WorkQueue>> queues;
 	private final DeviceLimits limits;
@@ -38,10 +38,7 @@ public class LogicalDevice extends TransientNativeObject {
 		this.limits = new DeviceLimits(limits);
 	}
 
-	/**
-	 * @param <T> Library type
-	 * @return Vulkan library
-	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T library() {
 		return (T) library;

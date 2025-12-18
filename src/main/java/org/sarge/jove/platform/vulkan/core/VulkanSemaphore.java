@@ -3,7 +3,7 @@ package org.sarge.jove.platform.vulkan.core;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
+import org.sarge.jove.platform.vulkan.common.*;
 
 /**
  * A <i>semaphore</i> is used to synchronise operations within or across command queues.
@@ -13,7 +13,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Constructor.
 	 */
-	protected VulkanSemaphore(Handle handle, LogicalDevice device) {
+	protected VulkanSemaphore(Handle handle, DeviceContext device) {
 		super(handle, device);
 	}
 
@@ -28,7 +28,7 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @param device Logical device
 	 * @return New semaphore
 	 */
-	public static VulkanSemaphore create(LogicalDevice device) {
+	public static VulkanSemaphore create(DeviceContext device) {
 		final var info = new VkSemaphoreCreateInfo();
 		info.sType = VkStructureType.SEMAPHORE_CREATE_INFO;
 		info.flags = 0;
@@ -43,6 +43,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Vulkan semaphore API.
 	 */
+	public // TODO
 	interface Library {
 		/**
 		 * Creates a semaphore.
@@ -52,7 +53,7 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param pSemaphore		Returned semaphore
 		 * @return Result
 		 */
-		VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore);
+		VkResult vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore);
 
 		/**
 		 * Destroys a semaphore.
@@ -60,6 +61,6 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param semaphore			Semaphore to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySemaphore(LogicalDevice device, VulkanSemaphore semaphore, Handle pAllocator);
+		void vkDestroySemaphore(DeviceContext device, VulkanSemaphore semaphore, Handle pAllocator);
 	}
 }

@@ -4,10 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 
 public class VulkanObjectTest {
-
 	private static class MockVulkanObject extends VulkanObject {
 		public boolean released;
 
@@ -19,7 +18,7 @@ public class VulkanObjectTest {
 		protected Destructor<?> destructor() {
 			return new Destructor<>() {
 				@Override
-				public void destroy(LogicalDevice device, VulkanObject object, Handle allocator) {
+				public void destroy(DeviceContext device, VulkanObject object, Handle allocator) {
 					final MockVulkanObject instance = MockVulkanObject.this;
 					assertEquals(instance.device(), device);
 					assertEquals(instance, object);
