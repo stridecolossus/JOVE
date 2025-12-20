@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -12,13 +11,12 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class RenderPassTest {
-	private static class MockRenderPassLibrary extends MockVulkanLibrary {
-		@Override
+	@SuppressWarnings("unused")
+	private static class MockRenderPassLibrary extends MockLibrary {
 		public VkResult vkCreateRenderPass(LogicalDevice device, VkRenderPassCreateInfo pCreateInfo, Handle pAllocator, Pointer pRenderPass) {
-			assertNotNull(device);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.attachmentCount);
 			assertEquals(1, pCreateInfo.pAttachments.length);
@@ -26,13 +24,14 @@ class RenderPassTest {
 			assertEquals(1, pCreateInfo.pAttachments.length);
 			assertEquals(1, pCreateInfo.dependencyCount);
 			assertEquals(1, pCreateInfo.pAttachments.length);
-			pRenderPass.set(MemorySegment.ofAddress(2));
+			init(pRenderPass);
 			return VkResult.VK_SUCCESS;
 		}
 	}
 
 	private RenderPass pass;
 	private Attachment attachment;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
@@ -50,15 +49,19 @@ class RenderPassTest {
 				Set.of()
 		);
 
+		// Init library
+		mockery = new Mockery(new MockRenderPassLibrary(), RenderPass.Library.class);
+
 		// Create render pass
 		pass = new RenderPass.Builder()
 				.add(subpass)
 				.dependency(dependency)
-				.build(new MockLogicalDevice(new MockRenderPassLibrary()));
+				.build(new MockLogicalDevice(mockery.proxy()));
 	}
 
 	@Test
-	void attachments() {
+	void constructor() {
+		assertFalse(pass.isDestroyed());
 		assertEquals(List.of(attachment), pass.attachments());
 	}
 
@@ -69,12 +72,13 @@ class RenderPassTest {
 	@Test
 	void empty() {
 		final var builder = new RenderPass.Builder();
-		assertThrows(IllegalArgumentException.class, () -> builder.build(new MockLogicalDevice()));
+		assertThrows(IllegalArgumentException.class, () -> builder.build(new MockLogicalDevice(mockery.proxy())));
 	}
 
 	@Test
 	void destroy() {
 		pass.destroy();
-		assertEquals(true, pass.isDestroyed());
+		assertTrue(pass.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyRenderPass").count());
 	}
 }

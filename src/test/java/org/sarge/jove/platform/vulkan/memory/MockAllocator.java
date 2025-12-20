@@ -7,14 +7,15 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 public class MockAllocator extends Allocator {
-	public static final MemoryType TYPE = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryPropertyFlags.HOST_VISIBLE));
-
-	public MockAllocator() {
-		this(new MockLogicalDevice());
-	}
+	public static final MemoryType MEMORY_TYPE = new MemoryType(0, new Heap(1, Set.of()), Set.of(VkMemoryPropertyFlags.HOST_VISIBLE));
 
 	public MockAllocator(LogicalDevice device) {
-		super(device, new MemoryType[]{TYPE});
+		final var selector = new MemorySelector(new MemoryType[]{MEMORY_TYPE});
+		super(device, selector, 1024, Integer.MAX_VALUE);
+	}
+
+	public MockAllocator() {
+		this(new MockLogicalDevice(new MockMemoryLibrary()));
 	}
 
 	@Override

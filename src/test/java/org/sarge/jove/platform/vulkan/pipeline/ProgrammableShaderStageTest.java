@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.util.EnumMask;
 
 class ProgrammableShaderStageTest {
@@ -16,7 +15,7 @@ class ProgrammableShaderStageTest {
 	void before() {
 		stage = new ProgrammableShaderStage.Builder()
 				.stage(VkShaderStageFlags.VERTEX)
-				.shader(new MockShader(new MockLogicalDevice()))
+				.shader(new MockShader())
 				.name("name")
 				.constants(new SpecialisationConstants(Map.of(1, 2)))
 				.build();

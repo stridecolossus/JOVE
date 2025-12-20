@@ -25,9 +25,11 @@ class FrameStateTest {
 
 		// Init command sequence
 		sequence = new MockCommandBuffer();
+		sequence.begin();
+		sequence.end();
 
 		// Create swapchain
-		swapchain = new MockSwapchain(new MockLogicalDevice()) {
+		swapchain = new MockSwapchain() {
 			@Override
 			public int acquire(VulkanSemaphore semaphore, Fence fence) throws Invalidated {
 				assertEquals(available, semaphore);

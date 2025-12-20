@@ -125,6 +125,7 @@ public class PushConstant {
 			}
 		}
 	}
+	// TODO - introduce factory, including arena/allocator, logical device -> validation
 
 	/**
 	 * @return Ranges of this push constant
@@ -166,7 +167,7 @@ public class PushConstant {
 		}
 		check(layout);
 
-		return new UpdateCommand(range, layout, new Handle(data));
+		return new UpdateCommand(range, layout, data);
 	}
 
 	/**
@@ -178,10 +179,12 @@ public class PushConstant {
 	public Command update(PipelineLayout layout) {
 		check(layout);
 
+		// Short-cut for a single range
 		if(ranges.size() == 1) {
 			return update(ranges.getFirst(), layout);
 		}
 
+		// Enumerate shader stages across all ranges
 		final Set<VkShaderStageFlags> stages = ranges
 				.stream()
 				.map(Range::stages)
@@ -189,25 +192,27 @@ public class PushConstant {
 				.distinct()
 				.collect(toSet());
 
+		// Build update command for the whole buffer
 		final Range range = new Range(0, (int) data.byteSize(), stages);
-		return new UpdateCommand(range, layout, new Handle(data));
+		return new UpdateCommand(range, layout, data);
 	}
 
 	private void check(PipelineLayout layout) {
-		if(layout.constant() != this) {
-			throw new IllegalArgumentException();
+		if(layout.constant().filter(this::equals).isEmpty()) {
+			throw new IllegalArgumentException("Invalid pipeline layout %s for constant %s".formatted(layout, this));
 		}
 	}
 
 	/**
 	 * Command to update a write a portion of the backing buffer of this push constant to the pipeline.
 	 */
-	private record UpdateCommand(Range range, PipelineLayout layout, Handle data) implements Command {
+	private record UpdateCommand(Range range, PipelineLayout layout, MemorySegment data) implements Command {
 		@Override
 		public void execute(Buffer buffer) {
 			final PipelineLayout.Library library = layout.device().library();
 			final var stages = new EnumMask<>(range.stages);
-			library.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, data);
+			library.vkCmdPushConstants(buffer, layout, stages, range.offset, range.size, new Handle(data));
 		}
 	}
+	// TODO - use MemorySegment directly rather than Handle?
 }

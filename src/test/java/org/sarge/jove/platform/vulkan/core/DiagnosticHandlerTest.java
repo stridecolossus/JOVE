@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageSeverityFlagsEXT.*;
 import static org.sarge.jove.platform.vulkan.VkDebugUtilsMessageTypeFlagsEXT.*;
 
-import java.lang.foreign.MemorySegment;
 import java.util.Set;
 
 import org.junit.jupiter.api.*;
@@ -12,46 +11,38 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.DiagnosticHandler.*;
-import org.sarge.jove.platform.vulkan.core.InstanceTest.MockInstanceLibrary;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class DiagnosticHandlerTest {
-	private class MockHandlerLibrary implements HandlerLibrary {
+	private class MockHandlerLibrary extends MockLibrary implements HandlerLibrary {
 		@Override
 		public VkResult vkCreateDebugUtilsMessengerEXT(Instance instance, VkDebugUtilsMessengerCreateInfoEXT pCreateInfo, Handle pAllocator, Pointer pHandler) {
-			// Check create descriptor
+			assertEquals(VkStructureType.DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT, pCreateInfo.sType);
 			assertEquals(0, pCreateInfo.flags);
 			assertEquals(new EnumMask<>(GENERAL_EXT, VALIDATION_EXT), pCreateInfo.messageType);
 			assertEquals(new EnumMask<>(WARNING_EXT, ERROR_EXT), pCreateInfo.messageSeverity);
 			assertNotNull(pCreateInfo.pfnUserCallback);
 			assertEquals(null, pCreateInfo.pUserData);
-
-			// Check parameters
 			assertEquals(DiagnosticHandlerTest.this.instance, instance);
-			assertEquals(null, pAllocator);
-
-			// Init handler
-			pHandler.set(MemorySegment.ofAddress(2));
+			init(pHandler);
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public void vkDestroyDebugUtilsMessengerEXT(Instance instance, DiagnosticHandler handler, Handle pAllocator) {
 			assertEquals(DiagnosticHandlerTest.this.instance, instance);
-			destroyed = true;
 		}
 	}
 
 	private DiagnosticHandler handler;
 	private Instance instance;
-	private HandlerLibrary lib;
-	private boolean destroyed;
+	private MockHandlerLibrary library;
 
 	@BeforeEach
 	void before() {
-		lib = new MockHandlerLibrary();
-		instance = new Instance(new Handle(1), new MockInstanceLibrary());
-		handler = new DiagnosticHandler(new Handle(2), instance, lib);
+		library = new MockHandlerLibrary();
+		instance = new MockInstance();
+		handler = new DiagnosticHandler(new Handle(2), instance, library);
 	}
 
 	@Test
@@ -81,7 +72,6 @@ class DiagnosticHandlerTest {
 	@Test
 	void destroy() {
 		handler.destroy();
-		assertEquals(true, handler.isDestroyed());
-		assertEquals(true, destroyed);
+		assertTrue(handler.isDestroyed());
 	}
 }

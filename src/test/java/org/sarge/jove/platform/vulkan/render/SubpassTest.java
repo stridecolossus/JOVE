@@ -7,7 +7,6 @@ import java.util.function.IntFunction;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
 import org.sarge.jove.util.EnumMask;
@@ -18,7 +17,7 @@ class SubpassTest {
 
 	@BeforeEach
 	void before() {
-		final IntFunction<View> views = _ -> new MockView(new MockLogicalDevice());
+		final IntFunction<View> views = _ -> new MockView();
 		colour = new Attachment(AttachmentType.COLOUR, AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT), views);
 		depth = new Attachment(AttachmentType.DEPTH, AttachmentDescription.depth(VkFormat.D32_SFLOAT), views);
 		subpass = new Subpass(Set.of(), List.of(colour.reference(), depth.reference()));

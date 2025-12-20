@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -11,13 +9,12 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.Sampler.AddressMode;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class SamplerTest {
-	private static class MockSamplerLibrary extends MockVulkanLibrary {
-		@Override
+	@SuppressWarnings("unused")
+	static class MockSamplerLibrary extends MockLibrary {
 		public VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler) {
-			assertNotNull(device);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(VkFilter.LINEAR, pCreateInfo.minFilter);
 			assertEquals(VkFilter.LINEAR, pCreateInfo.magFilter);
@@ -31,26 +28,30 @@ class SamplerTest {
 			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeW);
 			assertEquals(VkBorderColor.FLOAT_TRANSPARENT_BLACK, pCreateInfo.borderColor);
 			assertEquals(false, pCreateInfo.unnormalizedCoordinates);
-			pSampler.set(MemorySegment.ofAddress(2));
+			init(pSampler);
 			return VkResult.VK_SUCCESS;
 		}
 	}
 
 	private Sampler sampler;
-	private LogicalDevice device;
-	private MockSamplerLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockSamplerLibrary();
-		device = new MockLogicalDevice(library);
-		sampler = new Sampler.Builder().build(device);
+		mockery = new Mockery(new MockSamplerLibrary(), Sampler.Library.class);
+		sampler = new Sampler.Builder().build(new MockLogicalDevice(mockery.proxy()));
+	}
+
+	@Test
+	void constructor() {
+		assertFalse(sampler.isDestroyed());
 	}
 
 	@Test
 	void destroy() {
 		sampler.destroy();
-		assertEquals(true, sampler.isDestroyed());
+		assertTrue(sampler.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroySampler").count());
 	}
 
 	@Nested
@@ -81,7 +82,7 @@ class SamplerTest {
 
 		@BeforeEach
 		void before() {
-			view = new View(new Handle(2), device, new MockImage(), true);
+			view = new MockView();
 			resource = sampler.new SamplerResource(view);
 		}
 

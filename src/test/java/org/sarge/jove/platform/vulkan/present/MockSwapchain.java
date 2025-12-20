@@ -6,25 +6,14 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.MockView;
+import org.sarge.jove.util.Mockery;
 
 public class MockSwapchain extends Swapchain {
-	private boolean invalid;
+	public boolean invalid;
 
-	public MockSwapchain(LogicalDevice device) {
-		final var attachment = new MockView(device);
-		super(new Handle(2), device, List.of(attachment));
-	}
-
-	public void invalidate() {
-		invalid = true;
-	}
-
-	@Override
-	public int acquire(VulkanSemaphore semaphore, Fence fence) throws Invalidated {
-		if(invalid) {
-			throw new Invalidated(VkResult.VK_ERROR_DEVICE_LOST);
-		}
-		return super.acquire(semaphore, fence);
+	public MockSwapchain() {
+		final var library = new Mockery(Swapchain.Library.class).proxy();
+		super(new Handle(2), new MockLogicalDevice(library), List.of(new MockView()));
 	}
 
 	@Override
@@ -32,6 +21,5 @@ public class MockSwapchain extends Swapchain {
 		if(invalid) {
 			throw new Invalidated(VkResult.VK_ERROR_DEVICE_LOST);
 		}
-		super.present(queue, index, semaphores);
 	}
 }

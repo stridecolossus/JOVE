@@ -2,24 +2,18 @@ package org.sarge.jove.platform.vulkan.memory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.*;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.memory.MemoryType.Heap;
 
 class MemoryPoolTest {
 	private MemoryPool pool;
-	private MemoryType type;
-	private LogicalDevice device;
 	private Allocator allocator;
 
 	@BeforeEach
 	void before() {
-		device = new MockLogicalDevice(new MockMemoryLibrary());
-		type = new MemoryType(0, new Heap(0, Set.of()), Set.of());
-		allocator = new Allocator(device, new MemoryType[]{type});
-		pool = new MemoryPool(type);
+		allocator = new MockAllocator();
+		pool = new MemoryPool(MockAllocator.MEMORY_TYPE);
 	}
 
 	@DisplayName("A new pool...")
@@ -50,7 +44,7 @@ class MemoryPoolTest {
     	@DisplayName("can add new memory blocks")
     	@Test
     	void add() {
-    		pool.add(new Block(allocator.allocate(type, 2)));
+    		pool.add(new Block(allocator.allocate(MockAllocator.MEMORY_TYPE, 2)));
     		assertEquals(2, pool.size());
     		assertEquals(2, pool.free());
     		assertEquals(1, pool.blocks());
@@ -65,7 +59,7 @@ class MemoryPoolTest {
 
 		@BeforeEach
 		void before() {
-			block = new Block(allocator.allocate(type, 2));
+			block = new Block(allocator.allocate(MockAllocator.MEMORY_TYPE, 2));
     		pool.add(block);
 		}
 
@@ -74,7 +68,7 @@ class MemoryPoolTest {
 		void allocate() {
 			final DeviceMemory memory = pool.allocate(1).get();
 			assertEquals(1, memory.size());
-			assertEquals(type, memory.type());
+			assertEquals(MockAllocator.MEMORY_TYPE, memory.type());
 			assertEquals(false, memory.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(1, pool.free());
@@ -108,7 +102,7 @@ class MemoryPoolTest {
 
 		@BeforeEach
 		void before() {
-    		pool.add(new Block(allocator.allocate(type, 2)));
+    		pool.add(new Block(allocator.allocate(MockAllocator.MEMORY_TYPE, 2)));
 			memory = pool.allocate(1).get();
 		}
 
@@ -117,7 +111,7 @@ class MemoryPoolTest {
 		void allocate() {
 			final DeviceMemory remaining = pool.allocate(1).get();
 			assertEquals(1, remaining.size());
-			assertEquals(type, remaining.type());
+			assertEquals(MockAllocator.MEMORY_TYPE, remaining.type());
 			assertEquals(false, remaining.isDestroyed());
 			assertEquals(2, pool.size());
 			assertEquals(0, pool.free());
@@ -160,7 +154,7 @@ class MemoryPoolTest {
 	class Exhausted {
 		@BeforeEach
 		void before() {
-    		pool.add(new Block(allocator.allocate(type, 2)));
+    		pool.add(new Block(allocator.allocate(MockAllocator.MEMORY_TYPE, 2)));
 			pool.allocate(2).get();
 		}
 
@@ -179,7 +173,7 @@ class MemoryPoolTest {
 
 		@BeforeEach
 		void before() {
-    		pool.add(new Block(allocator.allocate(type, 2)));
+    		pool.add(new Block(allocator.allocate(MockAllocator.MEMORY_TYPE, 2)));
 			memory = pool.allocate(2).get();
 			memory.destroy();
 		}

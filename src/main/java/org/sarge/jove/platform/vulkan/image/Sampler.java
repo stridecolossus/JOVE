@@ -8,7 +8,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.EnumMask;
@@ -23,7 +23,7 @@ public class Sampler extends VulkanObject {
 	 * @param handle		Sampler handle
 	 * @param device		Logical device
 	 */
-	Sampler(Handle handle, DeviceContext device) {
+	Sampler(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
@@ -305,7 +305,7 @@ public class Sampler extends VulkanObject {
 		 * @param pSampler			Returned sampler handle
 		 * @return Result
 		 */
-		VkResult vkCreateSampler(DeviceContext device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler);
+		VkResult vkCreateSampler(LogicalDevice device, VkSamplerCreateInfo pCreateInfo, Handle pAllocator, Pointer pSampler);
 
 		/**
 		 * Destroys a sampler.
@@ -313,6 +313,6 @@ public class Sampler extends VulkanObject {
 		 * @param sampler			Sampler
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySampler(DeviceContext device, Sampler sampler, Handle pAllocator);
+		void vkDestroySampler(LogicalDevice device, Sampler sampler, Handle pAllocator);
 	}
 }

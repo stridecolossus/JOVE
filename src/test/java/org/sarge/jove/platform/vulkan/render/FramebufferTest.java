@@ -2,8 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
@@ -11,16 +9,13 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.present.MockSwapchain;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class FramebufferTest {
-	static class MockFramebufferLibrary extends MockVulkanLibrary {
-		public boolean begin;
-		public boolean end;
-		public boolean destroyed;
-
-		@Override
+	@SuppressWarnings("unused")
+	private static class MockFramebufferLibrary extends MockLibrary {
 		public VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer) {
+			assertEquals(VkStructureType.FRAMEBUFFER_CREATE_INFO, pCreateInfo.sType);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertNotNull(pCreateInfo.renderPass);
 			assertNotEquals(0, pCreateInfo.attachmentCount);
@@ -28,12 +23,12 @@ class FramebufferTest {
 			assertEquals(640, pCreateInfo.width);
 			assertEquals(480, pCreateInfo.height);
 			assertEquals(1, pCreateInfo.layers);
-			pFramebuffer.set(MemorySegment.ofAddress(3));
+			init(pFramebuffer);
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public void vkCmdBeginRenderPass(Buffer commandBuffer, VkRenderPassBeginInfo pRenderPassBegin, VkSubpassContents contents) {
+			assertEquals(VkStructureType.RENDER_PASS_BEGIN_INFO, pRenderPassBegin.sType);
 			assertNotNull(pRenderPassBegin.renderPass);
 			assertNotNull(pRenderPassBegin.framebuffer);
 			assertEquals(0, pRenderPassBegin.renderArea.offset.x);
@@ -47,60 +42,63 @@ class FramebufferTest {
 			if(colour != null) {
 				assertArrayEquals(new float[]{0, 0, 0, 1}, colour.float32);
 			}
-
-			begin = true;
-		}
-
-		@Override
-		public void vkCmdEndRenderPass(Buffer commandBuffer) {
-			end = true;
-		}
-
-		@Override
-		public void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator) {
-			destroyed = true;
 		}
 	}
 
 	private Framebuffer framebuffer;
-	private MockFramebufferLibrary library;
 	private LogicalDevice device;
-	private RenderPass pass;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockFramebufferLibrary();
-		device = new MockLogicalDevice(library);
-		pass = new MockRenderPass(device);
-		framebuffer = new Framebuffer(new Handle(1), pass, new Dimensions(640, 480));
+		mockery = new Mockery(new MockFramebufferLibrary(), Framebuffer.Library.class, RenderPass.Library.class);
+		device = new MockLogicalDevice(mockery.proxy());
+		framebuffer = new Framebuffer(new Handle(1), device, new MockRenderPass(), new Dimensions(640, 480));
+	}
+
+	@Test
+	void constructor() {
+		assertFalse(framebuffer.isDestroyed());
 	}
 
 	@Test
 	void begin() {
 		final Command begin = framebuffer.begin(VkSubpassContents.INLINE);
 		begin.execute(null);
-		assertEquals(true, library.begin);
+		assertEquals(1, mockery.mock("vkCmdBeginRenderPass").count());
 	}
 
 	@Test
 	void end() {
 		final Command end = framebuffer.end();
 		end.execute(null);
-		assertEquals(true, library.end);
+		assertEquals(1, mockery.mock("vkCmdEndRenderPass").count());
 	}
 
 	@Test
 	void destroy() {
 		framebuffer.destroy();
-		assertEquals(true, framebuffer.isDestroyed());
-		assertEquals(true, library.destroyed);
+		assertTrue(framebuffer.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyFramebuffer").count());
 	}
 
 	@Test
 	void factory() {
+		final var pass = new MockRenderPass() {
+			@Override
+			public LogicalDevice device() {
+				return device;
+			}
+		};
 		final var factory = new Framebuffer.Factory(pass);
-		final var swapchain = new MockSwapchain(device);
+		final var swapchain = new MockSwapchain() {
+			@Override
+			public int attachments() {
+				return 3;
+			}
+		};
 		factory.build(swapchain);
+		assertEquals(3, mockery.mock("vkCreateFramebuffer").count());
 		assertNotNull(factory.framebuffer(0));
 	}
 }

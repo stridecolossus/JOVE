@@ -1,14 +1,12 @@
 package org.sarge.jove.platform.vulkan.core;
 
 import org.sarge.jove.common.Handle;
+import org.sarge.jove.util.Mockery;
 
 public class MockVulkanSemaphore extends VulkanSemaphore {
-	public MockVulkanSemaphore(LogicalDevice device) {
-		super(new Handle(1), device);
-	}
-
 	public MockVulkanSemaphore() {
-		this(new MockLogicalDevice());
+		final var library = new Mockery(VulkanSemaphore.Library.class).proxy();
+		super(new Handle(1), new MockLogicalDevice(library));
 	}
 
 	@Override

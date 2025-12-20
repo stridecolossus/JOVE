@@ -7,6 +7,10 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+blog
+- move mesh load/persist -> model loader chapter
+- check cube vertices in perspective.md
+
 blog - physical device refers to NativeParameter
 
 blog - add section for minimised/closed windows ~ callbacks, recreation
@@ -19,7 +23,8 @@ mesh loader: 1. still needs custom indexed implementation, 2. nasty ByteBuffer f
 interpolation expansion: colours, vector, quaternion, etc?
 
 helper for 'wrappers' that are not native objects (i.e. not destroyed) but compose and optionally destroy their dependencies?
-e.g. VertexBuffer, View
+buffers - VBO, index, resource (uniform), flag on buffer itself, these classes replicate logic? default boolean autoRelease() ?
+View - done
 
 we would want to configure pipeline stage from YAML like files, fluid builder less important (?)
 

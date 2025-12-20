@@ -39,7 +39,7 @@ public class VulkanBuffer extends VulkanObject {
 	 * @param memory		Buffer memory
 	 * @param length		Length of this buffer (bytes)
 	 */
-	VulkanBuffer(Handle handle, DeviceContext device, Set<VkBufferUsageFlags> usage, DeviceMemory memory, long length) {
+	protected VulkanBuffer(Handle handle, LogicalDevice device, Set<VkBufferUsageFlags> usage, DeviceMemory memory, long length) {
 		super(handle, device);
 		this.usage = Set.copyOf(usage);
 		this.memory = requireNonNull(memory);
@@ -195,90 +195,103 @@ public class VulkanBuffer extends VulkanObject {
 	}
 
 	/**
-	 * Creates a buffer.
-	 * @param allocator			Memory allocator
-	 * @param length			Length (bytes)
-	 * @param properties		Memory properties
-	 * @return New buffer
-	 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
+	 * Factory for Vulkan buffers.
 	 */
-	public static VulkanBuffer create(Allocator allocator, long length, MemoryProperties<VkBufferUsageFlags> properties) {
-		// TODO
-		if(properties.mode() == VkSharingMode.CONCURRENT) {
-			throw new UnsupportedOperationException();
+	public record Factory(Allocator allocator) {
+		/**
+		 * Constructor.
+		 * @param allocator Memory allocator
+		 */
+		public Factory {
+			requireNonNull(allocator);
 		}
-		// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
-		// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
-		// - queueFamilyIndexCount
 
-		// Build buffer descriptor
-		final var info = new VkBufferCreateInfo();
-		info.sType = VkStructureType.BUFFER_CREATE_INFO;
-		info.flags = new EnumMask<>();
-		info.usage = new EnumMask<>(properties.usage());
-		info.sharingMode = properties.mode();
-		info.size = requireOneOrMore(length);
-		// TODO - queue families
+		/**
+		 * Creates a buffer.
+		 * @param allocator			Memory allocator
+		 * @param length			Length (bytes)
+		 * @param properties		Memory properties
+		 * @return New buffer
+		 * @throws IllegalArgumentException if the buffer length is zero or the usage set is empty
+		 */
+		public VulkanBuffer create(long length, MemoryProperties<VkBufferUsageFlags> properties) {
+			// TODO
+			if(properties.mode() == VkSharingMode.CONCURRENT) {
+				throw new UnsupportedOperationException();
+			}
+			// - VkSharingMode.VK_SHARING_MODE_CONCURRENT
+			// - queue families (unique, < vkGetPhysicalDeviceQueueFamilyProperties)
+			// - queueFamilyIndexCount
 
-		// Allocate buffer
-		final LogicalDevice device = allocator.device();
-		final Library library = device.library();
-		final Pointer pointer = new Pointer();
-		library.vkCreateBuffer(device, info, null, pointer);
+			// Build buffer descriptor
+			final var info = new VkBufferCreateInfo();
+			info.sType = VkStructureType.BUFFER_CREATE_INFO;
+			info.flags = new EnumMask<>();
+			info.usage = new EnumMask<>(properties.usage());
+			info.sharingMode = properties.mode();
+			info.size = requireOneOrMore(length);
+			// TODO - queue families
 
-		// Query memory requirements
-		final Handle handle = pointer.handle();
-		final var requirements = new VkMemoryRequirements();
-		library.vkGetBufferMemoryRequirements(device, handle, requirements);
+			// Allocate buffer
+			final LogicalDevice device = allocator.device();
+			final Library library = device.library();
+			final Pointer pointer = new Pointer();
+			library.vkCreateBuffer(device, info, null, pointer);
 
-		// Allocate buffer memory
-		final DeviceMemory memory = allocator.allocate(requirements, properties);
+			// Query memory requirements
+			final Handle handle = pointer.handle();
+			final var requirements = new VkMemoryRequirements();
+			library.vkGetBufferMemoryRequirements(device, handle, requirements);
 
-		// Bind memory
-		library.vkBindBufferMemory(device, handle, memory, 0L);
+			// Allocate buffer memory
+			final DeviceMemory memory = allocator.allocate(requirements, properties);
 
-		// Create buffer
-		return new VulkanBuffer(handle, device, properties.usage(), memory, length);
-	}
+			// Bind memory
+			library.vkBindBufferMemory(device, handle, memory, 0L);
 
-	/**
-	 * Helper.
-	 * Creates a staging buffer for data to be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
-	 * <p>
-	 * The buffer has the following properties:
-	 * <ul>
-	 * <li>{@link VkBufferUsageFlags#TRANSFER_SRC}</li>
-	 * <li>{@link VkMemoryProperty#HOST_VISIBLE}</li>
-	 * <li>{@link VkMemoryProperty#HOST_COHERENT}</li>
-	 * <li>{@link VkMemoryProperty#DEVICE_LOCAL}</li>
-	 * </ul>
-	 * @param allocator		Memory allocator
-	 * @param length		Buffer length
-	 * @return New staging buffer
-	 */
-	public static VulkanBuffer staging(Allocator allocator, long length) {
-		final var properties = new MemoryProperties.Builder<VkBufferUsageFlags>()
-				.usage(VkBufferUsageFlags.TRANSFER_SRC)
-				.required(HOST_VISIBLE)
-				.required(HOST_COHERENT)
-				.optimal(DEVICE_LOCAL)
-				.build();
+			// Create buffer
+			return new VulkanBuffer(handle, device, properties.usage(), memory, length);
+		}
 
-		return create(allocator, length, properties);
-	}
+		/**
+		 * Helper.
+		 * Creates a staging buffer for data to be copied to {@link VkMemoryProperty#DEVICE_LOCAL} memory.
+		 * <p>
+		 * The buffer has the following properties:
+		 * <ul>
+		 * <li>{@link VkBufferUsageFlags#TRANSFER_SRC}</li>
+		 * <li>{@link VkMemoryProperty#HOST_VISIBLE}</li>
+		 * <li>{@link VkMemoryProperty#HOST_COHERENT}</li>
+		 * <li>{@link VkMemoryProperty#DEVICE_LOCAL}</li>
+		 * </ul>
+		 * @param allocator		Memory allocator
+		 * @param length		Buffer length
+		 * @return New staging buffer
+		 */
+		public VulkanBuffer staging(long length) {
+			final var properties = new MemoryProperties.Builder<VkBufferUsageFlags>()
+					.usage(VkBufferUsageFlags.TRANSFER_SRC)
+					.required(HOST_VISIBLE)
+					.required(HOST_COHERENT)
+					.optimal(DEVICE_LOCAL)
+					.build();
 
-	/**
-	 * Helper.
-	 * Creates and populates a staging buffer.
-	 * @param allocator		Memory allocator
-	 * @param data			Data to be staged
-	 * @return New staging buffer
-	 * @see #staging(Allocator, long)
-	 */
-	public static VulkanBuffer staging(Allocator allocator, MemorySegment data) {
-		final var staging = staging(allocator, data.byteSize());
-		staging.map().copyFrom(data);
-		return staging;
+			return create(length, properties);
+		}
+
+		/**
+		 * Helper.
+		 * Creates and populates a staging buffer.
+		 * @param allocator		Memory allocator
+		 * @param data			Data to be staged
+		 * @return New staging buffer
+		 * @see #staging(Allocator, long)
+		 */
+		public VulkanBuffer staging(MemorySegment data) {
+			final var staging = staging(data.byteSize());
+			staging.map().copyFrom(data);
+			return staging;
+		}
 	}
 
 	/**
@@ -293,7 +306,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Returned buffer handle
 		 * @return Result
 		 */
-		VkResult vkCreateBuffer(DeviceContext device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer);
+		VkResult vkCreateBuffer(LogicalDevice device, VkBufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pBuffer);
 
 		/**
 		 * Destroys a buffer.
@@ -301,7 +314,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer			Buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyBuffer(DeviceContext device, VulkanBuffer pBuffer, Handle pAllocator);
+		void vkDestroyBuffer(LogicalDevice device, VulkanBuffer pBuffer, Handle pAllocator);
 
 		/**
 		 * Queries the memory requirements of the given buffer.
@@ -309,7 +322,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param pBuffer					Buffer
 		 * @param pMemoryRequirements		Returned memory requirements
 		 */
-		void vkGetBufferMemoryRequirements(DeviceContext device, Handle pBuffer, @Updated VkMemoryRequirements pMemoryRequirements);
+		void vkGetBufferMemoryRequirements(LogicalDevice device, Handle pBuffer, @Updated VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds the memory for the given buffer.
@@ -319,7 +332,7 @@ public class VulkanBuffer extends VulkanObject {
 		 * @param memoryOffset		Offset
 		 * @return Result
 		 */
-		VkResult vkBindBufferMemory(DeviceContext device, Handle pBuffer, DeviceMemory memory, long memoryOffset);
+		VkResult vkBindBufferMemory(LogicalDevice device, Handle pBuffer, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Binds a vertex buffer.

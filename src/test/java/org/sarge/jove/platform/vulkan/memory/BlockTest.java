@@ -19,7 +19,7 @@ public class BlockTest {
 	void before() {
 		final var device = new MockLogicalDevice(new MockMemoryLibrary());
 		allocator = Arena.ofAuto();
-		memory = new DefaultDeviceMemory(new Handle(allocator.allocate(3)), device, MockAllocator.TYPE, 3);
+		memory = new DefaultDeviceMemory(new Handle(allocator.allocate(3)), device, MockAllocator.MEMORY_TYPE, 3);
 		block = new Block(memory);
 	}
 

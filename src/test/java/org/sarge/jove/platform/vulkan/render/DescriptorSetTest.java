@@ -2,7 +2,6 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -13,16 +12,13 @@ import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet.*;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 public class DescriptorSetTest {
-	private static class MockDescriptorSetLibrary extends MockVulkanLibrary {
-		private boolean updated;
-		private boolean bound;
-
-		@Override
+	@SuppressWarnings("unused")
+	private static class MockDescriptorSetLibrary extends MockLibrary {
 		public VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout) {
-			assertNotNull(device);
+			assertEquals(VkStructureType.DESCRIPTOR_SET_LAYOUT_CREATE_INFO, pCreateInfo.sType);
 			assertEquals(new EnumMask<>(), pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.bindingCount);
 			assertEquals(1, pCreateInfo.pBindings.length);
@@ -32,59 +28,47 @@ public class DescriptorSetTest {
 			assertEquals(2, pCreateInfo.pBindings[0].descriptorCount);
 			assertEquals(new EnumMask<>(VkShaderStageFlags.FRAGMENT), pCreateInfo.pBindings[0].stageFlags);
 
-			pSetLayout.set(MemorySegment.ofAddress(3));
+			init(pSetLayout);
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool) {
-			assertNotNull(device);
 			assertEquals(new EnumMask<>(VkDescriptorPoolCreateFlags.FREE_DESCRIPTOR_SET), pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.poolSizeCount);
 			assertEquals(1, pCreateInfo.pPoolSizes.length);
 			assertEquals(2, pCreateInfo.pPoolSizes[0].descriptorCount);
 			assertEquals(VkDescriptorType.SAMPLER, pCreateInfo.pPoolSizes[0].type);
-			pDescriptorPool.set(MemorySegment.ofAddress(4));
+			init(pDescriptorPool);
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, Handle[] pDescriptorSets) {
-			assertNotNull(device);
-			assertNotNull(pAllocateInfo.descriptorPool);
+			assertEquals(VkStructureType.DESCRIPTOR_SET_ALLOCATE_INFO, pAllocateInfo.sType);
 			assertEquals(pDescriptorSets.length, pAllocateInfo.descriptorSetCount);
 			assertEquals(1, pAllocateInfo.pSetLayouts.length);
-			Arrays.fill(pDescriptorSets, new Handle(5));
+			init(pDescriptorSets, new Handle(1));
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public void vkUpdateDescriptorSets(LogicalDevice device, int descriptorWriteCount, VkWriteDescriptorSet[] pDescriptorWrites, int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies) {
-			assertNotNull(device);
-			assertEquals(1, descriptorWriteCount);
-			assertEquals(1, pDescriptorWrites.length);
+			for(var write : pDescriptorWrites) {
+				assertEquals(VkStructureType.WRITE_DESCRIPTOR_SET, write.sType);
+				assertEquals(1, write.dstBinding);
+				assertEquals(VkDescriptorType.SAMPLER, write.descriptorType);
+				assertEquals(1, write.descriptorCount);
+				assertEquals(0, write.dstArrayElement);
+			}
+			assertEquals(descriptorWriteCount, pDescriptorWrites.length);
 			assertEquals(0, descriptorCopyCount);
 			assertEquals(null, pDescriptorCopies);
-
-			assertEquals(1, pDescriptorWrites[0].dstBinding);
-			assertEquals(VkDescriptorType.SAMPLER, pDescriptorWrites[0].descriptorType);
-			assertEquals(1, pDescriptorWrites[0].descriptorCount);
-			assertEquals(0, pDescriptorWrites[0].dstArrayElement);
-			assertEquals(new Handle(2), pDescriptorWrites[0].dstSet);
-
-			updated = true;
 		}
 
-		@Override
 		public void vkCmdBindDescriptorSets(Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, PipelineLayout layout, int firstSet, int descriptorSetCount, DescriptorSet[] pDescriptorSets, int dynamicOffsetCount, int[] pDynamicOffsets) {
 			assertEquals(VkPipelineBindPoint.GRAPHICS, pipelineBindPoint);
 			assertEquals(0, firstSet);
-			assertEquals(1, descriptorSetCount);
-			assertEquals(1, pDescriptorSets.length);
-			assertEquals(new Handle(2), pDescriptorSets[0].handle());
+			assertEquals(descriptorSetCount, pDescriptorSets.length);
 			assertEquals(0, dynamicOffsetCount);
 			assertEquals(null, pDynamicOffsets);
-			bound = true;
 		}
 	}
 
@@ -92,13 +76,13 @@ public class DescriptorSetTest {
 	private DescriptorSet set;
 	private Resource resource;
 	private LogicalDevice device;
-	private MockDescriptorSetLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
 		// Init device
-		library = new MockDescriptorSetLibrary();
-		device = new MockLogicalDevice(library);
+		mockery = new Mockery(new MockDescriptorSetLibrary(), DescriptorSet.Library.class);
+		device = new MockLogicalDevice(mockery.proxy());
 
 		// Create layout with a sampler binding
 		binding = new Binding(1, VkDescriptorType.SAMPLER, 2, Set.of(VkShaderStageFlags.FRAGMENT));
@@ -181,7 +165,7 @@ public class DescriptorSetTest {
 	void update() {
 		set.set(binding, resource);
 		assertEquals(1, DescriptorSet.update(device, List.of(set)));
-		assertEquals(true, library.updated);
+		assertEquals(1, mockery.mock("vkUpdateDescriptorSets").count());
 	}
 
 	@Test
@@ -198,9 +182,15 @@ public class DescriptorSetTest {
 
 	@Test
 	void bind() {
-		final Command bind = set.bind(new MockPipelineLayout(device));
+		final var pipeline = new MockPipelineLayout() {
+			@Override
+			public LogicalDevice device() {
+				return device;
+			}
+		};
+		final Command bind = set.bind(pipeline);
 		bind.execute(null);
-		assertEquals(true, library.bound);
+		assertEquals(1, mockery.mock("vkCmdBindDescriptorSets").count());
 	}
 
 	@Test

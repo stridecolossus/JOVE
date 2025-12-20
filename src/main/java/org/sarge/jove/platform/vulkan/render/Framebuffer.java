@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.image.*;
@@ -27,10 +27,10 @@ public class Framebuffer extends VulkanObject {
 	 * Constructor.
 	 * @param handle 		Handle
 	 * @param device		Logical device
+	 * @param pass			Render pass
 	 * @param extents		Framebuffer extents
 	 */
-	Framebuffer(Handle handle, RenderPass pass, Dimensions extents) {
-		final var device = pass.device();
+	Framebuffer(Handle handle, LogicalDevice device, RenderPass pass, Dimensions extents) {
 		super(handle, device);
 		this.library = device.library();
 		this.pass = requireNonNull(pass);
@@ -180,13 +180,13 @@ public class Framebuffer extends VulkanObject {
 			info.layers = 1; // TODO - layers?
 
 			// Allocate frame buffer
-			final DeviceContext device = pass.device();
+			final LogicalDevice device = pass.device();
 			final Library library = device.library();
 			final Pointer pointer = new Pointer();
 			library.vkCreateFramebuffer(device, info, null, pointer);
 
 			// Create frame buffer
-			return new Framebuffer(pointer.handle(), pass, extents);
+			return new Framebuffer(pointer.handle(), device, pass, extents);
 		}
 
 		@Override
@@ -209,7 +209,7 @@ public class Framebuffer extends VulkanObject {
 		 * @param pAllocator		Allocator
 		 * @param pFramebuffer		Returned frame buffer handle
 		 */
-		VkResult vkCreateFramebuffer(DeviceContext device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer);
+		VkResult vkCreateFramebuffer(LogicalDevice device, VkFramebufferCreateInfo pCreateInfo, Handle pAllocator, Pointer pFramebuffer);
 
 		/**
 		 * Destroys a frame buffer.
@@ -217,7 +217,7 @@ public class Framebuffer extends VulkanObject {
 		 * @param framebuffer		Frame buffer
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyFramebuffer(DeviceContext device, Framebuffer framebuffer, Handle pAllocator);
+		void vkDestroyFramebuffer(LogicalDevice device, Framebuffer framebuffer, Handle pAllocator);
 
 		/**
 		 * Begins a render pass.

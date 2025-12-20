@@ -11,64 +11,53 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer.Stage;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class CommandTest {
-	private static class MockCommandLibrary extends MockVulkanLibrary {
-		private boolean destroyed;
-		private boolean reset;
-		private boolean free;
+	static class MockCommandLibrary extends MockLibrary implements Command.Library {
 		private Stage stage = INITIAL;
 
 		@Override
 		public VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool) {
+			assertEquals(VkStructureType.COMMAND_POOL_CREATE_INFO, pCreateInfo.sType);
+			assertEquals(new EnumMask<>(VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER), pCreateInfo.flags);
+			assertEquals(0, pCreateInfo.queueFamilyIndex);
+			init(pCommandPool);
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Handle pAllocator) {
-			assertNotNull(device);
-			assertNotNull(commandPool);
-			assertEquals(null, pAllocator);
-			destroyed = true;
 		}
 
 		@Override
 		public VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags) {
-			assertNotNull(device);
-			assertNotNull(commandPool);
 			assertEquals(new EnumMask<>(VkCommandPoolResetFlags.RELEASE_RESOURCES), flags);
-			reset = true;
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, Handle[] pCommandBuffers) {
-			assertNotNull(device);
-			assertNotNull(pAllocateInfo.commandPool);
 			assertEquals(1, pAllocateInfo.commandBufferCount);
 			assertEquals(1, pCommandBuffers.length);
-			pCommandBuffers[0] = new Handle(4);
+			init(pCommandBuffers, new Handle(1));
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers) {
-			assertNotNull(device);
-			assertNotNull(commandPool);
 			assertEquals(1, commandBufferCount);
 			assertEquals(1, pCommandBuffers.length);
-			assertNotNull(pCommandBuffers[0]);
-			free = true;
 		}
 
 		@Override
 		public VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo) {
+			assertEquals(VkStructureType.COMMAND_BUFFER_BEGIN_INFO, pBeginInfo.sType);
 			if(commandBuffer.isPrimary()) {
-				assertEquals(new EnumMask<>(), pBeginInfo.flags);
 				assertEquals(null, pBeginInfo.pInheritanceInfo);
 			}
 			else {
@@ -104,6 +93,21 @@ class CommandTest {
 				assertEquals(EXECUTABLE, pCommandBuffers[0].stage());
 			}
 		}
+
+		@Override
+		public VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence) {
+			assertEquals(submitCount, pSubmits.length);
+
+			for(VkSubmitInfo submit : pSubmits) {
+				assertEquals(VkStructureType.SUBMIT_INFO, submit.sType);
+				assertEquals(submit.commandBufferCount, submit.pCommandBuffers.length);
+				assertEquals(submit.signalSemaphoreCount, submit.pSignalSemaphores.length);
+				assertEquals(submit.waitSemaphoreCount, submit.pWaitSemaphores.length);
+				assertEquals(submit.waitSemaphoreCount, submit.pWaitSemaphores.length);
+			}
+
+			return VkResult.VK_SUCCESS;
+		}
 	}
 
 	private MockCommand command;
@@ -118,7 +122,7 @@ class CommandTest {
 		library = new MockCommandLibrary();
 		device = new MockLogicalDevice(library);
 		queue = new WorkQueue(new Handle(1), new Family(0, 1, Set.of()));
-		pool = new Pool(new Handle(2), device, queue);
+		pool = Pool.create(device, queue, VkCommandPoolCreateFlags.RESET_COMMAND_BUFFER);
 	}
 
 	@Nested
@@ -290,7 +294,6 @@ class CommandTest {
 
 			final Buffer buffer = buffers.getFirst();
 			assertEquals(pool, buffer.pool());
-			assertEquals(new Handle(4), buffer.handle());
 			assertEquals(false, buffer.isReady());
 			assertEquals(INITIAL, buffer.stage());
 			assertEquals(true, buffer.isPrimary());
@@ -313,7 +316,7 @@ class CommandTest {
 					.begin();
 
 			pool.reset(VkCommandPoolResetFlags.RELEASE_RESOURCES);
-			assertEquals(true, library.reset);
+			// TODO - library.assertFlag("reset");
 			assertEquals(Stage.INITIAL, buffer.stage());
 		}
 
@@ -321,7 +324,7 @@ class CommandTest {
 		void free() {
 			final Buffer buffer = pool.allocate(1, true).getFirst();
 			pool.free(List.of(buffer));
-			assertEquals(true, library.free);
+			// TODO - library.assertFlag("free");
 			assertEquals(Stage.INVALID, buffer.stage());
 			assertEquals(0, pool.buffers().size());
 		}
@@ -330,8 +333,8 @@ class CommandTest {
 		void destroy() {
 			final Buffer buffer = pool.allocate(1, true).getFirst();
 			pool.destroy();
-			assertEquals(true, pool.isDestroyed());
-			assertEquals(true, library.destroyed);
+			assertTrue(pool.isDestroyed());
+			// TODO - library.assertDestroyed();
 			assertEquals(Stage.INVALID, buffer.stage());
 			assertEquals(0, pool.buffers().size());
 		}

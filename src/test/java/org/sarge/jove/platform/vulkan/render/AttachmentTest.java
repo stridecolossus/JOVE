@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Colour;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.image.ClearValue.*;
 import org.sarge.jove.platform.vulkan.render.Attachment.*;
@@ -16,7 +15,7 @@ class AttachmentTest {
 
 	@BeforeEach
 	void before() {
-		view = new MockView(new MockLogicalDevice());
+		view = new MockView();
 	}
 
 	@Nested

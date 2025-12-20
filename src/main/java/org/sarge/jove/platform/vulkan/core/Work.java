@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 
 import org.sarge.jove.common.NativeObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.util.EnumMask;
 
@@ -152,7 +151,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 				.toArray(VkSubmitInfo[]::new);
 
 		// Submit batch
-		final LogicalDevice.Library library = pool.device().library();
+		final Command.Library library = pool.device().library();
 		library.vkQueueSubmit(pool.queue(), info.length, info, fence);
 	}
 
@@ -184,7 +183,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public static void submit(Buffer buffer) {
 		// Create bounding fence
-		final DeviceContext device = buffer.pool().device();
+		final LogicalDevice device = buffer.pool().device();
 		final Fence fence = Fence.create(device);
 
 		// Create work instance

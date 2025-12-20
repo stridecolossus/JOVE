@@ -13,13 +13,11 @@ import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.platform.vulkan.image.MockImage;
 import org.sarge.jove.platform.vulkan.pipeline.Barrier.BarrierType.*;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class BarrierTest {
-	private static class MockPipelineLibrary extends MockVulkanLibrary {
-		boolean executed;
-
-		@Override
+	@SuppressWarnings("unused")
+	private static class MockPipelineBarrierLibrary extends MockLibrary {
 		public void vkCmdPipelineBarrier(
 				Buffer commandBuffer,
 				EnumMask<VkPipelineStageFlags> srcStageMask, EnumMask<VkPipelineStageFlags> dstStageMask,
@@ -38,14 +36,13 @@ class BarrierTest {
 			assertEquals(memoryBarrierCount, pMemoryBarriers.length);
 			assertEquals(bufferMemoryBarrierCount, pBufferMemoryBarriers.length);
 			assertEquals(imageMemoryBarrierCount, pImageMemoryBarriers.length);
-			executed = true;
 		}
 	}
 
 	@Test
 	void builder() {
-		final var library = new MockPipelineLibrary();
-		final var device = new MockLogicalDevice(library);
+		final var mockery = new Mockery(new MockPipelineBarrierLibrary(), Pipeline.Library.class);
+		final var device = new MockLogicalDevice(mockery.proxy());
 
 		final Command barrier = new Barrier.Builder()
         		.source(TOP_OF_PIPE)
@@ -55,8 +52,7 @@ class BarrierTest {
 				.build(device);
 
 		barrier.execute(null);
-
-		assertEquals(true, library.executed);
+		assertEquals(1, mockery.mock("vkCmdPipelineBarrier").count());
 	}
 
 	@Test

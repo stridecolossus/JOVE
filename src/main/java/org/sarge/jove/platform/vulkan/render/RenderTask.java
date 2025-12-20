@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.sarge.jove.common.TransientObject;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.present.*;
@@ -55,17 +54,17 @@ public class RenderTask implements Runnable, TransientObject {
 	/**
 	 * Cycle iterator for in-flight frames.
 	 */
-	private static class FrameStateIterator {
+	private class FrameStateIterator {
 		private final List<FrameState> frames;
 		private int index = -1;
 
 		public FrameStateIterator(Swapchain swapchain) {
 			final int number = requireOneOrMore(swapchain.frames());
-			final DeviceContext device = swapchain.device();
+			final LogicalDevice device = swapchain.device();
 
 			this.frames = IntStream
 					.range(0, number)
-					.mapToObj(_ -> FrameState.create(device))
+					.mapToObj(_ -> frame(device))
 					.toList();
 		}
 
@@ -87,6 +86,15 @@ public class RenderTask implements Runnable, TransientObject {
 				f.destroy();
 			}
 		}
+	}
+
+	/**
+	 * Creates a frame instance.
+	 * @param device Logical device
+	 * @return New frame instance
+	 */
+	protected FrameState frame(LogicalDevice device) {
+		return FrameState.create(device);
 	}
 
 	@Override
@@ -125,7 +133,7 @@ public class RenderTask implements Runnable, TransientObject {
 	 */
 	private void recreate() {
 		// Wait for pending rendering tasks
-		final var device = (LogicalDevice) manager.swapchain().device();
+		final LogicalDevice device = manager.device();
 		device.waitIdle();
 
 		// Recreate the swapchain

@@ -8,9 +8,8 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.VulkanBuffer;
 import org.sarge.jove.platform.vulkan.memory.DeviceMemory;
 
 /**
@@ -164,7 +163,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param pAllocator		Allocator
 		 * @param pImage			Returned image handle
 		 */
-		VkResult vkCreateImage(DeviceContext device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage);
+		VkResult vkCreateImage(LogicalDevice device, VkImageCreateInfo pCreateInfo, Handle pAllocator, Pointer pImage);
 
 		/**
 		 * Destroys an image.
@@ -172,7 +171,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param image				Image
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyImage(DeviceContext device, Image image, Handle pAllocator);
+		void vkDestroyImage(LogicalDevice device, Image image, Handle pAllocator);
 
 		/**
 		 * Retrieves the memory requirements for the given image.
@@ -180,7 +179,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param image					Image
 		 * @param pMemoryRequirements	Returned memory requirements
 		 */
-		void vkGetImageMemoryRequirements(DeviceContext device, Handle image, @Updated VkMemoryRequirements pMemoryRequirements);
+		void vkGetImageMemoryRequirements(LogicalDevice device, Handle image, @Updated VkMemoryRequirements pMemoryRequirements);
 
 		/**
 		 * Binds image memory.
@@ -189,7 +188,7 @@ public interface Image extends NativeObject, TransientObject {
 		 * @param memory			Image memory
 		 * @param memoryOffset		Offset
 		 */
-		VkResult vkBindImageMemory(DeviceContext device, Handle image, DeviceMemory memory, long memoryOffset);
+		VkResult vkBindImageMemory(LogicalDevice device, Handle image, DeviceMemory memory, long memoryOffset);
 
 		/**
 		 * Copies an image.

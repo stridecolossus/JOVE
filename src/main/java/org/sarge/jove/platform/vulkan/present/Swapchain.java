@@ -51,7 +51,7 @@ public class Swapchain extends VulkanObject {
 	 * @param device		Logical device
 	 * @param views			Colour attachments
 	 */
-	Swapchain(Handle handle, DeviceContext device, List<View> attachments) {
+	Swapchain(Handle handle, LogicalDevice device, List<View> attachments) {
 		super(handle, device);
 		this.library = device.library();
 		this.attachments = List.copyOf(attachments);
@@ -189,7 +189,7 @@ public class Swapchain extends VulkanObject {
 	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
 	 */
 	public static final class Invalidated extends VulkanException {
-		Invalidated(VkResult result) {
+		protected Invalidated(VkResult result) {
 			super(result);
 		}
 	}
@@ -442,7 +442,7 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Creates the colour attachments.
 		 */
-		private List<View> attachments(LogicalDevice device, Handle swapchain) {
+		protected List<View> attachments(LogicalDevice device, Handle swapchain) {
 			// Retrieve swapchain images
 			final Library library = device.library();
 			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
@@ -504,7 +504,7 @@ public class Swapchain extends VulkanObject {
 		 * @param swapchain			Swapchain
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySwapchainKHR(DeviceContext device, Swapchain swapchain, Handle pAllocator);
+		void vkDestroySwapchainKHR(LogicalDevice device, Swapchain swapchain, Handle pAllocator);
 
 		/**
 		 * Retrieves swapchain image handles.
@@ -514,7 +514,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		VkResult vkGetSwapchainImagesKHR(DeviceContext device, Handle swapchain, IntegerReference pSwapchainImageCount, @Updated Handle[] pSwapchainImages);
+		VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, @Updated Handle[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swapchain.
@@ -527,7 +527,7 @@ public class Swapchain extends VulkanObject {
 		 * @return Success code
 		 * @implNote Returns {@code int} since this method returns multiple success codes
 		 */
-		int vkAcquireNextImageKHR(DeviceContext device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
+		int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex);
 
 		/**
 		 * Presents to the swapchain.

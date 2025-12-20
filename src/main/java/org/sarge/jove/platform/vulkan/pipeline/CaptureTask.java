@@ -10,7 +10,6 @@ import static org.sarge.jove.platform.vulkan.VkPipelineStageFlags.TRANSFER;
 import java.util.Set;
 
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.memory.*;
@@ -30,7 +29,7 @@ import org.sarge.jove.platform.vulkan.present.Swapchain;
  */
 public class CaptureTask {
 	private final Command.Pool pool;
-	private final DeviceContext device;
+	private final LogicalDevice device;
 
 	/**
 	 * Constructor.
@@ -51,7 +50,7 @@ public class CaptureTask {
 		final Image image = swapchain.attachment(0).image(); // TODO - where to get 'latest' COMPLETED framebuffer index?
 
 		// Create destination screenshot image
-		final DeviceContext device = swapchain.device();
+		final LogicalDevice device = swapchain.device();
 		final DefaultImage screenshot = screenshot(device, allocator, image.descriptor());
 
 		// Init copy command
@@ -82,7 +81,7 @@ public class CaptureTask {
 	 * @param allocator		Memory allocator
 	 * @param target		Target image descriptor
 	 */
-	private static DefaultImage screenshot(DeviceContext device, Allocator allocator, Image.Descriptor target) {
+	private static DefaultImage screenshot(LogicalDevice device, Allocator allocator, Image.Descriptor target) {
 		// Create descriptor
 		final var descriptor = new Image.Descriptor.Builder()
 				.type(VkImageType.TYPE_2D)

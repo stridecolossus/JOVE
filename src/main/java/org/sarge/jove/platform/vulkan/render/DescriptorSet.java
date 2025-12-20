@@ -10,7 +10,7 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.pipeline.PipelineLayout;
@@ -341,6 +341,19 @@ public class DescriptorSet implements NativeObject {
 	}
 
 	@Override
+	public int hashCode() {
+		return handle.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof DescriptorSet that) &&
+				this.handle.equals(that.handle);
+	}
+
+	@Override
 	public String toString() {
 		return String.format("DescriptorSet[%s]", this.handle());
 	}
@@ -454,7 +467,7 @@ public class DescriptorSet implements NativeObject {
 			info.pSetLayouts = NativeObject.handles(layouts);
 
 			// Allocate descriptors sets
-			final DeviceContext device = this.device();
+			final LogicalDevice device = this.device();
 			final Library library = device.library();
 			final Handle[] handles = new Handle[count];
 			library.vkAllocateDescriptorSets(device, info, handles);
@@ -617,6 +630,7 @@ public class DescriptorSet implements NativeObject {
 	/**
 	 * Descriptor set API.
 	 */
+	public // TODO - only for pipeline layout test?
 	interface Library {
 		/**
 		 * Creates a descriptor set layout.
@@ -626,7 +640,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pSetLayout			Returned layout handle
 		 * @return Result
 		 */
-		VkResult vkCreateDescriptorSetLayout(DeviceContext device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout);
+		VkResult vkCreateDescriptorSetLayout(LogicalDevice device, VkDescriptorSetLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pSetLayout);
 
 		/**
 		 * Destroys a descriptor set layout.
@@ -634,7 +648,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param descriptorSetLayout	Layout
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorSetLayout(DeviceContext device, Layout descriptorSetLayout, Handle pAllocator);
+		void vkDestroyDescriptorSetLayout(LogicalDevice device, Layout descriptorSetLayout, Handle pAllocator);
 
 		/**
 		 * Creates a descriptor set pool.
@@ -644,7 +658,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pDescriptorPool		Returned pool handle
 		 * @return Result
 		 */
-		VkResult vkCreateDescriptorPool(DeviceContext device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool);
+		VkResult vkCreateDescriptorPool(LogicalDevice device, VkDescriptorPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pDescriptorPool);
 
 		/**
 		 * Destroys a descriptor set pool.
@@ -652,7 +666,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param descriptorPool		Pool
 		 * @param pAllocator			Allocator
 		 */
-		void vkDestroyDescriptorPool(DeviceContext device, Pool descriptorPool, Handle pAllocator);
+		void vkDestroyDescriptorPool(LogicalDevice device, Pool descriptorPool, Handle pAllocator);
 
 		/**
 		 * Allocates a number of descriptor sets from a given pool.
@@ -661,7 +675,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Returned descriptor set handles
 		 * @return Result
 		 */
-		VkResult vkAllocateDescriptorSets(DeviceContext device, VkDescriptorSetAllocateInfo pAllocateInfo, @Updated Handle[] pDescriptorSets);
+		VkResult vkAllocateDescriptorSets(LogicalDevice device, VkDescriptorSetAllocateInfo pAllocateInfo, @Updated Handle[] pDescriptorSets);
 
 		/**
 		 * Resets all descriptor sets in the given pool, i.e. recycles the resources back to the pool and releases the descriptor sets.
@@ -670,7 +684,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param flags					Unused
 		 * @return Result
 		 */
-		VkResult vkResetDescriptorPool(DeviceContext device, Pool descriptorPool, int flags);
+		VkResult vkResetDescriptorPool(LogicalDevice device, Pool descriptorPool, int flags);
 
 		/**
 		 * Releases allocated descriptor sets.
@@ -680,7 +694,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param pDescriptorSets		Descriptor sets
 		 * @return Result
 		 */
-		VkResult vkFreeDescriptorSets(DeviceContext device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
+		VkResult vkFreeDescriptorSets(LogicalDevice device, Pool descriptorPool, int descriptorSetCount, DescriptorSet[] pDescriptorSets);
 
 		/**
 		 * Updates the resources for one-or-more descriptor sets.
@@ -690,7 +704,7 @@ public class DescriptorSet implements NativeObject {
 		 * @param descriptorCopyCount	Number of copies
 		 * @param pDescriptorCopies		Copy descriptors
 		 */
-		void vkUpdateDescriptorSets(DeviceContext device, int descriptorWriteCount, VkWriteDescriptorSet pDescriptorWrites[], int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
+		void vkUpdateDescriptorSets(LogicalDevice device, int descriptorWriteCount, VkWriteDescriptorSet pDescriptorWrites[], int descriptorCopyCount, VkCopyDescriptorSet[] pDescriptorCopies);
 
 		/**
 		 * Binds one-or-more descriptor sets to the given pipeline.

@@ -18,7 +18,7 @@ import org.sarge.jove.util.EnumMask;
  * <p>
  * Generally a query is comprised of two commands that wrap a portion of a render sequence, e.g. to perform an {@link VkQueryType#OCCLUSION} query.
  * <p>
- * Queries are allocated as <i>slots</i> from a {@link Pool} created via the {@link Pool#create(DeviceContext, VkQueryType, int, VkQueryPipelineStatisticFlag...)} factory method.
+ * Queries are allocated as <i>slots</i> from a {@link Pool} created via the {@link Pool#create(LogicalDevice, VkQueryType, int, VkQueryPipelineStatisticFlag...)} factory method.
  * Note that a query pool <b>must</b> be reset before each sample <b>outside</b> the render pass.
  * <p>
  * The {@link QueryResult} configures the mechanism to retrieve the results of a query.
@@ -82,15 +82,16 @@ public interface Query {
 		 * @return Query pool
 		 * @throws IllegalArgumentException if {@link #statistics} is empty for a {@link VkQueryType#PIPELINE_STATISTICS} query
 		 */
-		public static Pool create(DeviceContext device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
+		public static Pool create(LogicalDevice device, VkQueryType type, int slots, VkQueryPipelineStatisticFlags... statistics) {
 			// Validate
 			requireOneOrMore(slots);
-			if((type == VkQueryType.PIPELINE_STATISTICS) ^ (statistics.length == 0)) {
+			if((type == VkQueryType.PIPELINE_STATISTICS) ^ (statistics.length > 0)) {
 				throw new IllegalArgumentException();
 			}
 
 			// Populate create descriptor
 			final var info = new VkQueryPoolCreateInfo();
+			info.sType = VkStructureType.QUERY_POOL_CREATE_INFO;
 			info.queryType = type;
 			info.queryCount = slots;
 			info.pipelineStatistics = new EnumMask<>(statistics);
@@ -116,7 +117,7 @@ public interface Query {
 		 * @param slots			Number of slots
 		 * @param library		Query pool API
 		 */
-		Pool(Handle handle, DeviceContext device, VkQueryType type, int slots, Library library) {
+		Pool(Handle handle, LogicalDevice device, VkQueryType type, int slots, Library library) {
 			super(handle, device);
 			this.type = requireNonNull(type);
 			this.slots = requireOneOrMore(slots);
@@ -321,7 +322,7 @@ public interface Query {
 		 * @param pAllocator		Allocator
 		 * @param pQueryPool		Returned query pool handle
 		 */
-		VkResult vkCreateQueryPool(DeviceContext device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool);
+		VkResult vkCreateQueryPool(LogicalDevice device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool);
 
 		/**
 		 * Destroys a query pool.
@@ -329,7 +330,7 @@ public interface Query {
 		 * @param queryPool			Query pool to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyQueryPool(DeviceContext device, Pool queryPool, Handle pAllocator);
+		void vkDestroyQueryPool(LogicalDevice device, Pool queryPool, Handle pAllocator);
 
 		/**
 		 * Command to reset a query pool.
@@ -377,7 +378,7 @@ public interface Query {
 		 * @param stride			Data stride (bytes)
 		 * @param flags				Query flags
 		 */
-		VkResult vkGetQueryPoolResults(DeviceContext device, Pool queryPool, int firstQuery, int queryCount, long dataSize, MemorySegment pData, long stride, EnumMask<VkQueryResultFlags> flags);
+		VkResult vkGetQueryPoolResults(LogicalDevice device, Pool queryPool, int firstQuery, int queryCount, long dataSize, MemorySegment pData, long stride, EnumMask<VkQueryResultFlags> flags);
 		// TODO - MemorySegment transformer
 
 		/**

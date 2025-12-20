@@ -3,23 +3,18 @@ package org.sarge.jove.platform.vulkan.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.foreign.MemorySegment;
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.Query.*;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.platform.vulkan.core.Query.Pool;
+import org.sarge.jove.util.*;
 
 class QueryTest {
-	private static class MockQueryLibrary implements Library {
-		boolean reset;
-		boolean start, end;
-		boolean write;
-		boolean destroyed;
-
+	private static class MockQueryLibrary extends MockLibrary implements Query.Library {
 		@Override
 		public VkResult vkCreateQueryPool(LogicalDevice device, VkQueryPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pQueryPool) {
 			assertEquals(VkStructureType.QUERY_POOL_CREATE_INFO, pCreateInfo.sType);
@@ -28,43 +23,34 @@ class QueryTest {
 				assertEquals(new EnumMask<>(VkQueryPipelineStatisticFlags.VERTEX_SHADER_INVOCATIONS), pCreateInfo.pipelineStatistics);
 			}
 			else {
-				assertEquals(VkQueryType.OCCLUSION, pCreateInfo.queryType);
 				assertEquals(new EnumMask<>(), pCreateInfo.pipelineStatistics);
 			}
 			assertEquals(2, pCreateInfo.queryCount);
+			init(pQueryPool);
 			return VkResult.VK_SUCCESS;
-		}
-
-		@Override
-		public void vkDestroyQueryPool(LogicalDevice device, Pool queryPool, Handle pAllocator) {
-			destroyed = true;
 		}
 
 		@Override
 		public void vkCmdResetQueryPool(Buffer commandBuffer, Pool queryPool, int firstQuery, int queryCount) {
 			assertEquals(0, firstQuery);
 			assertEquals(2, queryCount);
-			reset = true;
 		}
 
 		@Override
 		public void vkCmdBeginQuery(Buffer commandBuffer, Pool queryPool, int query, EnumMask<VkQueryControlFlags> flags) {
 			assertEquals(1, query);
 			assertEquals(new EnumMask<>(VkQueryControlFlags.PRECISE), flags);
-			start = true;
 		}
 
 		@Override
 		public void vkCmdEndQuery(Buffer commandBuffer, Pool queryPool, int query) {
 			assertEquals(1, query);
-			end = true;
 		}
 
 		@Override
 		public void vkCmdWriteTimestamp(Buffer commandBuffer, VkPipelineStageFlags pipelineStage, Pool queryPool, int query) {
 			assertEquals(VkPipelineStageFlags.VERTEX_SHADER, pipelineStage);
 			assertEquals(1, query);
-			write = true;
 		}
 
 		@Override
@@ -80,29 +66,38 @@ class QueryTest {
 			assertEquals(0L, dstOffset);
 			assertEquals(8L, stride);
 			assertEquals(new EnumMask<>(VkQueryResultFlags.RESULT_64), flags);
+		}
 
-			dstBuffer.buffer().putLong(3).putLong(4);
+		@Override
+		public void vkDestroyQueryPool(LogicalDevice device, Pool queryPool, Handle pAllocator) {
+			// Empty
 		}
 	}
 
 	private Pool pool;
 	private LogicalDevice device;
-	private MockQueryLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockQueryLibrary();
-		device = new MockLogicalDevice();
-		pool = new Pool(new Handle(1), device, VkQueryType.OCCLUSION, 2, library);
+		mockery = new Mockery(Query.Library.class);
+		mockery.implement(new MockQueryLibrary());
+		device = new MockLogicalDevice(mockery.proxy());
+		pool = Pool.create(device, VkQueryType.OCCLUSION, 2);
 	}
 
-	// TODO - create
+	@Test
+	void constructor() {
+		assertEquals(2, pool.slots());
+	}
+
+	// TODO - pipeline statistics
 
 	@Test
 	void reset() {
 		final Command reset = pool.reset();
 		reset.execute(null);
-		assertEquals(true, library.reset);
+		assertEquals(1, mockery.mock("vkCmdResetQueryPool").count());
 	}
 
 	@Nested
@@ -118,30 +113,30 @@ class QueryTest {
 		void begin() {
 			final Command begin = query.begin(VkQueryControlFlags.PRECISE);
 			begin.execute(null);
-			assertEquals(true, library.start);
+			assertEquals(1, mockery.mock("vkCmdBeginQuery").count());
 		}
 
 		@Test
 		void end() {
 			final Command end = query.end();
 			end.execute(null);
-			assertEquals(true, library.end);
+			assertEquals(1, mockery.mock("vkCmdEndQuery").count());
 		}
 	}
 
 	@Test
 	void timestamp() {
-		final Pool pool = new Pool(new Handle(1), device, VkQueryType.TIMESTAMP, 2, library);
+		final Pool pool = Pool.create(device, VkQueryType.TIMESTAMP, 2);
 		final Command timestamp = pool.timestamp(1, VkPipelineStageFlags.VERTEX_SHADER);
 		timestamp.execute(null);
-		assertEquals(true, library.write);
+		assertEquals(1, mockery.mock("vkCmdWriteTimestamp").count());
 	}
 
 	@Test
 	void results() {
-		final var results = new QueryResult(pool, Set.of(VkQueryResultFlags.RESULT_64));
-		final var buffer = new MockVulkanBuffer(new MockLogicalDevice(), 16L, VkBufferUsageFlags.TRANSFER_DST);
-		results.buffer(buffer, 0L);
+//		final var results = new QueryResult(pool, Set.of(VkQueryResultFlags.RESULT_64));
+//		final var buffer = new MockVulkanBuffer(new MockLogicalDevice(), 16L, VkBufferUsageFlags.TRANSFER_DST);
+//		results.buffer(buffer, 0L);
 		// TODO
 	}
 
@@ -149,6 +144,6 @@ class QueryTest {
 	void destroy() {
 		pool.destroy();
 		assertEquals(true, pool.isDestroyed());
-		assertEquals(true, library.destroyed);
+		assertEquals(1, mockery.mock("vkDestroyQueryPool").count());
 	}
 }

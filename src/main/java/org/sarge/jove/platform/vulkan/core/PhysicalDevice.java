@@ -20,34 +20,24 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  */
 public class PhysicalDevice implements NativeObject {
 	private final Handle handle;
-	private final Library library;
-	private final Instance instance;
 	private final List<Family> families;
+	private final Library library;
 
 	/**
 	 * Constructor.
 	 * @param handle		Device handle
 	 * @param families		Queue families
-	 * @param instance		Vulkan instance
-	 * @param library		Device library
+	 * @param library Device library
 	 */
-	PhysicalDevice(Handle handle, List<Family> families, Instance instance, Library library) {
+	PhysicalDevice(Handle handle, List<Family> families, Library library) {
 		this.handle = requireNonNull(handle);
 		this.families = List.copyOf(families);
-		this.instance = requireNonNull(instance);
 		this.library = requireNonNull(library);
 	}
 
 	@Override
 	public Handle handle() {
 		return handle;
-	}
-
-	/**
-	 * @return Vulkan instance
-	 */
-	public Instance instance() {
-		return instance;
 	}
 
 	/**
@@ -119,11 +109,13 @@ public class PhysicalDevice implements NativeObject {
 
 	/**
 	 * Enumerates the available physical devices.
-	 * @param instance		Vulkan instance
-	 * @param library		Device library
+	 * @param instance Vulkan instance
 	 * @return Physical devices
 	 */
-	public static Stream<PhysicalDevice> enumerate(Instance instance, Library library) {
+	public static Stream<PhysicalDevice> enumerate(Instance instance) {
+		// Get device library
+		final Library library = (Library) instance.library();
+
 		// Builder for each device
 		final var builder = new Object() {
 			private final ReverseMapping<VkQueueFlags> mapping = ReverseMapping.mapping(VkQueueFlags.class);
@@ -134,7 +126,7 @@ public class PhysicalDevice implements NativeObject {
 			 */
 	    	public PhysicalDevice device(Handle device) {
 	    		final List<Family> families = families(device);
-	    		return new PhysicalDevice(device, families, instance, library);
+	    		return new PhysicalDevice(device, families, library);
 	    	}
 
 	    	/**

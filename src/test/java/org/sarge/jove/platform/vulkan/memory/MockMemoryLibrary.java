@@ -8,9 +8,10 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.VulkanException;
-import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.util.MockLibrary;
 
-public class MockMemoryLibrary extends MockVulkanLibrary {
+public class MockMemoryLibrary extends MockLibrary implements MemoryLibrary {
 	public boolean fail;
 
 	@Override
@@ -37,5 +38,13 @@ public class MockMemoryLibrary extends MockVulkanLibrary {
 		ppData.set(mapped);
 
 		return VkResult.VK_SUCCESS;
+	}
+
+	@Override
+	public void vkFreeMemory(LogicalDevice device, DeviceMemory memory, Handle pAllocator) {
+	}
+
+	@Override
+	public void vkUnmapMemory(LogicalDevice device, DeviceMemory memory) {
 	}
 }

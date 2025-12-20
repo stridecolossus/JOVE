@@ -57,6 +57,13 @@ public class SwapchainManager implements TransientObject {
 	}
 
 	/**
+	 * @return Logical device
+	 */
+	public LogicalDevice device() {
+		return device;
+	}
+
+	/**
 	 * @return Current swapchain
 	 */
 	public Swapchain swapchain() {

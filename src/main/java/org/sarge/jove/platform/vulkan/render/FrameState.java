@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceContext;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.present.Swapchain;
@@ -22,7 +21,7 @@ public class FrameState implements TransientObject {
 	 * @param device Logical device
 	 * @return New frame state
 	 */
-	public static FrameState create(DeviceContext device) {
+	public static FrameState create(LogicalDevice device) {
 		final var available = VulkanSemaphore.create(device);
 		final var ready = VulkanSemaphore.create(device);
 		final var fence = Fence.create(device, VkFenceCreateFlags.SIGNALED);

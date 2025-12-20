@@ -11,68 +11,37 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.DeviceFeatures;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class PhysicalDeviceTest {
-	static class MockPhysicalDeviceLibrary implements PhysicalDevice.Library {
-		@Override
+	@SuppressWarnings("unused")
+	static class MockPhysicalDeviceLibrary extends MockLibrary { // implements PhysicalDevice.Library {
 		public VkResult vkEnumeratePhysicalDevices(Instance instance, IntegerReference pPhysicalDeviceCount, Handle[] devices) {
-			if(devices == null) {
-				pPhysicalDeviceCount.set(1);
-			}
-			else {
-				devices[0] = new Handle(1);
-			}
+			pPhysicalDeviceCount.set(1);
+			init(devices);
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public void vkGetPhysicalDeviceProperties(PhysicalDevice device, VkPhysicalDeviceProperties props) {
 			props.deviceType = VkPhysicalDeviceType.DISCRETE_GPU;
 		}
 
-		@Override
-		public void vkGetPhysicalDeviceMemoryProperties(PhysicalDevice device, VkPhysicalDeviceMemoryProperties pMemoryProperties) {
-		}
-
-		@Override
 		public void vkGetPhysicalDeviceFeatures(Handle device, VkPhysicalDeviceFeatures features) {
 			features.wideLines = true;
 		}
 
-		@Override
 		public void vkGetPhysicalDeviceQueueFamilyProperties(Handle device, IntegerReference pQueueFamilyPropertyCount, VkQueueFamilyProperties[] pQueueFamilyProperties) {
-			if(pQueueFamilyProperties == null) {
-				pQueueFamilyPropertyCount.set(1);
-			}
-			else {
-				final var family = new VkQueueFamilyProperties();
-				family.queueCount = 1;
-				family.queueFlags = new EnumMask<>(VkQueueFlags.GRAPHICS);
-				assertEquals(1, pQueueFamilyProperties.length);
-				pQueueFamilyProperties[0] = family;
-			}
+			final var properties = new VkQueueFamilyProperties();
+			properties.queueCount = 1;
+			properties.queueFlags = new EnumMask<>(VkQueueFlags.GRAPHICS);
+			init(pQueueFamilyProperties, properties);
+			pQueueFamilyPropertyCount.set(1);
 		}
 
-		@Override
 		public VkResult vkEnumerateDeviceExtensionProperties(PhysicalDevice device, String layer, IntegerReference count, VkExtensionProperties[] extensions) {
-			if(extensions == null) {
-				count.set(1);
-			}
-			else {
-				extensions[0] = new VkExtensionProperties();
-			}
+			count.set(1);
+			init(extensions, new VkExtensionProperties());
 			return VkResult.VK_SUCCESS;
-		}
-
-		@Override
-		public VkResult vkEnumerateDeviceLayerProperties(PhysicalDevice device, IntegerReference count, VkLayerProperties[] layers) {
-			return VkResult.VK_ERROR_DEVICE_LOST;
-		}
-
-		@Override
-		public void vkGetPhysicalDeviceFormatProperties(PhysicalDevice device, VkFormat format, VkFormatProperties props) {
-			props.linearTilingFeatures = new EnumMask<>(VkFormatFeatureFlags.COLOR_ATTACHMENT);		// TODO - ???
 		}
 	}
 
@@ -83,10 +52,17 @@ class PhysicalDeviceTest {
 
 	@BeforeEach
 	void before() {
-		instance = new MockInstance();
+		final var mockery = new Mockery(PhysicalDevice.Library.class, Instance.Library.class);
+		mockery.implement(new MockPhysicalDeviceLibrary());
+		library = mockery.proxy();
+		instance = new MockInstance() {
+			@Override
+			public Library library() {
+				return (Instance.Library) library;
+			}
+		};
 		family = new Family(0, 1, Set.of(VkQueueFlags.GRAPHICS));
-		library = new MockPhysicalDeviceLibrary();
-		device = new PhysicalDevice(new Handle(2), List.of(family), instance, library);
+		device = new PhysicalDevice(new Handle(2), List.of(family), library);
 	}
 
 	@Test
@@ -97,7 +73,6 @@ class PhysicalDeviceTest {
 
 	@Test
 	void families() {
-		assertEquals(instance, device.instance());
 		assertEquals(List.of(family), device.families());
 	}
 
@@ -115,7 +90,7 @@ class PhysicalDeviceTest {
 
 	@Test
 	void enumerate() {
-		final var devices = PhysicalDevice.enumerate(instance, library).toList();
+		final var devices = PhysicalDevice.enumerate(instance).toList();
 		assertEquals(1, devices.size());
 		assertNotNull(devices.getFirst());
 	}

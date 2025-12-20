@@ -5,9 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.MockLogicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
@@ -30,8 +29,7 @@ class SwapchainManagerTest {
 
 	@BeforeEach
 	void before() {
-		final var library = new MockSwapchainLibrary();
-		final var device = new MockLogicalDevice(library);
+		final var device = new MockLogicalDevice(); // mockery.proxy());
 
 		format = new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
 
@@ -47,10 +45,12 @@ class SwapchainManagerTest {
 			}
 		};
 
-		builder = new Builder()
-				.count(1)
-				.format(format)
-				.extent(new Dimensions(640, 480));
+		builder = new Swapchain.Builder() {
+			@Override
+			public Swapchain build(LogicalDevice device, Properties properties) {
+				return new MockSwapchain();
+			}
+		};
 
 		configuration = new MockConfiguration();
 

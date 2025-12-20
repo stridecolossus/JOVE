@@ -2,48 +2,44 @@ package org.sarge.jove.platform.vulkan.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
-
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.util.*;
 
 class ShaderTest {
-	private static class MockShaderLibrary extends MockVulkanLibrary {
-		private boolean destroyed;
-
-		@Override
+	@SuppressWarnings("unused")
+	static class MockShaderLibrary extends MockLibrary {
 		public VkResult vkCreateShaderModule(LogicalDevice device, VkShaderModuleCreateInfo info, Handle pAllocator, Pointer shader) {
-			assertNotNull(device);
+			assertEquals(VkStructureType.SHADER_MODULE_CREATE_INFO, info.sType);
 			assertEquals(42L, info.codeSize);
 			assertArrayEquals(new byte[42], info.pCode);
-			shader.set(MemorySegment.ofAddress(2));
+			init(shader);
 			return VkResult.VK_SUCCESS;
-		}
-
-		@Override
-		public void vkDestroyShaderModule(LogicalDevice device, Shader shader, Handle pAllocator) {
-			destroyed = true;
 		}
 	}
 
 	private Shader shader;
-	private LogicalDevice device;
-	private MockShaderLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockShaderLibrary();
-		device = new MockLogicalDevice(library);
+		mockery = new Mockery(new MockShaderLibrary(), Shader.Library.class);
+		final var device = new MockLogicalDevice(mockery.proxy());
 		shader = Shader.create(device, new byte[42]);
+	}
+
+	@Test
+	void create() {
+		assertFalse(shader.isDestroyed());
 	}
 
 	@Test
 	void destroy() {
 		shader.destroy();
-		assertEquals(true, shader.isDestroyed());
-		assertEquals(true, library.destroyed);
+		assertTrue(shader.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyShaderModule").count());
 	}
 }

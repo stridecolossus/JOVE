@@ -19,11 +19,10 @@ import org.sarge.jove.util.*;
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends TransientNativeObject implements DeviceContext {
-	private final Library library;
+public class LogicalDevice extends TransientNativeObject {
 	private final Map<Family, List<WorkQueue>> queues;
 	private final DeviceLimits limits;
-
+	private final Library library;
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
@@ -31,14 +30,14 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	 * @param limits		Device limits
 	 * @param library		Device library
 	 */
-	LogicalDevice(Handle handle, Map<Family, List<WorkQueue>> queues, VkPhysicalDeviceLimits limits, Library library) {
+	LogicalDevice(Handle handle, Map<Family, List<WorkQueue>> queues, DeviceLimits limits, Library library) {
 		super(handle);
-		this.library = requireNonNull(library);
 		this.queues = Map.copyOf(queues);
-		this.limits = new DeviceLimits(limits);
+		this.limits = requireNonNull(limits);
+		this.library = requireNonNull(library);
 	}
 
-	@Override
+	// TODO
 	@SuppressWarnings("unchecked")
 	public <T> T library() {
 		return (T) library;
@@ -90,116 +89,116 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 	}
 
 	/**
-	 * A <i>required queue</i> is a transient descriptor for a number of work queues to be created for a logical device.
-	 * <p>
-	 * Note that only <b>one</b> required queue can be configured for a given queue family.
-	 * <p>
-	 * @see PhysicalDevice.Selector
-	 */
-	public record RequiredQueue(Family family, List<Percentile> priorities) {
-		/**
-		 * Constructor.
-		 * @param family			Queue family
-		 * @param priorities		Priority of each queue
-		 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
-		 */
-		public RequiredQueue {
-			requireNonNull(family);
-			requireNotEmpty(priorities);
-			priorities = List.copyOf(priorities);
-
-			if(priorities.size() > family.count()) {
-				throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
-			}
-		}
-
-		/**
-		 * Constructor for a single queue with a priority of {@code one}.
-		 * @param family Queue family
-		 */
-		public RequiredQueue(Family family) {
-			this(family, 1);
-		}
-
-		/**
-		 * Constructor for a group of queues with an equal priority of {@code one}.
-		 * @param family		Queue family
-		 * @param count			Number of required queues
-		 */
-		public RequiredQueue(Family family, int count) {
-			this(family, Collections.nCopies(count, Percentile.ONE));
-		}
-
-		/**
-		 * @return Vulkan descriptor for this set of queues
-		 */
-		private VkDeviceQueueCreateInfo build() {
-			final var info = new VkDeviceQueueCreateInfo();
-			info.sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
-			info.flags = new EnumMask<>();
-			info.queueCount = priorities.size();
-			info.queueFamilyIndex = family.index();
-			info.pQueuePriorities = array(priorities);
-			return info;
-		}
-
-		/**
-		 * Converts queue priorities to an array.
-		 * @implNote There is no built-in helper to initialise a floating-point array or stream
-		 */
-		private static float[] array(List<Percentile> priorities) {
-			final int length = priorities.size();
-			final float[] array = new float[length];
-			for(int n = 0; n < length; ++n) {
-				array[n] = priorities.get(n).value();
-			}
-			return array;
-		}
-
-		/**
-		 * Helper to retrieve the work queues for this device.
-		 */
-		private record Helper(Handle device, Library library) {
-    		/**
-    		 * Retrieves the work queues for the given device.
-    		 * @param queues Required queues
-    		 * @return Work queues indexed by family
-    		 */
-    		public Map<Family, List<WorkQueue>> queues(List<RequiredQueue> queues) {
-    			return queues
-    					.stream()
-    					.flatMap(this::queues)
-    					.collect(groupingBy(WorkQueue::family));
-    		}
-
-    		/**
-    		 * Retrieves work queues for the given specification.
-    		 */
-    		private Stream<WorkQueue> queues(RequiredQueue queue) {
-    			return IntStream
-    					.range(0, queue.priorities.size())
-    					.mapToObj(n -> queue(queue.family, n));
-    		}
-
-    		/**
-    		 * Retrieves a work queue.
-    		 * @param family	Queue family
-    		 * @param index		Queue index
-    		 * @return Work queue
-    		 */
-    		private WorkQueue queue(Family family, int index) {
-    			final var pointer = new Pointer();
-    			library.vkGetDeviceQueue(device, family.index(), index, pointer);
-    			return new WorkQueue(pointer.handle(), family);
-    		}
-		}
-	}
-
-	/**
 	 * Builder for a logical device.
 	 */
 	public static class Builder {
-		private final PhysicalDevice parent;
+		/**
+		 * A <i>required queue</i> is a transient descriptor for a number of work queues to be created for a logical device.
+		 * <p>
+		 * Note that only <b>one</b> required queue can be configured for a given queue family.
+		 * <p>
+		 * @see PhysicalDevice.Selector
+		 */
+		public record RequiredQueue(Family family, List<Percentile> priorities) {
+			/**
+			 * Constructor.
+			 * @param family			Queue family
+			 * @param priorities		Priority of each queue
+			 * @throws IllegalArgumentException if the specified number of queues exceeds that supported by the family
+			 */
+			public RequiredQueue {
+				requireNonNull(family);
+				requireNotEmpty(priorities);
+				priorities = List.copyOf(priorities);
+
+				if(priorities.size() > family.count()) {
+					throw new IllegalArgumentException("Number of queues exceeds family: available=%d requested=%d".formatted(family.count(), priorities.size()));
+				}
+			}
+
+			/**
+			 * Constructor for a single queue with a priority of {@code one}.
+			 * @param family Queue family
+			 */
+			public RequiredQueue(Family family) {
+				this(family, 1);
+			}
+
+			/**
+			 * Constructor for a group of queues with an equal priority of {@code one}.
+			 * @param family		Queue family
+			 * @param count			Number of required queues
+			 */
+			public RequiredQueue(Family family, int count) {
+				this(family, Collections.nCopies(count, Percentile.ONE));
+			}
+
+			/**
+			 * @return Vulkan descriptor for this set of queues
+			 */
+			private VkDeviceQueueCreateInfo build() {
+				final var info = new VkDeviceQueueCreateInfo();
+				info.sType = VkStructureType.DEVICE_QUEUE_CREATE_INFO;
+				info.flags = new EnumMask<>();
+				info.queueCount = priorities.size();
+				info.queueFamilyIndex = family.index();
+				info.pQueuePriorities = array(priorities);
+				return info;
+			}
+
+			/**
+			 * Converts queue priorities to an array.
+			 * @implNote There is no built-in helper to initialise a floating-point array or stream
+			 */
+			private static float[] array(List<Percentile> priorities) {
+				final int length = priorities.size();
+				final float[] array = new float[length];
+				for(int n = 0; n < length; ++n) {
+					array[n] = priorities.get(n).value();
+				}
+				return array;
+			}
+
+			/**
+			 * Helper to retrieve the work queues for this device.
+			 */
+			private record Helper(Handle device, Library library) {
+				/**
+				 * Retrieves the work queues for the given device.
+				 * @param queues Required queues
+				 * @return Work queues indexed by family
+				 */
+				public Map<Family, List<WorkQueue>> queues(List<RequiredQueue> queues) {
+					return queues
+							.stream()
+							.flatMap(this::queues)
+							.collect(groupingBy(WorkQueue::family));
+				}
+
+				/**
+				 * Retrieves work queues for the given specification.
+				 */
+				private Stream<WorkQueue> queues(RequiredQueue queue) {
+					return IntStream
+							.range(0, queue.priorities.size())
+							.mapToObj(n -> queue(queue.family, n));
+				}
+
+				/**
+				 * Retrieves a work queue.
+				 * @param family	Queue family
+				 * @param index		Queue index
+				 * @return Work queue
+				 */
+				private WorkQueue queue(Family family, int index) {
+					final var pointer = new Pointer();
+					library.vkGetDeviceQueue(device, family.index(), index, pointer);
+					return new WorkQueue(pointer.handle(), family);
+				}
+			}
+		}
+
+		private final PhysicalDevice device;
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
 		private final Set<String> features = new HashSet<>();
@@ -207,10 +206,10 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 
 		/**
 		 * Constructor.
-		 * @param parent Parent physical device
+		 * @param device Parent physical device
 		 */
-		public Builder(PhysicalDevice parent) {
-			this.parent = requireNonNull(parent);
+		public Builder(PhysicalDevice device) {
+			this.device = requireNonNull(device);
 		}
 
 		/**
@@ -254,7 +253,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 */
 		public Builder queue(RequiredQueue queue) {
 			// Check queue family is a member of the physical device
-			if(!parent.families().contains(queue.family)) {
+			if(!device.families().contains(queue.family)) {
 				throw new IllegalArgumentException("Invalid queue family for this device: " + queue.family);
 			}
 
@@ -278,7 +277,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @throws IllegalStateException if the selected queue family is {@code null}
 		 */
 		public Builder queue(Selector selector) {
-			final Family family = selector.family(parent);
+			final Family family = selector.family(device);
 			if(family == null) {
 				throw new IllegalStateException("No queue family selected");
 			}
@@ -294,7 +293,7 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			// Create device
 			final VkDeviceCreateInfo info = populate();
 			final var pointer = new Pointer();
-			library.vkCreateDevice(parent, info, null, pointer);
+			library.vkCreateDevice(device, info, null, pointer);
 
 			// Retrieve work queues
 			final Handle handle = pointer.handle();
@@ -302,10 +301,11 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 			final Map<Family, List<WorkQueue>> map = helper.queues(queues);
 
 			// Retrieve device limits
-			final var properties = parent.properties();
+			final VkPhysicalDeviceProperties properties = device.properties();
+			final var limits = new DeviceLimits(properties.limits);
 
 			// Create domain object
-			return new LogicalDevice(handle, map, properties.limits, library);
+			return new LogicalDevice(handle, map, limits, library);
 		}
 
 		/**
@@ -370,16 +370,6 @@ public class LogicalDevice extends TransientNativeObject implements DeviceContex
 		 * @param pQueue				Returned queue handle
 		 */
 		void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, Pointer pQueue);
-
-		/**
-		 * Submits work to a queue.
-		 * @param queue					Queue
-		 * @param submitCount			Number of submissions
-		 * @param pSubmits				Work submissions
-		 * @param fence					Optional fence
-		 * @return Result
-		 */
-		VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 
 		/**
 		 * Blocks until the given queue becomes idle.

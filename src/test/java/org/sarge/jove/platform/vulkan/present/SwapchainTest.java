@@ -6,23 +6,65 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
+import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
+import org.sarge.jove.util.*;
+import org.sarge.jove.util.Mockery.Mock;
 
 class SwapchainTest {
+	@SuppressWarnings("unused")
+	private static class MockSwapchainLibrary extends MockLibrary {
+		public VkResult vkCreateSwapchainKHR(LogicalDevice device, VkSwapchainCreateInfoKHR pCreateInfo, Handle pAllocator, Pointer pSwapchain) {
+			assertEquals(VkStructureType.SWAPCHAIN_CREATE_INFO_KHR, pCreateInfo.sType);
+			assertEquals(new EnumMask<>(), pCreateInfo.flags);
+			assertNotNull(pCreateInfo.surface);
+			assertEquals(new EnumMask<>(VkImageUsageFlags.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
+			assertTrue(pCreateInfo.minImageCount > 0);
+			assertEquals(VkFormat.B8G8R8A8_UNORM, pCreateInfo.imageFormat);
+			assertEquals(VkColorSpaceKHR.SRGB_NONLINEAR_KHR, pCreateInfo.imageColorSpace);
+			assertTrue(pCreateInfo.imageExtent.width >= 640);
+			assertTrue(pCreateInfo.imageExtent.width <= 1024);
+			assertTrue(pCreateInfo.imageExtent.height >= 480);
+			assertTrue(pCreateInfo.imageExtent.height <= 768);
+			assertEquals(1, pCreateInfo.imageArrayLayers);
+			assertEquals(new EnumMask<>(VkImageUsageFlags.COLOR_ATTACHMENT), pCreateInfo.imageUsage);
+			assertEquals(new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR), pCreateInfo.preTransform);
+			assertEquals(new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR), pCreateInfo.compositeAlpha);
+			assertNotNull(pCreateInfo.presentMode);
+			assertEquals(true, pCreateInfo.clipped);
+			assertEquals(null, pCreateInfo.oldSwapchain);
+			init(pSwapchain);
+			return VkResult.VK_SUCCESS;
+		}
+
+		public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
+			pSwapchainImageCount.set(1);
+			init(pSwapchainImages);
+			return VkResult.VK_SUCCESS;
+		}
+
+		public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
+			assertEquals(Long.MAX_VALUE, timeout);
+			pImageIndex.set(0);
+			return result.value();
+		}
+	}
+
 	private Swapchain swapchain;
 	private View view;
 	private LogicalDevice device;
-	private MockSwapchainLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockSwapchainLibrary();
-		device = new MockLogicalDevice(library);
-		view = new MockView(device);
-		swapchain = new Swapchain(new Handle(2), device, List.of(view, new MockView(device)));
+		mockery = new Mockery(new MockSwapchainLibrary(), Swapchain.Library.class, View.Library.class);
+		device = new MockLogicalDevice(mockery.proxy());
+		view = new MockView();
+		swapchain = new Swapchain(new Handle(2), device, List.of(view, new MockView()));
 	}
 
 	@Test
@@ -48,18 +90,20 @@ class SwapchainTest {
 	@Test
 	void destroy() {
 		swapchain.destroy();
-		assertEquals(true, swapchain.isDestroyed());
-		assertEquals(true, library.destroyed);
-		assertEquals(true, view.isDestroyed());
+		assertTrue(swapchain.isDestroyed());
+		assertTrue(view.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroySwapchainKHR").count());
 	}
 
 	@Nested
 	class AcquireTest {
 		private VulkanSemaphore semaphore;
+		private Mock acquire;
 
 		@BeforeEach
 		void before() {
-			semaphore = new MockVulkanSemaphore(device);
+			semaphore = new MockVulkanSemaphore();
+			acquire = mockery.mock("vkAcquireNextImageKHR");
 		}
 
 		@Test
@@ -69,13 +113,13 @@ class SwapchainTest {
 
 		@Test
 		void suboptimal() {
-			library.result = VkResult.VK_SUBOPTIMAL_KHR;
+			acquire.result(VkResult.VK_SUBOPTIMAL_KHR.value());
 			assertEquals(0, swapchain.acquire(semaphore, null));
 		}
 
 		@Test
 		void invalidated() {
-			library.result = VkResult.VK_ERROR_OUT_OF_DATE_KHR;
+			acquire.result(VkResult.VK_ERROR_OUT_OF_DATE_KHR.value());
 			assertThrows(Invalidated.class, () -> swapchain.acquire(semaphore, null));
 		}
 
@@ -93,7 +137,13 @@ class SwapchainTest {
 		@BeforeEach
 		void before() {
 			properties = new MockSurfaceProperties();
-			builder = new Builder();
+
+			builder = new Swapchain.Builder() {
+				@Override
+				protected List<View> attachments(LogicalDevice device, Handle swapchain) {
+					return List.of(new MockView());
+				}
+			};
 		}
 
 		@Test

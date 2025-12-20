@@ -148,7 +148,7 @@ public class DefaultImage extends VulkanObject implements Image {
 
 		/**
 		 * Constructs this image.
-		 * @param device Logical device
+		 * @param allocator Memory allocator
 		 * @return New image
 		 * @throws IllegalArgumentException if the image descriptor or memory properties have not been configured
 		 */

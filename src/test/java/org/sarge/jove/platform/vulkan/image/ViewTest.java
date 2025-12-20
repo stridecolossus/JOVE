@@ -9,11 +9,10 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class ViewTest {
-	private static class MockViewLibrary extends MockVulkanLibrary {
-		@Override
+	static class MockViewLibrary extends MockLibrary {
 		public VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView) {
 			assertNotNull(device);
 			assertEquals(null, pAllocator);
@@ -36,19 +35,26 @@ class ViewTest {
 	}
 
 	private View view;
-	private LogicalDevice device;
 	private Image image;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		device = new MockLogicalDevice(new MockViewLibrary());
+		mockery = new Mockery(new MockViewLibrary(), View.Library.class);
 		image = new MockImage();
-		view = new View.Builder().build(device, image);
+		view = new View.Builder().build(new MockLogicalDevice(mockery.proxy()), image);
+	}
+
+	@Test
+	void constructor() {
+		assertFalse(view.isDestroyed());
+		assertEquals(image, view.image());
 	}
 
 	@Test
 	void destroy() {
 		view.destroy();
-		assertEquals(true, view.isDestroyed());
+		assertTrue(view.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyImageView").count());
 	}
 }

@@ -7,7 +7,7 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.pipeline.PushConstant.Range;
@@ -26,21 +26,17 @@ public class PipelineLayout extends VulkanObject {
 	 * @param handle		Layout handle
 	 * @param device		Logical device
 	 * @param constant		Optional push constant
-	 * @throws IllegalArgumentException if any range of the push constant exceeds the maximum for the device
 	 */
-	PipelineLayout(Handle handle, DeviceContext device, PushConstant constant) {
+	PipelineLayout(Handle handle, LogicalDevice device, PushConstant constant) {
 		super(handle, device);
 		this.constant = constant;
-		if(constant != null) {
-			constant.validate((LogicalDevice) device);
-		}
 	}
 
 	/**
 	 * @return Push constant for this layout
 	 */
-	public PushConstant constant() {
-		return constant;
+	public Optional<PushConstant> constant() {
+		return Optional.ofNullable(constant);
 	}
 
 	@Override
@@ -121,7 +117,7 @@ public class PipelineLayout extends VulkanObject {
 		 * @param pAllocator		Allocator
 		 * @param pPipelineLayout	Returned pipeline layout
 		 */
-		VkResult vkCreatePipelineLayout(DeviceContext device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout);
+		VkResult vkCreatePipelineLayout(LogicalDevice device, VkPipelineLayoutCreateInfo pCreateInfo, Handle pAllocator, Pointer pPipelineLayout);
 
 		/**
 		 * Destroys a pipeline layout.
@@ -129,7 +125,7 @@ public class PipelineLayout extends VulkanObject {
 		 * @param pPipelineLayout	Pipeline layout
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyPipelineLayout(DeviceContext device, PipelineLayout pipelineLayout, Handle pAllocator);
+		void vkDestroyPipelineLayout(LogicalDevice device, PipelineLayout pipelineLayout, Handle pAllocator);
 
 		/**
 		 * Updates a push constant range.

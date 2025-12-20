@@ -24,7 +24,7 @@ import org.sarge.jove.util.EnumMask;
  * Notes:
  * <ul>
  * <li>A pipeline can be <i>derived</i> from an existing <i>parent</i> by configuring the {@link #parent(Pipeline)} pipeline</li>
- * <li>A group of pipelines can be constructed in one operation using the {@link #build(GraphicsPipelineBuilder[], PipelineCache, DeviceContext)} variant</li>
+ * <li>A group of pipelines can be constructed in one operation using the {@link #build(GraphicsPipelineBuilder[], PipelineCache, LogicalDevice)} variant</li>
  * <li>Pipelines can also be derived from a sibling within an array by configuring the {@link #sibling(int)} index</li>
  * </ul>
  * @author Sarge

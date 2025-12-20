@@ -26,6 +26,26 @@ public class Allocator {
 		}
 	}
 
+	/**
+	 * Creates an allocator for the given device.
+	 * <p>
+	 * The allocator is configured by the following device limits:
+	 * <ul>
+	 * <li>{@code bufferImageGranularity} configures the granularity of allocated memory pages</li>
+	 * <li>{@Code maxMemoryAllocationCount} caps the number of allowed allocations</li>
+	 * </ul>
+	 * <p>
+	 * @param device	Logical device
+	 * @param types		Memory types
+	 * @return Allocator
+	 */
+	public static Allocator of(LogicalDevice device, MemoryType[] types) {
+		final var limits = device.limits();
+		final long page = limits.get("bufferImageGranularity");
+		final int max = limits.get("maxMemoryAllocationCount");
+		return new Allocator(device, new MemorySelector(types), page, max);
+	}
+
 	private final LogicalDevice device;
 	private final MemorySelector selector;
 	private final long page;
@@ -35,23 +55,23 @@ public class Allocator {
 	/**
 	 * Constructor.
 	 * @param device		Logical device
-	 * @param types 		Memory types
+	 * @param selector		Memory selector
+	 * @param page			Page granularity (bytes)
+	 * @param max			Maximum number of allocations
 	 */
-	public Allocator(LogicalDevice device, MemoryType[] types) {
-		final var limits = device.limits();
+	Allocator(LogicalDevice device, MemorySelector selector, long page, int max) {
 		this.device = requireNonNull(device);
-		this.selector = new MemorySelector(types);
-		this.page = requireOneOrMore((long) limits.get("bufferImageGranularity"));
-		this.max = constrain(limits.get("maxMemoryAllocationCount"), Integer.MAX_VALUE);
+		this.selector = requireNonNull(selector);
+		this.page = requireOneOrMore(page);
+		this.max = max > 0 ? max : Integer.MAX_VALUE;
 	}
 
-	private static int constrain(int value, int def) {
-		if(value == -1) {
-			return def;
-		}
-		else {
-			return value;
-		}
+	/**
+	 * Copy constructor.
+	 * @param that Delegate allocator
+	 */
+	protected Allocator(Allocator that) {
+		this(that.device, that.selector, that.page, that.max);
 	}
 
 	/**
@@ -76,7 +96,7 @@ public class Allocator {
 	}
 
 	/**
-	 * @return Page size
+	 * @return Page size granularity
 	 */
 	public final long page() {
 		return page;

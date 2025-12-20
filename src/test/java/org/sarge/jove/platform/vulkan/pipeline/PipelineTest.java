@@ -1,47 +1,35 @@
 package org.sarge.jove.platform.vulkan.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPipelineBindPoint;
 import org.sarge.jove.platform.vulkan.core.*;
+import org.sarge.jove.util.Mockery;
 
 class PipelineTest {
-	private static class MockPipelineLibrary extends MockVulkanLibrary {
-		private boolean bound;
-
-		@Override
-		public void vkCmdBindPipeline(Command.Buffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, Pipeline pipeline) {
-			assertEquals(VkPipelineBindPoint.GRAPHICS, pipelineBindPoint);
-			assertNotNull(pipeline);
-			bound = true;
-		}
-	}
-
 	private Pipeline pipeline;
-	private PipelineLayout layout;
-	private LogicalDevice device;
-	private MockPipelineLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockPipelineLibrary();
-		device = new MockLogicalDevice(library);
-		layout = new PipelineLayout(new Handle(2), device, null);
-		pipeline = new Pipeline(new Handle(3), device, VkPipelineBindPoint.GRAPHICS, layout, true);
+		mockery = new Mockery(Pipeline.Library.class);
+		final var device = new MockLogicalDevice(mockery.proxy());
+		pipeline = new Pipeline(new Handle(3), device, VkPipelineBindPoint.GRAPHICS, new MockPipelineLayout(), true);
 	}
 
 	@Test
 	void bind() {
 		final Command bind = pipeline.bind();
 		bind.execute(null);
-		assertEquals(true, library.bound);
+		assertEquals(1, mockery.mock("vkCmdBindPipeline").count());
 	}
 
 	@Test
 	void destroy() {
 		pipeline.destroy();
 		assertEquals(true, pipeline.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyPipeline").count());
 	}
 }

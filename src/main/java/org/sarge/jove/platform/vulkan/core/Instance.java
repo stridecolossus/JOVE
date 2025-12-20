@@ -28,6 +28,13 @@ public class Instance extends TransientNativeObject {
 	}
 
 	/**
+	 * @return Instance library
+	 */
+	Library library() {
+		return library;
+	}
+
+	/**
 	 * Looks up a function pointer in this instance.
 	 * @param name Function name
 	 * @return Function pointer

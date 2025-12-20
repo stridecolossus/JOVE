@@ -4,38 +4,36 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.util.Mockery;
 
 class IndexBufferTest {
 	private IndexBuffer index;
-	private int max;
-	private boolean bound;
+	private Mockery mockery;
+	private MockLogicalDevice device;
 
 	@BeforeEach
 	void before() {
-		final var library = new MockVulkanLibrary() {
-			@Override
+		// Init device
+		mockery = new Mockery(VulkanBuffer.Library.class);
+		device = new MockLogicalDevice(mockery.proxy());
+
+		// Create underlying buffer
+		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
+
+		// Init bind command
+		@SuppressWarnings("unused")
+		final var mock = new Object() {
 			public void vkCmdBindIndexBuffer(Buffer commandBuffer, VulkanBuffer buffer, long offset, VkIndexType indexType) {
-				assertEquals(index.buffer(), buffer);
 				assertEquals(0L, offset);
 				assertEquals(VkIndexType.UINT32, indexType);
-				bound = true;
 			}
-		};
 
-		final var device = new MockLogicalDevice(library) {
-			@Override
-			public DeviceLimits limits() {
-				final var limits = new VkPhysicalDeviceLimits();
-				limits.maxDrawIndexedIndexValue = max;
-				return new DeviceLimits(limits);
-			}
 		};
-		max = 2;
+		mockery.implement(mock);
 
-		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
+		// Create index buffer
 		index = new IndexBuffer(VkIndexType.UINT32, buffer);
 	}
 
@@ -43,7 +41,7 @@ class IndexBufferTest {
 	void bind() {
 		final Command bind = index.bind(0L);
 		bind.execute(null);
-		assertEquals(true, bound);
+		assertEquals(1, mockery.mock("vkCmdBindIndexBuffer").count());
 	}
 
 	@Test
@@ -53,7 +51,7 @@ class IndexBufferTest {
 
 	@Test
 	void limit() {
-		max = 1;
+		device.limits.maxDrawIndexedIndexValue = 0;
 		assertThrows(IllegalStateException.class, () -> index.bind(0L));
 	}
 

@@ -2,27 +2,23 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
-import java.util.*;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice.RequiredQueue;
+import org.sarge.jove.platform.vulkan.core.LogicalDevice.Builder.RequiredQueue;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
-import org.sarge.jove.util.EnumMask;
+import org.sarge.jove.util.*;
 
 class LogicalDeviceTest {
-	static class MockLogicalDeviceLibrary extends MockVulkanLibrary {
-		boolean destroyed;
-		boolean blocked;
-		boolean queueBlocked;
-
-		@Override
+	@SuppressWarnings("unused")
+	static class MockLogicalDeviceLibrary extends MockLibrary {
 		public VkResult vkCreateDevice(PhysicalDevice physicalDevice, VkDeviceCreateInfo pCreateInfo, Handle pAllocator, Pointer device) {
 			// Check descriptor
+			assertEquals(VkStructureType.DEVICE_CREATE_INFO, pCreateInfo.sType);
 			assertEquals(0, pCreateInfo.flags);
 			assertEquals(1, pCreateInfo.queueCreateInfoCount);
 
@@ -45,143 +41,106 @@ class LogicalDeviceTest {
 			assertArrayEquals(new float[]{1}, queue.pQueuePriorities);
 
 			// Create device
-			device.set(MemorySegment.ofAddress(2));
-
+			init(device);
 			return VkResult.VK_SUCCESS;
 		}
 
-		@Override
 		public void vkGetDeviceQueue(Handle device, int queueFamilyIndex, int queueIndex, Pointer pQueue) {
 			assertEquals(0, queueFamilyIndex);
 			assertEquals(0, queueIndex);
-			pQueue.set(MemorySegment.ofAddress(3));
-		}
-
-		@Override
-		public void vkDestroyDevice(LogicalDevice device, Handle pAllocator) {
-			destroyed = true;
-		}
-
-		@Override
-		public VkResult vkDeviceWaitIdle(LogicalDevice device) {
-			blocked = true;
-			return VkResult.VK_SUCCESS;
-		}
-
-		@Override
-		public VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence) {
-			// TODO
-			return VkResult.VK_SUCCESS;
-		}
-
-		@Override
-		public VkResult vkQueueWaitIdle(WorkQueue queue) {
-			queueBlocked = true;
-			return VkResult.VK_SUCCESS;
+			init(pQueue);
 		}
 	}
 
 	private LogicalDevice device;
-	private Family family;
-	private WorkQueue queue;
-	private MockLogicalDeviceLibrary library;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockLogicalDeviceLibrary();
-		family = new Family(0, 1, Set.of());
-		queue = new WorkQueue(new Handle(3), family);
-		device = new LogicalDevice(new Handle(2), Map.of(family, List.of(queue)), new VkPhysicalDeviceLimits(), library);
+		mockery = new Mockery(LogicalDevice.Library.class);
+		mockery.implement(new MockLogicalDeviceLibrary());
+
+		device = new LogicalDevice.Builder(new MockPhysicalDevice())
+				.layer(DiagnosticHandler.STANDARD_VALIDATION)
+				.extension("extension")
+				.feature("wideLines")
+				.queue(new RequiredQueue(MockPhysicalDevice.FAMILY))
+				.build(mockery.proxy());
 	}
 
 	@Test
+	void constructor() {
+		assertNotNull(device.limits());
+		assertEquals(1, device.queues().size());
+		assertFalse(device.isDestroyed());
+	}
+
+	// TODO - library cast fiddle
+
+	@Test
 	void queues() {
-		assertEquals(Map.of(family, List.of(queue)), device.queues());
+		final WorkQueue queue = device.queue(MockPhysicalDevice.FAMILY);
+		assertEquals(MockPhysicalDevice.FAMILY, queue.family());
 	}
 
 	@Test
 	void waitIdleDevice() {
 		device.waitIdle();
-		assertEquals(true, library.blocked);
+		assertEquals(1, mockery.mock("vkDeviceWaitIdle").count());
 	}
 
 	@Test
 	void waitIdleQueue() {
+		final WorkQueue queue = device.queue(MockPhysicalDevice.FAMILY);
 		device.waitIdle(queue);
-		assertEquals(true, library.queueBlocked);
+		assertEquals(1, mockery.mock("vkQueueWaitIdle").count());
 	}
 
 	@Test
 	void destroy() {
 		device.destroy();
-		assertEquals(true, device.isDestroyed());
-		assertEquals(true, library.destroyed);
+		assertTrue(device.isDestroyed());
+		assertEquals(1, mockery.mock("vkDestroyDevice").count());
 	}
 
+	@DisplayName("A required queue...")
 	@Nested
-	class BuilderTest {
-		private PhysicalDevice parent;
+	class RequiredQueueTest {
 		private LogicalDevice.Builder builder;
+		private PhysicalDevice physical;
 
 		@BeforeEach
 		void before() {
-			parent = new MockPhysicalDevice(library) {
-				@Override
-				public List<Family> families() {
-					return List.of(family);
-				}
-
-				@Override
-				public VkPhysicalDeviceProperties properties() {
-					final var properties = new VkPhysicalDeviceProperties();
-					properties.limits = new VkPhysicalDeviceLimits();
-					return properties;
-				}
-			};
-			builder = new LogicalDevice.Builder(parent);
+			physical = new MockPhysicalDevice();
+			builder = new LogicalDevice.Builder(physical);
 		}
 
-		@Test
-		void build() {
-			final LogicalDevice device = builder
-					.layer(DiagnosticHandler.STANDARD_VALIDATION)
-					.extension("extension")
-					.feature("wideLines")
-					.queue(new RequiredQueue(family))
-					.build(library);
-
-			assertEquals(false, library.destroyed);
-			assertEquals(false, device.isDestroyed());
-			assertEquals(new Handle(2), device.handle());
-			assertEquals(Map.of(family, List.of(queue)), device.queues());
-		}
-
-		@DisplayName("A required queue must be a member of the physical device")
+		@DisplayName("must be a member of the physical device")
 		@Test
 		void unknown() {
 			final var unknown = new Family(1, 2, Set.of());
 			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(unknown, 1)));
 		}
 
-		@DisplayName("The size of a required queue cannot exceed the maximum available for that family")
+		@DisplayName("cannot exceed the maximum number of queues for that family")
 		@Test
 		void maximum() {
-			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(family, 2)));
+			assertThrows(IllegalArgumentException.class, () -> builder.queue(new RequiredQueue(MockPhysicalDevice.FAMILY, 2)));
 		}
 
-		@DisplayName("A required queue can be specified by a selector")
+		@DisplayName("can be specified by a selector")
 		@Test
 		void selector() {
 			final Selector selector = new Selector((_, _) -> true);
-			selector.test(parent);
+			selector.test(physical);
 			builder.queue(selector);
 		}
 
-		@DisplayName("A required queue with a duplicate queue family is silently ignored")
+		@DisplayName("with a duplicate queue family is silently ignored")
 		@Test
 		void duplicate() {
-			builder.queue(new RequiredQueue(family, 1));
-			builder.queue(new RequiredQueue(family, 1));
+			builder.queue(new RequiredQueue(MockPhysicalDevice.FAMILY, 1));
+			builder.queue(new RequiredQueue(MockPhysicalDevice.FAMILY, 1));
 		}
 	}
 }

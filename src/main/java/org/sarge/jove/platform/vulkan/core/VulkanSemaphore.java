@@ -13,7 +13,7 @@ public class VulkanSemaphore extends VulkanObject {
 	/**
 	 * Constructor.
 	 */
-	protected VulkanSemaphore(Handle handle, DeviceContext device) {
+	protected VulkanSemaphore(Handle handle, LogicalDevice device) {
 		super(handle, device);
 	}
 
@@ -28,7 +28,7 @@ public class VulkanSemaphore extends VulkanObject {
 	 * @param device Logical device
 	 * @return New semaphore
 	 */
-	public static VulkanSemaphore create(DeviceContext device) {
+	public static VulkanSemaphore create(LogicalDevice device) {
 		final var info = new VkSemaphoreCreateInfo();
 		info.sType = VkStructureType.SEMAPHORE_CREATE_INFO;
 		info.flags = 0;
@@ -53,7 +53,7 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param pSemaphore		Returned semaphore
 		 * @return Result
 		 */
-		VkResult vkCreateSemaphore(DeviceContext device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore);
+		VkResult vkCreateSemaphore(LogicalDevice device, VkSemaphoreCreateInfo pCreateInfo, Handle pAllocator, Pointer pSemaphore);
 
 		/**
 		 * Destroys a semaphore.
@@ -61,6 +61,6 @@ public class VulkanSemaphore extends VulkanObject {
 		 * @param semaphore			Semaphore to destroy
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroySemaphore(DeviceContext device, VulkanSemaphore semaphore, Handle pAllocator);
+		void vkDestroySemaphore(LogicalDevice device, VulkanSemaphore semaphore, Handle pAllocator);
 	}
 }

@@ -7,47 +7,52 @@ import org.sarge.jove.geometry.Point;
 import org.sarge.jove.model.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.util.*;
 
 class DrawCommandTest {
-	private static class MockDrawLibrary extends MockVulkanLibrary {
-		private boolean draw, indexed;
-
-		@Override
+	@SuppressWarnings("unused")
+	private static class MockDrawLibrary extends MockLibrary {
 		public void vkCmdDraw(Buffer commandBuffer, int vertexCount, int instanceCount, int firstVertex, int firstInstance) {
-			draw = true;
+			assertEquals(3, vertexCount);
+			assertEquals(1, instanceCount);
+			assertEquals(0, firstVertex);
+			assertEquals(0, firstInstance);
 		}
 
-		@Override
 		public void vkCmdDrawIndexed(Buffer commandBuffer, int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance) {
-			indexed = true;
+			assertEquals(3, indexCount);
+			assertEquals(1, instanceCount);
+			assertEquals(0, firstIndex);
+			assertEquals(0, firstVertex);
+			assertEquals(0, firstInstance);
 		}
 	}
 
-	private MockDrawLibrary library;
 	private LogicalDevice device;
+	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
-		library = new MockDrawLibrary();
-		device = new MockLogicalDevice(library);
+		mockery = new Mockery(new MockDrawLibrary(), DrawCommand.Library.class);
+		device = new MockLogicalDevice(mockery.proxy());
 	}
 
 	@Test
 	void draw() {
-		final DrawCommand draw = DrawCommand.of(1, device);
+		final DrawCommand draw = DrawCommand.of(3, device);
 		draw.execute(null);
-		assertEquals(true, library.draw);
+		assertEquals(1, mockery.mock("vkCmdDraw").count());
 	}
 
 	@Test
 	void indexed() {
 		final DrawCommand indexed = new DrawCommand.Builder()
-				.vertexCount(1)
+				.vertexCount(3)
 				.indexed()
 				.build(device);
 
 		indexed.execute(null);
-		assertEquals(true, library.indexed);
+		assertEquals(1, mockery.mock("vkCmdDrawIndexed").count());
 	}
 
 	@Test
@@ -58,7 +63,7 @@ class DrawCommandTest {
 		mesh.add(0);
 		mesh.add(0);
 
-		final DrawCommand expected = new DrawCommand(3, 1, 0, 0, 0, library);
+		final DrawCommand expected = new DrawCommand(3, 1, 0, 0, 0, mockery.proxy());
 		assertEquals(expected, DrawCommand.of(mesh, device));
 	}
 }

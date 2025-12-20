@@ -7,8 +7,7 @@ import java.util.Objects;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
-import org.sarge.jove.platform.vulkan.core.Command.Buffer;
+import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.util.EnumMask;
 
@@ -154,6 +153,7 @@ public class View extends VulkanObject {
 	/**
 	 * Image view API.
 	 */
+	public // TODO
 	interface Library {
 		/**
 		 * Creates an image view.
@@ -162,7 +162,7 @@ public class View extends VulkanObject {
 		 * @param pAllocator		Allocator
 		 * @param pView				Returned image view handle
 		 */
-		VkResult vkCreateImageView(DeviceContext device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView);
+		VkResult vkCreateImageView(LogicalDevice device, VkImageViewCreateInfo pCreateInfo, Handle pAllocator, Pointer pView);
 
 		/**
 		 * Destroys an image view.
@@ -170,31 +170,31 @@ public class View extends VulkanObject {
 		 * @param imageView			Image view
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyImageView(DeviceContext device, View imageView, Handle pAllocator);
+		void vkDestroyImageView(LogicalDevice device, View imageView, Handle pAllocator);
 
-		/**
-		 * Clears a colour attachment.
-		 * @param commandBuffer		Command buffer
-		 * @param image				Image to clear
-		 * @param imageLayout		Image layout
-		 * @param pColor			Clear colour
-		 * @param rangeCount		Number of sub-resource ranges
-		 * @param pRanges			Sub-resource ranges
-		 */
-		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
-		// TODO
-		// TODO - these can only be done outside of a render pass? what are they for?
-
-		/**
-		 * Clears the depth-stencil attachment.
-		 * @param commandBuffer		Command buffer
-		 * @param image				Image to clear
-		 * @param imageLayout		Image layout
-		 * @param pDepthStencil		Depth clear value
-		 * @param rangeCount		Number of sub-resource ranges
-		 * @param pRanges			Sub-resource ranges
-		 */
-		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
-		// TODO
+//		/**
+//		 * Clears a colour attachment.
+//		 * @param commandBuffer		Command buffer
+//		 * @param image				Image to clear
+//		 * @param imageLayout		Image layout
+//		 * @param pColor			Clear colour
+//		 * @param rangeCount		Number of sub-resource ranges
+//		 * @param pRanges			Sub-resource ranges
+//		 */
+//		void vkCmdClearColorImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearColorValue pColor, int rangeCount, VkImageSubresourceRange[] pRanges);
+//		// TODO
+//		// TODO - these can only be done outside of a render pass? what are they for?
+//
+//		/**
+//		 * Clears the depth-stencil attachment.
+//		 * @param commandBuffer		Command buffer
+//		 * @param image				Image to clear
+//		 * @param imageLayout		Image layout
+//		 * @param pDepthStencil		Depth clear value
+//		 * @param rangeCount		Number of sub-resource ranges
+//		 * @param pRanges			Sub-resource ranges
+//		 */
+//		void vkCmdClearDepthStencilImage(Buffer commandBuffer, Image image, VkImageLayout imageLayout, VkClearDepthStencilValue pDepthStencil, int rangeCount, VkImageSubresourceRange[] pRanges);
+//		// TODO
 	}
 }

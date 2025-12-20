@@ -114,6 +114,14 @@ public interface Command {
 		}
 
 		/**
+		 * Transitions to the given stage.
+		 * @stage Next stage
+		 */
+		protected void stage(Stage stage) {
+			this.stage = requireNonNull(stage);
+		}
+
+		/**
 		 * Starts recording this primary buffer.
 		 * @param flags Usage flags
 		 * @see #begin(VkCommandBufferInheritanceInfo, Set)
@@ -147,7 +155,7 @@ public interface Command {
 
 			// Start buffer recording
 			pool.library.vkBeginCommandBuffer(this, info);
-			stage = Stage.RECORDING;
+			stage(Stage.RECORDING);
 
 			return this;
 		}
@@ -192,7 +200,7 @@ public interface Command {
 		public Buffer end() {
 			check(Stage.RECORDING);
 			pool.library.vkEndCommandBuffer(Buffer.this);
-			stage = Stage.EXECUTABLE;
+			stage(Stage.EXECUTABLE);
 			return this;
 		}
 
@@ -206,7 +214,7 @@ public interface Command {
 			// TODO - check pool has flag
 			final EnumMask<VkCommandBufferResetFlags> mask = new EnumMask<>(flags);
 			pool.library.vkResetCommandBuffer(this, mask);
-			stage = Stage.INITIAL;
+			stage(Stage.INITIAL);
 		}
 		// TODO - should allocated buffers be invalidated? (ditto free)
 
@@ -216,12 +224,20 @@ public interface Command {
 		 */
 		public void free() {
 			pool.free(Set.of(this));
-			stage = Stage.INVALID;
+			stage(Stage.INVALID);
+		}
+
+		@Override
+		public int hashCode() {
+			return handle.hashCode();
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			return (obj == this);
+			return
+					(obj == this) ||
+					(obj instanceof Buffer that) &&
+					this.handle.equals(that.handle);
 		}
 
 		@Override
@@ -240,7 +256,7 @@ public interface Command {
 		 * @param queue			Work queue
 		 * @param flags			Creation flags
 		 */
-		public static Pool create(DeviceContext device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
+		public static Pool create(LogicalDevice device, WorkQueue queue, VkCommandPoolCreateFlags... flags) {
 			// Init pool descriptor
 			final var info = new VkCommandPoolCreateInfo();
 			info.sType = VkStructureType.COMMAND_POOL_CREATE_INFO;
@@ -266,7 +282,7 @@ public interface Command {
 		 * @param device		Logical device
 		 * @param queue			Work queue
 		 */
-		Pool(Handle handle, DeviceContext device, WorkQueue queue) {
+		Pool(Handle handle, LogicalDevice device, WorkQueue queue) {
 			super(handle, device);
 			this.queue = requireNonNull(queue);
 			this.library = device.library();
@@ -371,9 +387,8 @@ public interface Command {
 		 * @param pCreateInfo		Descriptor
 		 * @param pAllocator		Allocator
 		 * @param pCommandPool		Returned command pool handle
-		 * @return Result
 		 */
-		VkResult vkCreateCommandPool(DeviceContext device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool);
+		VkResult vkCreateCommandPool(LogicalDevice device, VkCommandPoolCreateInfo pCreateInfo, Handle pAllocator, Pointer pCommandPool);
 
 		/**
 		 * Destroys a command pool (and its buffers).
@@ -381,25 +396,23 @@ public interface Command {
 		 * @param commandPool		Command pool
 		 * @param pAllocator		Allocator
 		 */
-		void vkDestroyCommandPool(DeviceContext device, Pool commandPool, Handle pAllocator);
+		void vkDestroyCommandPool(LogicalDevice device, Pool commandPool, Handle pAllocator);
 
 		/**
 		 * Resets a command pool.
 		 * @param device			Logical device
 		 * @param commandPool		Command pool
 		 * @param flags				Flags
-		 * @return Result
 		 */
-		VkResult vkResetCommandPool(DeviceContext device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags);
+		VkResult vkResetCommandPool(LogicalDevice device, Pool commandPool, EnumMask<VkCommandPoolResetFlags> flags);
 
 		/**
 		 * Allocates a number of command buffers.
 		 * @param device			Logical device
 		 * @param pAllocateInfo		Descriptor
 		 * @param pCommandBuffers	Returned buffer handles
-		 * @return Result
 		 */
-		VkResult vkAllocateCommandBuffers(DeviceContext device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
+		VkResult vkAllocateCommandBuffers(LogicalDevice device, VkCommandBufferAllocateInfo pAllocateInfo, @Updated Handle[] pCommandBuffers);
 
 		/**
 		 * Releases a set of command buffers back to the pool.
@@ -408,20 +421,18 @@ public interface Command {
 		 * @param commandBufferCount	Number of buffers
 		 * @param pCommandBuffers		Command buffers
 		 */
-		void vkFreeCommandBuffers(DeviceContext device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
+		void vkFreeCommandBuffers(LogicalDevice device, Pool commandPool, int commandBufferCount, Buffer[] pCommandBuffers);
 
 		/**
 		 * Starts recording.
 		 * @param commandBuffer			Command buffer
 		 * @param pBeginInfo			Descriptor
-		 * @return Result
 		 */
 		VkResult vkBeginCommandBuffer(Buffer commandBuffer, VkCommandBufferBeginInfo pBeginInfo);
 
 		/**
 		 * Stops recording.
 		 * @param commandBuffer Command buffer
-		 * @return Result
 		 */
 		VkResult vkEndCommandBuffer(Buffer commandBuffer);
 
@@ -429,7 +440,6 @@ public interface Command {
 		 * Resets a command buffer.
 		 * @param commandBuffer			Command buffer
 		 * @param flags					Flags
-		 * @return Result
 		 */
 		VkResult vkResetCommandBuffer(Buffer commandBuffer, EnumMask<VkCommandBufferResetFlags> flags);
 
@@ -440,5 +450,14 @@ public interface Command {
 		 * @param pCommandBuffers		Secondary buffers to execute
 		 */
 		void vkCmdExecuteCommands(Buffer commandBuffer, int commandBufferCount, Buffer[] pCommandBuffers);
+
+		/**
+		 * Submits work to a queue.
+		 * @param queue					Queue
+		 * @param submitCount			Number of submissions
+		 * @param pSubmits				Work submissions
+		 * @param fence					Optional fence
+		 */
+		VkResult vkQueueSubmit(WorkQueue queue, int submitCount, VkSubmitInfo[] pSubmits, Fence fence);
 	}
 }

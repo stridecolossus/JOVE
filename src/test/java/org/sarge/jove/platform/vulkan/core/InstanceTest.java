@@ -2,33 +2,26 @@ package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.lang.foreign.MemorySegment;
-import java.util.*;
+import java.util.Optional;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.common.Version;
+import org.sarge.jove.util.MockLibrary;
 
 class InstanceTest {
-	private Instance instance;
-	private MockInstanceLibrary library;
-
-	@BeforeEach
-	void before() {
-		library = new MockInstanceLibrary();
-		instance = new Instance(new Handle(1), library);
-	}
-
-	public // TODO
-	static class MockInstanceLibrary implements Instance.Library {
-		private final Map<String, Handle> functions = new HashMap<>();
-		boolean destroyed;
+	static class MockInstanceLibrary extends MockLibrary implements Instance.Library {
+		private Handle function;
 
 		@Override
 		public VkResult vkCreateInstance(VkInstanceCreateInfo pCreateInfo, Handle pAllocator, Pointer pInstance) {
-			// Check create descriptor
+			// Check descriptor
+			assertEquals(VkStructureType.INSTANCE_CREATE_INFO, pCreateInfo.sType);
+			assertEquals(0, pCreateInfo.flags);
+
+			// Check extensions and layers
 			assertEquals(1, pCreateInfo.enabledExtensionCount);
 			assertEquals(1, pCreateInfo.enabledLayerCount);
 			assertArrayEquals(new String[]{"extension"}, pCreateInfo.ppEnabledExtensionNames);
@@ -36,6 +29,7 @@ class InstanceTest {
 
 			// Check application descriptor
 			final VkApplicationInfo app = pCreateInfo.pApplicationInfo;
+			assertEquals(VkStructureType.APPLICATION_INFO, app.sType);
 			assertEquals("name", app.pApplicationName);
 			assertEquals("JOVE", app.pEngineName);
 			assertEquals(new Version(1, 2, 3).toInteger(), app.applicationVersion);
@@ -43,63 +37,55 @@ class InstanceTest {
 			assertEquals(new Version(1, 1, 0).toInteger(), app.apiVersion);
 
 			// Create instance
-			pInstance.set(MemorySegment.ofAddress(2));
+			init(pInstance);
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public void vkDestroyInstance(Instance instance, Handle pAllocator) {
-			destroyed = true;
 		}
 
 		@Override
 		public VkResult vkEnumerateInstanceExtensionProperties(String pLayerName, IntegerReference pPropertyCount, VkExtensionProperties[] pProperties) {
-			if(pProperties == null) {
-				pPropertyCount.set(1);
-			}
-			else {
-				pProperties[0] = new VkExtensionProperties();
-			}
+			pPropertyCount.set(1);
+			init(pProperties, new VkExtensionProperties());
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public VkResult vkEnumerateInstanceLayerProperties(IntegerReference pPropertyCount, VkLayerProperties[] pProperties) {
-			if(pProperties == null) {
-				pPropertyCount.set(1);
-			}
-			else {
-				pProperties[0] = new VkLayerProperties();
-			}
+			pPropertyCount.set(1);
+			init(pProperties, new VkLayerProperties());
 			return VkResult.VK_SUCCESS;
 		}
 
 		@Override
 		public Handle vkGetInstanceProcAddr(Instance instance, String pName) {
-			return functions.get(pName);
-		}
-
-		/**
-		 * Adds a function pointer.
-		 */
-		public void function(String name, Handle handle) {
-			functions.put(name, handle);
+			return function;
 		}
 	}
 
-	@DisplayName("An instance can be configured and created via the builder")
-	@Test
-	void build() {
-		final Instance instance = new Instance.Builder()
+	private Instance instance;
+	private MockInstanceLibrary library;
+
+	@BeforeEach
+	void before() {
+		library = new MockInstanceLibrary();
+
+		instance = new Instance.Builder()
         		.name("name")
         		.version(new Version(1, 2, 3))
         		.api(Vulkan.VERSION)
         		.extension("extension")
         		.layer("layer")
 				.build(library);
+	}
 
-		assertEquals(new Handle(2), instance.handle());
-		assertEquals(false, instance.isDestroyed());
+
+	@DisplayName("An instance can be configured and created via the builder")
+	@Test
+	void constructor() {
+		assertFalse(instance.isDestroyed());
 	}
 
 	@DisplayName("The required API version must be supported by the native library")
@@ -113,16 +99,14 @@ class InstanceTest {
 	@Test
 	void destroy() {
 		instance.destroy();
-		assertEquals(true, instance.isDestroyed());
-		assertEquals(true, library.destroyed);
+		assertTrue(instance.isDestroyed());
 	}
 
 	@DisplayName("A function pointer can be retrieved by name from the instance")
 	@Test
 	void function() {
-		final var handle = new Handle(3);
-		library.function("function", handle);
-		assertEquals(Optional.of(handle), instance.function("function"));
+		library.function = new Handle(42);
+		assertEquals(Optional.of(library.function), instance.function("function"));
 	}
 
 	@DisplayName("An unknown function pointer cannot be retrieved from the instance")
