@@ -13,14 +13,15 @@ import org.sarge.jove.platform.vulkan.*;
  * In general the client requests <i>required</i> and <i>optimal</i> properties for the memory, with the allocator falling back to the minimal properties as required.
  * <p>
  * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
- * <pre>
- * var properties = new MemoryProperties.Builder&lt;VkBufferUsageFlag&gt;()
+ * {@snippet:
+ * var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
  *     .mode(VkSharingMode.CONCURRENT)
  *     .required(VkMemoryPropertyFlags.HOST_COHERENT)
  *     .required(VkMemoryPropertyFlags.HOST_VISIBLE)
  *     .optimal(VkMemoryPropertyFlags.DEVICE_LOCAL)
  *     .build()</pre>
+ * }
  * <p>
  * @param <T> Usage enumeration
  * @see VkBufferUsageFlag

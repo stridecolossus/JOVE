@@ -144,7 +144,7 @@ public class Framebuffer extends VulkanObject {
 		 * Recreates the framebuffers.
 		 */
 		private void create(Swapchain swapchain) {
-			final int count = swapchain.attachments();
+			final int count = swapchain.attachments().size();
 			final Dimensions extents = swapchain.extents();
 			for(int n = 0; n < count; ++n) {
 				final List<View> views = views(n);

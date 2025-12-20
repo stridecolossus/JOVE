@@ -8,6 +8,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryRequirements;
 
 /**
  * The <i>memory selector</i> is a utility used to select a memory type matching a given allocation.
+ * @see <a href="https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceMemoryProperties.html">VkPhysicalDeviceMemoryProperties</a>
  * @author Sarge
  */
 class MemorySelector {

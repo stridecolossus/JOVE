@@ -5,7 +5,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkResult;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.MockView;
+import org.sarge.jove.platform.vulkan.image.MockImage;
 import org.sarge.jove.util.Mockery;
 
 public class MockSwapchain extends Swapchain {
@@ -13,7 +13,7 @@ public class MockSwapchain extends Swapchain {
 
 	public MockSwapchain() {
 		final var library = new Mockery(Swapchain.Library.class).proxy();
-		super(new Handle(2), new MockLogicalDevice(library), List.of(new MockView()));
+		super(new Handle(2), new MockLogicalDevice(library), List.of(new MockImage()));
 	}
 
 	@Override

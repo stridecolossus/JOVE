@@ -18,10 +18,9 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
  * DeviceMemory memory = ...
  *
  * // Map accessible region
- * Region region = memory.map();
+ * MemorySegment region = memory.map();
  *
  * // Write to memory
- * MemorySegment address = memory.segment();
  * ByteBuffer buffer = address.asByteBuffer();
  * ...
  *

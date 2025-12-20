@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
@@ -55,7 +54,6 @@ class SwapchainTest {
 	}
 
 	private Swapchain swapchain;
-	private View view;
 	private LogicalDevice device;
 	private Mockery mockery;
 
@@ -63,8 +61,7 @@ class SwapchainTest {
 	void before() {
 		mockery = new Mockery(new MockSwapchainLibrary(), Swapchain.Library.class, View.Library.class);
 		device = new MockLogicalDevice(mockery.proxy());
-		view = new MockView();
-		swapchain = new Swapchain(new Handle(2), device, List.of(view, new MockView()));
+		swapchain = new Swapchain(new Handle(2), device, List.of(new MockImage()));
 	}
 
 	@Test
@@ -75,23 +72,13 @@ class SwapchainTest {
 
 	@Test
 	void attachments() {
-		assertEquals(2, swapchain.attachments());
-		assertEquals(view, swapchain.attachment(0));
-		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(-1));
-		assertThrows(IndexOutOfBoundsException.class, () -> swapchain.attachment(2));
-	}
-
-	@DisplayName("The number of in-flight frames is the same as the number of colour attachments by default")
-	@Test
-	void frames() {
-		assertEquals(2, swapchain.frames());
+		assertEquals(1, swapchain.attachments().size());
 	}
 
 	@Test
 	void destroy() {
 		swapchain.destroy();
 		assertTrue(swapchain.isDestroyed());
-		assertTrue(view.isDestroyed());
 		assertEquals(1, mockery.mock("vkDestroySwapchainKHR").count());
 	}
 
@@ -137,13 +124,7 @@ class SwapchainTest {
 		@BeforeEach
 		void before() {
 			properties = new MockSurfaceProperties();
-
-			builder = new Swapchain.Builder() {
-				@Override
-				protected List<View> attachments(LogicalDevice device, Handle swapchain) {
-					return List.of(new MockView());
-				}
-			};
+			builder = new Swapchain.Builder();
 		}
 
 		@Test
@@ -157,7 +138,7 @@ class SwapchainTest {
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(MockSurfaceProperties.FORMAT.format, swapchain.format());
 			assertEquals(false, swapchain.isDestroyed());
-			assertNotNull(swapchain.attachment(0));
+			assertEquals(1, swapchain.attachments().size());
 		}
 
 		// TODO

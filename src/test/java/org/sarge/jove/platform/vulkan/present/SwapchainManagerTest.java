@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
@@ -29,7 +30,7 @@ class SwapchainManagerTest {
 
 	@BeforeEach
 	void before() {
-		final var device = new MockLogicalDevice(); // mockery.proxy());
+		final var device = new MockLogicalDevice();
 
 		format = new SurfaceFormatWrapper(VkFormat.R32G32B32_SFLOAT, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
 
@@ -54,7 +55,12 @@ class SwapchainManagerTest {
 
 		configuration = new MockConfiguration();
 
-		manager = new SwapchainManager(device, properties, builder, List.of(configuration));
+		manager = new SwapchainManager(device, properties, builder, List.of(configuration)) {
+			@Override
+			protected View view(Image image) {
+				return new MockView();
+			}
+		};
 	}
 
 	@Test

@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
-import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.List;
 import java.util.stream.IntStream;
@@ -59,7 +58,7 @@ public class RenderTask implements Runnable, TransientObject {
 		private int index = -1;
 
 		public FrameStateIterator(Swapchain swapchain) {
-			final int number = requireOneOrMore(swapchain.frames());
+			final int number = swapchain.attachments().size();
 			final LogicalDevice device = swapchain.device();
 
 			this.frames = IntStream

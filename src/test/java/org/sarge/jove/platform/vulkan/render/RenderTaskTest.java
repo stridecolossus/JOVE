@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.*;
 
 class RenderTaskTest {
@@ -39,7 +40,12 @@ class RenderTaskTest {
 			}
 		};
 		final var device = new MockLogicalDevice();
-		final var manager = new SwapchainManager(device, new MockSurfaceProperties(), builder, List.of());
+		final var manager = new SwapchainManager(device, new MockSurfaceProperties(), builder, List.of()) {
+			@Override
+			protected View view(Image image) {
+				return new MockView();
+			}
+		};
 
 		// Init framebuffers
 		final var factory = new Framebuffer.Factory(new MockRenderPass()) {

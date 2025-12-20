@@ -43,7 +43,7 @@ public class Swapchain extends VulkanObject {
 	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
-	private final List<View> attachments;
+	private final List<Image> attachments;
 
 	/**
 	 * Constructor.
@@ -51,7 +51,7 @@ public class Swapchain extends VulkanObject {
 	 * @param device		Logical device
 	 * @param views			Colour attachments
 	 */
-	Swapchain(Handle handle, LogicalDevice device, List<View> attachments) {
+	Swapchain(Handle handle, LogicalDevice device, List<Image> attachments) {
 		super(handle, device);
 		this.library = device.library();
 		this.attachments = List.copyOf(attachments);
@@ -75,35 +75,14 @@ public class Swapchain extends VulkanObject {
 	 * @return Image descriptor for the first attachment
 	 */
 	private Image.Descriptor descriptor() {
-		return attachments
-				.getFirst()
-				.image()
-				.descriptor();
+		return attachments.getFirst().descriptor();
 	}
 
 	/**
-	 * @return Number of in-flight frames
+	 * @return Swapchain images
 	 */
-	public int frames() {
-		return attachments();
-	}
-
-	/**
-	 * @return Number of colour attachments
-	 */
-	public int attachments() {
-		return attachments.size();
-	}
-
-	/**
-	 * Retrieves a colour attachment by index.
-	 * @param index Attachment index
-	 * @return Colour attachment
-	 * @throws IndexOutOfBoundsException for an invalid index
-	 * @see #attachments()
-	 */
-	public View attachment(int index) {
-		return attachments.get(index);
+	public List<Image> attachments() {
+		return attachments;
 	}
 
 	/**
@@ -176,13 +155,6 @@ public class Swapchain extends VulkanObject {
 	@Override
 	protected Destructor<Swapchain> destructor() {
 		return library::vkDestroySwapchainKHR;
-	}
-
-	@Override
-	protected void release() {
-		for(View view : attachments) {
-			view.destroy();
-		}
 	}
 
 	/**
@@ -407,7 +379,7 @@ public class Swapchain extends VulkanObject {
 			final Handle handle = create(device, info);
 
 			// Create colour attachments
-			final List<View> attachments = attachments(device, handle);
+			final List<Image> attachments = attachments(device, handle);
 
 			// Create swapchain
 			return new Swapchain(handle, device, attachments);
@@ -442,41 +414,29 @@ public class Swapchain extends VulkanObject {
 		/**
 		 * Creates the colour attachments.
 		 */
-		protected List<View> attachments(LogicalDevice device, Handle swapchain) {
-			// Retrieve swapchain images
+		private List<Image> attachments(LogicalDevice device, Handle swapchain) {
+			// Retrieve swapchain image handles
 			final Library library = device.library();
 			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
-			final Handle[] images = VulkanFunction.invoke(function, Handle[]::new);
+			final Handle[] handles = VulkanFunction.invoke(function, Handle[]::new);
 
-			// Build the common image descriptor for the views
+			// Build the common image descriptor
 			final var descriptor = new Image.Descriptor.Builder()
     				.format(info.imageFormat)
     				.extents(dimensions(info.imageExtent))
     				.aspect(VkImageAspectFlags.COLOR)
     				.build();
 
-			// Init views builder
-			final var builder = new View.Builder()
-					.type(VkImageViewType.TYPE_2D)
-					.subresource(descriptor);
-
-			// Create image views
 			return Arrays
-					.stream(images)
-					.map(handle -> new SwapChainImage(handle, descriptor))
-					.map(image -> builder.build(device, image))
+					.stream(handles)
+					.map(handle -> (Image) new SwapchainImage(handle, descriptor))
 					.toList();
 		}
 
 		/**
-		 * Implementation for a swapchain image.
+		 * Swapchain colour attachment.
 		 */
-		private record SwapChainImage(Handle handle, Image.Descriptor descriptor) implements Image {
-			@Override
-			public boolean equals(Object obj) {
-				return obj == this;
-			}
-
+		private record SwapchainImage(Handle handle, Descriptor descriptor) implements Image {
 			@Override
 			public void destroy() {
 				throw new RuntimeException();

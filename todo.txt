@@ -10,10 +10,9 @@ also injects superfluous padding
 blog
 - move mesh load/persist -> model loader chapter
 - check cube vertices in perspective.md
-
-blog - physical device refers to NativeParameter
-
-blog - add section for minimised/closed windows ~ callbacks, recreation
+- physical device refers to NativeParameter
+- add section for minimised/closed windows ~ callbacks, recreation
+- region redundant after Panama, replaced with segment
 
 what is an descriptor set array used for?
 https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html

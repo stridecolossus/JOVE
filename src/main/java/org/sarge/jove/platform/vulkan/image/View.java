@@ -16,6 +16,16 @@ import org.sarge.jove.util.EnumMask;
  * @author Sarge
  */
 public class View extends VulkanObject {
+	/**
+	 * Creates a view of the given image with default properties.
+	 * @param device		Logical device
+	 * @param image			Image
+	 * @see Builder
+	 */
+	public static View of(LogicalDevice device, Image image) {
+		return new Builder().build(device, image);
+	}
+
 	private final Image image;
 	private final boolean release;
 

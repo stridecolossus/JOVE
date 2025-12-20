@@ -91,14 +91,9 @@ class FramebufferTest {
 			}
 		};
 		final var factory = new Framebuffer.Factory(pass);
-		final var swapchain = new MockSwapchain() {
-			@Override
-			public int attachments() {
-				return 3;
-			}
-		};
+		final var swapchain = new MockSwapchain();
 		factory.build(swapchain);
-		assertEquals(3, mockery.mock("vkCreateFramebuffer").count());
+		assertEquals(1, mockery.mock("vkCreateFramebuffer").count());
 		assertNotNull(factory.framebuffer(0));
 	}
 }
