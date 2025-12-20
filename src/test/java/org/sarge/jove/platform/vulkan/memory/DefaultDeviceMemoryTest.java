@@ -53,8 +53,8 @@ class DefaultDeviceMemoryTest {
 		@DisplayName("can be mapped")
 		@Test
 		void map() {
-			final Region region = memory.map(0, 3);
-			assertEquals(3, region.size());
+			final MemorySegment region = memory.map(0, 3);
+			assertEquals(3, region.byteSize());
 		}
 
 		@DisplayName("cannot be mapped if it is not host visible")
@@ -82,34 +82,26 @@ class DefaultDeviceMemoryTest {
 	@DisplayName("A mapped region of device memory...")
 	@Nested
 	class Mapped {
-		private Region region;
+		private MemorySegment region;
 
 		@BeforeEach
 		void before() {
-			region = memory.map(0, memory.size());
-			assertEquals(3, region.size());
+			region = memory.map();
+			assertEquals(3, region.byteSize());
 			assertEquals(Optional.of(region), memory.region());
 		}
 
 		@DisplayName("cannot be mapped more than once")
 		@Test
 		void map() {
-			assertThrows(IllegalStateException.class, () -> memory.map(0, memory.size()));
+			assertThrows(IllegalStateException.class, () -> memory.map());
 		}
 
 		@DisplayName("can be unmapped")
 		@Test
 		void unmap() {
-			region.unmap();
+			memory.unmap();
 			assertEquals(Optional.empty(), memory.region());
-		}
-
-		@DisplayName("can provide access to the underlying memory")
-		@Test
-		void buffer() {
-			final MemorySegment segment = region.memory();
-			assertEquals(false, segment.isReadOnly());
-			assertEquals(3L, segment.byteSize());
 		}
 
 		@DisplayName("can be destroyed")
@@ -130,66 +122,50 @@ class DefaultDeviceMemoryTest {
 	@DisplayName("An unmapped memory region...")
 	@Nested
 	class Unmapped {
-		private Region region;
-
 		@BeforeEach
 		void before() {
-			region = memory.map(0, memory.size());
-			region.unmap();
+			memory.map();
+			memory.unmap();
 		}
 
 		@DisplayName("can be re-mapped")
 		@Test
 		void map() {
-			memory.map(0, memory.size());
+			memory.map();
 		}
 
 		@DisplayName("cannot be unmapped more than once")
 		@Test
 		void unmap() {
-			assertThrows(IllegalStateException.class, () -> region.unmap());
-		}
-
-		@DisplayName("cannot access the underlying memory segment")
-		@Test
-		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.memory());
+			assertThrows(IllegalStateException.class, () -> memory.unmap());
 		}
 	}
 
 	@DisplayName("A destroyed memory instance...")
 	@Nested
 	class Destroyed {
-		private Region region;
-
 		@BeforeEach
 		void before() {
-			region = memory.map(0, memory.size());
+			memory.map();
 			memory.destroy();
 		}
 
 		@DisplayName("cannot be mapped")
 		@Test
 		void map() {
-			assertThrows(IllegalStateException.class, () -> memory.map(0, memory.size()));
+			assertThrows(IllegalStateException.class, () -> memory.map());
 		}
 
 		@DisplayName("cannot be unmapped")
 		@Test
 		void unmap() {
-			assertThrows(IllegalStateException.class, () -> region.unmap());
+			assertThrows(IllegalStateException.class, () -> memory.unmap());
 		}
 
 		@DisplayName("is automatically unmapped")
 		@Test
 		void unmapped() {
 			assertEquals(Optional.empty(), memory.region());
-		}
-
-		@DisplayName("cannot access the underlying memory segment")
-		@Test
-		void buffer() {
-			assertThrows(IllegalStateException.class, () -> region.memory());
 		}
 
 		@DisplayName("cannot be destroyed again")

@@ -1,5 +1,6 @@
 package org.sarge.jove.platform.vulkan.memory;
 
+import java.lang.foreign.MemorySegment;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -10,14 +11,6 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
  * A <i>device memory</i> instance is an area of memory accessible to the hardware.
  * <p>
  * Memory that is {@link VkMemoryPropertyFlags#HOST_VISIBLE} can be <i>mapped</i> using {@link #map(long, long)} in order to perform read or write operations by the application.
- * <p>
- * Notes:
- * <ul>
- * <li>Only <b>one</b> active mapping is permitted on a given instance at any one time</li>
- * <li>Memory mappings can be <i>persistent</i>, i.e. it is not required to explicitly unmap memory after a read/write access</li>
- * <li>Memory can be assumed to be automatically unmapped when it is released</li>
- * <li>A mapped region is invalidated if the region is unmapped or the memory has been destroyed</li>
- * </ul>
  * <p>
  * Usage:
  * <pre>
@@ -33,7 +26,7 @@ import org.sarge.jove.platform.vulkan.VkMemoryPropertyFlags;
  * ...
  *
  * // Release mapping
- * region.unmap();
+ * memory.unmap();
  *
  * // Release memory
  * memory.destroy();
@@ -60,25 +53,38 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
 	 * @return Mapped memory region
 	 */
-	Optional<Region> region();
+	Optional<MemorySegment> region();
 
 	/**
-	 * Maps a segment of this device memory.
+	 * Maps a <i>region</i> of this device memory.
+	 * Only <b>one</b> region can be active for a given device memory instance.
+	 * The region is invalidated if the memory is destroyed.
 	 * @param offset		Offset into this memory
 	 * @param size			Size of the region to map
 	 * @return Mapped memory region
 	 * @throws IllegalArgumentException if {@code offset} and {@code size} exceed the size of this memory
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
+	 * @see #unmap()
 	 */
-	Region map(long offset, long size);
+	MemorySegment map(long offset, long size);
 
 	/**
 	 * Maps this entire memory block.
 	 * @return Mapping memory
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 * @see #map(long, long)
+	 * @see #unmap()
 	 */
-	default Region map() {
+	default MemorySegment map() {
 		return map(0L, size());
 	}
+
+	/**
+	 * Unmaps the current mapped region of this memory.
+	 * Note that regions are <i>persistent</i>, i.e. it is not required to explicitly unmap memory after a read/write access.
+	 * Similarly a region does not need to be explicitly unmapped when the memory is destroyed.
+	 * @throws IllegalStateException if this memory has not been mapped or the memory has been destroyed
+	 * @see #map()
+	 */
+	void unmap();
 }

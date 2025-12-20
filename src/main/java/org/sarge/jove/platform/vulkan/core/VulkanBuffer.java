@@ -112,8 +112,7 @@ public class VulkanBuffer extends VulkanObject {
 	public MemorySegment map() {
 		return memory
 				.region()
-				.orElseGet(memory::map)
-				.memory();
+				.orElseGet(memory::map);
 	}
 
 	/**

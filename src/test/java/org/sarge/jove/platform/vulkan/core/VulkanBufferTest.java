@@ -104,14 +104,14 @@ class VulkanBufferTest {
 	@Test
 	void write() {
 		buffer.write(new byte[]{42});
-		assertEquals((byte) 42, buffer.memory().region().get().memory().get(ValueLayout.JAVA_BYTE, 0L));
+		assertEquals((byte) 42, buffer.memory().region().get().get(ValueLayout.JAVA_BYTE, 0L));
 	}
 
 	@Test
 	void buffer() {
 		final ByteBuffer bb = buffer.buffer();
 		bb.put((byte) 42);
-		assertEquals((byte) 42, buffer.memory().region().get().memory().get(ValueLayout.JAVA_BYTE, 0L));
+		assertEquals((byte) 42, buffer.memory().region().get().get(ValueLayout.JAVA_BYTE, 0L));
 	}
 
 	// TODO - offset tests

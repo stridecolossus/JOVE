@@ -27,7 +27,7 @@ public class PhysicalDevice implements NativeObject {
 	 * Constructor.
 	 * @param handle		Device handle
 	 * @param families		Queue families
-	 * @param library Device library
+	 * @param library		Device library
 	 */
 	PhysicalDevice(Handle handle, List<Family> families, Library library) {
 		this.handle = requireNonNull(handle);

@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	private final MemoryType type;
 	private final long size;
-	private Region region;
+	private MemorySegment region;
 
 	/**
 	 * Constructor.
@@ -44,72 +44,12 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	}
 
 	@Override
-	public final Optional<Region> region() {
+	public final Optional<MemorySegment> region() {
 		return Optional.ofNullable(region);
 	}
 
-	/**
-	 * Wrapper for a mapped memory segment.
-	 */
-	private class DefaultRegion implements Region {
-		private final MemorySegment segment;
-
-		/**
-		 * Constructor.
-		 * @param segment Mapped memory segment
-		 */
-		private DefaultRegion(MemorySegment segment) {
-			this.segment = requireNonNull(segment);
-		}
-
-		@Override
-		public long size() {
-			return segment.byteSize();
-		}
-
-		@Override
-		public MemorySegment memory() {
-			checkAlive();
-			checkMapped();
-			return segment;
-		}
-
-		@Override
-		public void unmap() {
-			// Validate mapping is active
-			checkAlive();
-			checkMapped();
-
-			// Release mapping
-			final LogicalDevice device = device();
-			final MemoryLibrary library = device.library();
-			library.vkUnmapMemory(device, DefaultDeviceMemory.this);
-
-			// Clear mapping
-			region = null;
-		}
-
-		@Override
-		public int hashCode() {
-			return segment.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return
-					(obj == this) ||
-					(obj instanceof DefaultRegion that) &&
-					this.segment.equals(that.segment);
-		}
-
-		@Override
-		public String toString() {
-			return String.format("Region[%s]", segment);
-		}
-	}
-
 	@Override
-	public Region map(long offset, long size) {
+	public MemorySegment map(long offset, long size) {
 		// Validate
 		requireZeroOrMore(offset);
 		requireOneOrMore(size);
@@ -130,11 +70,27 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 		final var pointer = new Pointer(size);
 		library.vkMapMemory(device, this, offset, size, 0, pointer);
 
-		// Create mapped region
-		region = new DefaultRegion(pointer.get());
+		// Retrieve mapped region
+		region = pointer.get();
+
 		return region;
 	}
-	// TODO - region rounding if not host coherent
+	// TODO - region rounding if not host coherent (?)
+
+	@Override
+	public void unmap() {
+		// Validate mapping is active
+		checkAlive();
+		checkMapped();
+
+		// Release mapping
+		final LogicalDevice device = device();
+		final MemoryLibrary library = device.library();
+		library.vkUnmapMemory(device, this);
+
+		// Clear mapping
+		region = null;
+	}
 
 	/**
 	 * @throws IllegalStateException if this memory has been released
@@ -150,7 +106,7 @@ class DefaultDeviceMemory extends VulkanObject implements DeviceMemory {
 	 */
 	private void checkMapped() {
 		if(region == null) {
-			throw new IllegalStateException("Memory region has been invalidated: " + this);
+			throw new IllegalStateException("Memory is not mapped: " + this);
 		}
 	}
 

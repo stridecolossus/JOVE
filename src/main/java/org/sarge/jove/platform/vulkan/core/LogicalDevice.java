@@ -37,7 +37,10 @@ public class LogicalDevice extends TransientNativeObject {
 		this.library = requireNonNull(library);
 	}
 
-	// TODO
+	/**
+	 * @param <T> Library type
+	 * @return Vulkan library
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> T library() {
 		return (T) library;

@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -19,7 +20,6 @@ class Block {
 	private final DeviceMemory memory;
 	private final List<BlockDeviceMemory> allocations = new ArrayList<>();
 	private long next;
-	private BlockDeviceMemory mapped;
 
 	/**
 	 * Constructor.
@@ -97,7 +97,6 @@ class Block {
 	void destroy() {
 		memory.destroy();
 		allocations.clear();
-		mapped = null;
 	}
 
 	@Override
@@ -145,21 +144,22 @@ class Block {
 		}
 
 		@Override
-		public Optional<Region> region() {
-			if(mapped == this) {
-				return memory.region();
-			}
-			else {
-				return Optional.empty();
-			}
+		public Optional<MemorySegment> region() {
+			return memory.region();
 		}
 
 		@Override
-		public Region map(long offset, long size) {
+		public MemorySegment map(long offset, long size) {
 			checkAlive();
-			memory.region().ifPresent(Region::unmap);
-			mapped = this;
+			if(memory.region().isPresent()) {
+				unmap();
+			}
 			return memory.map(offset, size);
+		}
+
+		@Override
+		public void unmap() {
+			memory.unmap();
 		}
 
 		/**
@@ -194,9 +194,8 @@ class Block {
 		@Override
 		public void destroy() {
 			checkAlive();
-			if(mapped == this) {
-				memory.region().get().unmap();
-				mapped = null;
+			if(memory.region().isPresent()) {
+				unmap();
 			}
 			destroyed = true;
 		}
