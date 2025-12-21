@@ -1,0 +1,68 @@
+
+general
+- scene graph
+- renderer transforms graph -> vulkan render sequence
+
+nodes
+- name?
+- tree: parent, children, mutable, clone
+- local transform
+- material
+- bounding volume ~ picking, culling, both
+
+local transform
+- inherited
+- matrix, compound/multiplied?
+- literal matrix, rotation: axis-angle, quaternion, mutable/animated
+- out: uniform, push constant
+
+material
+- inherited
+- name
+- texture(s?) ~ descriptor sets
+- pipeline -> layout -> descriptor sets, push constant/ranges(?)
+- render queue? opaque, translucent, etc
+- properties: named 'variables' -> shader
+- out: bind pipeline & descriptors to sequence
+
+material properties
+- name
+- type: equivalent to GLSL types: int, float, vector[size], matrix[order], etc
+- size (bytes)
+- array length?
+- mutability: fixed, variable, per-frame, per-node, etc
+- maps to uniform, push constant, shader constants?
+
+renderable object
+- is-a node
+- mesh: vertices, optional index
+- particle system
+- fixed (?) model matrix?
+- compound, e.g. tree trunk + leaves ~ scene graph!
+- instanced?
+- out: bind VBO & index to sequence, draw command
+
+light
+- is-a node
+- inherited?
+- type (sealed)
+- colour: main, specular, others?
+- intensity?
+- ambient
+- directional: direction
+- point: position, direction
+- spot light: position, direction, spread/angle/cone, attenuation(?)
+- out: uniform, push constants?
+
+other
+- billboard transform?
+
+implications:
+- outputs: commands, uniform and/or push constants, transform/matrix -> dynamic shader inputs
+- scene graph -> render queues -> render sequence
+- primary/secondary buffers
+- other shader inputs, e.g. time, elapsed, custom, etc
+
+how to:
+- specify sequence is secondary buffers? hint: dynamic, fixed?
+- use uniform or push constant / range (others?) -> some sort of 'layout' thing ~ struct layout, i.e. 'ranges' with names

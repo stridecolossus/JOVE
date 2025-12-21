@@ -7,6 +7,8 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+test for RenderTask and SwapchainManager are nasty
+
 blog
 - move mesh load/persist -> model loader chapter
 - check cube vertices in perspective.md

@@ -9,7 +9,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * A subpass <i>dependency</i> specifies a dependencies between the subpasses of a render pass.
+ * A subpass <i>dependency</i> specifies a dependency between the subpasses of a render pass.
  * @author Sarge
  */
 public record Dependency(Properties source, Properties destination, Set<VkDependencyFlags> flags) {
