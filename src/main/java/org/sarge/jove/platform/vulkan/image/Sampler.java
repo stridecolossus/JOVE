@@ -102,7 +102,9 @@ public class Sampler extends VulkanObject {
 		 * @throws IllegalStateException if this mode cannot be mirrored
 		 */
 		public VkSamplerAddressMode mirror() {
-			if(mirrored == null) throw new IllegalStateException("Address mode cannot be mirrored: " + this);
+			if(mirrored == null) {
+				throw new IllegalStateException("Address mode cannot be mirrored: " + this);
+			}
 			return mirrored;
 		}
 	}
@@ -124,10 +126,8 @@ public class Sampler extends VulkanObject {
 			mag(VkFilter.LINEAR);
 			mipmap(VkSamplerMipmapMode.LINEAR);
 			maxLod(VK_LOD_CLAMP_NONE);
-			anisotropy(1);
 			mode(VkSamplerAddressMode.REPEAT);
 			border(VkBorderColor.FLOAT_TRANSPARENT_BLACK);
-			unnormalizedCoordinates(false);
 		}
 
 		/**
@@ -142,7 +142,7 @@ public class Sampler extends VulkanObject {
 
 		/**
 		 * Sets the magnification filter.
-		 * @param min Magnification filter (default is {@link VkFilter#LINEAR})
+		 * @param min Magnification filter
 		 */
 		public Builder mag(VkFilter mag) {
 			info.magFilter = requireNonNull(mag);
@@ -151,7 +151,7 @@ public class Sampler extends VulkanObject {
 
 		/**
 		 * Sets the minification filter.
-		 * @param min Minification filter (default is {@link VkFilter#LINEAR})
+		 * @param min Minification filter
 		 */
 		public Builder min(VkFilter min) {
 			info.minFilter = requireNonNull(min);
@@ -160,7 +160,7 @@ public class Sampler extends VulkanObject {
 
 		/**
 		 * Sets the mipmap mode.
-		 * @param mode Mipmap mode (default is {@link VkSamplerMipmapMode#LINEAR})
+		 * @param mode Mipmap mode
 		 */
 		public Builder mipmap(VkSamplerMipmapMode mode) {
 			info.mipmapMode = requireNonNull(mode);
