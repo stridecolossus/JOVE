@@ -1,9 +1,8 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.Objects.requireNonNull;
 
 import org.sarge.jove.common.*;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * A <i>Vulkan object</i> is a template base-class for objects derived from the logical device.

@@ -1,10 +1,9 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.core.*;
 
 public class VulkanObjectTest {
 	private static class MockVulkanObject extends VulkanObject {

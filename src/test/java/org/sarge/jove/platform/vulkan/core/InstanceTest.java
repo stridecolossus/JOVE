@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.Version;
 import org.sarge.jove.util.MockLibrary;
 
 class InstanceTest {

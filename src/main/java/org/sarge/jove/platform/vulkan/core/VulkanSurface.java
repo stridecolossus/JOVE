@@ -8,7 +8,6 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanFunction;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 
 /**

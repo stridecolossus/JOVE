@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -17,6 +17,12 @@ class DeviceFeaturesTest {
 
 	@Test
 	void contains() {
+		assertTrue(features.contains("wideLines"));
+		assertFalse(features.contains("depthClamp"));
+	}
+
+	@Test
+	void other() {
 		final var other = new DeviceFeatures(Set.of("wideLines", "depthClamp"));
 		assertEquals(true, features.contains(features));
 		assertEquals(true, other.contains(features));
@@ -41,5 +47,17 @@ class DeviceFeaturesTest {
 		final var structure = new VkPhysicalDeviceFeatures();
 		structure.wideLines = true;
 		assertEquals(features, DeviceFeatures.of(structure));
+	}
+
+	@Test
+	void filter() {
+		final var device = new MockPhysicalDevice() {
+			@Override
+			public DeviceFeatures features() {
+				return features;
+			}
+		};
+		assertTrue(features.test(device));
+		assertFalse(features.test(new MockPhysicalDevice()));
 	}
 }

@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Updated;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.util.EnumMask;

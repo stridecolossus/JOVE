@@ -19,6 +19,8 @@ public class MockPhysicalDevice extends PhysicalDevice {
 	public VkPhysicalDeviceProperties properties() {
 		final var properties = new VkPhysicalDeviceProperties();
 		properties.limits = new VkPhysicalDeviceLimits();
+		properties.limits.maxSamplerAnisotropy = 8;
+		// TODO - others?
 		return properties;
 	}
 }

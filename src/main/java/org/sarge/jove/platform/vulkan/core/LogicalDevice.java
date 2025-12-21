@@ -10,7 +10,6 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.PhysicalDevice.Selector;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.*;
@@ -21,18 +20,21 @@ import org.sarge.jove.util.*;
  */
 public class LogicalDevice extends TransientNativeObject {
 	private final Map<Family, List<WorkQueue>> queues;
+	private final DeviceFeatures features;
 	private final DeviceLimits limits;
 	private final Library library;
 	/**
 	 * Constructor.
 	 * @param handle 		Device handle
 	 * @param queues 		Work queues indexed by family
+	 * @param features		Enabled device features
 	 * @param limits		Device limits
 	 * @param library		Device library
 	 */
-	LogicalDevice(Handle handle, Map<Family, List<WorkQueue>> queues, DeviceLimits limits, Library library) {
+	LogicalDevice(Handle handle, Map<Family, List<WorkQueue>> queues, DeviceFeatures features, DeviceLimits limits, Library library) {
 		super(handle);
 		this.queues = Map.copyOf(queues);
+		this.features = requireNonNull(features);
 		this.limits = requireNonNull(limits);
 		this.library = requireNonNull(library);
 	}
@@ -69,6 +71,13 @@ public class LogicalDevice extends TransientNativeObject {
 	 */
 	public DeviceLimits limits() {
 		return limits;
+	}
+
+	/**
+	 * @return Enabled device features
+	 */
+	public DeviceFeatures features() {
+		return features;
 	}
 
 	/**
@@ -202,10 +211,10 @@ public class LogicalDevice extends TransientNativeObject {
 		}
 
 		private final PhysicalDevice device;
+		private final List<RequiredQueue> queues = new ArrayList<>();
 		private final Set<String> extensions = new HashSet<>();
 		private final Set<String> layers = new HashSet<>();
-		private final Set<String> features = new HashSet<>();
-		private final List<RequiredQueue> queues = new ArrayList<>();
+		private DeviceFeatures features = new DeviceFeatures(Set.of());
 
 		/**
 		 * Constructor.
@@ -239,12 +248,16 @@ public class LogicalDevice extends TransientNativeObject {
 		}
 
 		/**
-		 * Adds a feature required by this device.
-		 * @param Required feature
+		 * Sets the features required by this logical device.
+		 * @param features Required device features
+		 * @throws IllegalArgumentException if any feature is not supported by the physical device
+		 * @see PhysicalDevice#features()
 		 */
-		public Builder feature(String feature) {
-			// TODO - check whether in parent device first? not much point in asking for it otherwise? => init this.features to parent.features?
-			features.add(feature);
+		public Builder features(DeviceFeatures features) {
+			if(!device.features().contains(features)) {
+				throw new IllegalArgumentException("Unuspported device features: " + features);
+			}
+			this.features = features;
 			return this;
 		}
 
@@ -308,7 +321,7 @@ public class LogicalDevice extends TransientNativeObject {
 			final var limits = new DeviceLimits(properties.limits);
 
 			// Create domain object
-			return new LogicalDevice(handle, map, limits, library);
+			return new LogicalDevice(handle, map, features, limits, library);
 		}
 
 		/**
@@ -325,9 +338,8 @@ public class LogicalDevice extends TransientNativeObject {
 			info.enabledLayerCount = layers.size();
 			info.ppEnabledLayerNames = layers.toArray(String[]::new);
 
-			// Add required features
-			final var required = new DeviceFeatures(features);
-			info.pEnabledFeatures = new VkPhysicalDeviceFeatures[]{required.build()};
+			// Add required features, note this field is an array mapping to a structure pointer
+			info.pEnabledFeatures = new VkPhysicalDeviceFeatures[]{features.build()};
 
 			// Add required queues
 			info.queueCreateInfoCount = queues.size();

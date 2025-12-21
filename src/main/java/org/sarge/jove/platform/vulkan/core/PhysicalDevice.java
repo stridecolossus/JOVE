@@ -10,7 +10,6 @@ import java.util.stream.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.IntEnum.ReverseMapping;
 
@@ -156,16 +155,6 @@ public class PhysicalDevice implements NativeObject {
 		final VulkanFunction<Handle[]> enumerate = (count, devices) -> library.vkEnumeratePhysicalDevices(instance, count, devices);
 		final Handle[] devices = VulkanFunction.invoke(enumerate, Handle[]::new);
 		return Arrays.stream(devices).map(builder::device);
-	}
-
-	/**
-	 * Helper.
-	 * Creates a device filter for the given required features.
-	 * @param required Required features
-	 * @return Device features filter
-	 */
-	public static Predicate<PhysicalDevice> predicate(DeviceFeatures required) {
-		return device -> device.features().contains(required);
 	}
 
 	/**

@@ -8,7 +8,6 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkCommandPoolCreateFlags;
-import org.sarge.jove.platform.vulkan.common.*;
 import org.sarge.jove.platform.vulkan.core.Command.*;
 import org.sarge.jove.platform.vulkan.core.CommandTest.MockCommandLibrary;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;

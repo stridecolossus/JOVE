@@ -7,8 +7,7 @@ import java.lang.foreign.MemorySegment;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanException;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.util.MockLibrary;
 
 public class MockMemoryLibrary extends MockLibrary implements MemoryLibrary {

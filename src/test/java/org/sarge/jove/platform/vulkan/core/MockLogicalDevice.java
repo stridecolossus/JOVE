@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceLimits;
-import org.sarge.jove.platform.vulkan.common.DeviceLimits;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 import org.sarge.jove.util.Mockery;
 
@@ -29,7 +28,7 @@ public class MockLogicalDevice extends LogicalDevice {
 		limits.maxUniformBufferRange = Integer.MAX_VALUE;
 		limits.maxPushConstantsSize = 256;
 
-		super(new Handle(1), Map.of(family, List.of(queue)), new DeviceLimits(limits), logical);
+		super(new Handle(1), Map.of(family, List.of(queue)), new DeviceFeatures(Set.of()), new DeviceLimits(limits), logical);
 		this.library = Objects.requireNonNullElse(library, logical);
 		this.limits = limits;
 	}

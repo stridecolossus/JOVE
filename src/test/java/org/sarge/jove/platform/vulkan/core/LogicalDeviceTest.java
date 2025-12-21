@@ -57,25 +57,46 @@ class LogicalDeviceTest {
 
 	@BeforeEach
 	void before() {
+		// Init device library
 		mockery = new Mockery(LogicalDevice.Library.class);
 		mockery.implement(new MockLogicalDeviceLibrary());
 
-		device = new LogicalDevice.Builder(new MockPhysicalDevice())
+		// Create physical device with supported features
+		final var features = new DeviceFeatures(Set.of("wideLines"));
+		final var physical = new MockPhysicalDevice() {
+			@Override
+			public DeviceFeatures features() {
+				return features;
+			}
+		};
+
+		// Create logical device
+		device = new LogicalDevice.Builder(physical)
 				.layer(DiagnosticHandler.STANDARD_VALIDATION)
 				.extension("extension")
-				.feature("wideLines")
+				.features(features)
 				.queue(new RequiredQueue(MockPhysicalDevice.FAMILY))
 				.build(mockery.proxy());
 	}
 
 	@Test
 	void constructor() {
-		assertNotNull(device.limits());
 		assertEquals(1, device.queues().size());
 		assertFalse(device.isDestroyed());
 	}
 
 	// TODO - library cast fiddle
+
+	@Test
+	void features() {
+		assertEquals(new DeviceFeatures(Set.of("wideLines")), device.features());
+	}
+
+	@Test
+	void limits() {
+		final DeviceLimits limits = device.limits();
+		assertEquals(8f, (float) limits.get("maxSamplerAnisotropy"));
+	}
 
 	@Test
 	void queues() {
@@ -142,5 +163,12 @@ class LogicalDeviceTest {
 			builder.queue(new RequiredQueue(MockPhysicalDevice.FAMILY, 1));
 			builder.queue(new RequiredQueue(MockPhysicalDevice.FAMILY, 1));
 		}
+	}
+
+	@Test
+	void invalidDeviceFeatures() {
+		final var builder = new LogicalDevice.Builder(new MockPhysicalDevice());
+		final var features = new DeviceFeatures(Set.of("wideLines"));
+		assertThrows(IllegalArgumentException.class, () -> builder.features(features));
 	}
 }

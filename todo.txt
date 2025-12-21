@@ -7,6 +7,10 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+need to recreate depth buffer for new swapchain resolution!
+ditto if we use a MSAA attachment
+=> a more structured recreate mechanism: swapchain, image views, framebuffers, other attachments 
+
 test for RenderTask and SwapchainManager are nasty
 
 blog

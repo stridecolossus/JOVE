@@ -8,8 +8,7 @@ import java.util.Optional;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * Default implementation that essentially wraps an FFM memory segment.

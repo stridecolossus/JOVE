@@ -5,8 +5,7 @@ import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanException;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * An <i>allocator</i> is responsible for allocating device memory for a given request.

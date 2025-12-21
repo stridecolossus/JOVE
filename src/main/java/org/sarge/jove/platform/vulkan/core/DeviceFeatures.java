@@ -1,9 +1,10 @@
-package org.sarge.jove.platform.vulkan.common;
+package org.sarge.jove.platform.vulkan.core;
 
 import static java.util.stream.Collectors.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Predicate;
 
 import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
 
@@ -12,13 +13,22 @@ import org.sarge.jove.platform.vulkan.VkPhysicalDeviceFeatures;
  * @see VkPhysicalDeviceFeatures
  * @author Sarge
  */
-public record DeviceFeatures(Set<String> features) {
+public record DeviceFeatures(Set<String> features) implements Predicate<PhysicalDevice> {
 	/**
 	 * Constructor.
 	 * @param features Enabled features
 	 */
 	public DeviceFeatures {
 		features = Set.copyOf(features);
+	}
+
+	/**
+	 * Helper.
+	 * @param feature Feature name
+	 * @return Whether this set contains the given feature
+	 */
+	public boolean contains(String feature) {
+		return features.contains(feature);
 	}
 
 	/**
@@ -50,6 +60,11 @@ public record DeviceFeatures(Set<String> features) {
 		}
 
 		return structure;
+	}
+
+	@Override
+	public boolean test(PhysicalDevice device) {
+		return device.features().contains(this);
 	}
 
 	/**

@@ -2,6 +2,8 @@ package org.sarge.jove.platform.vulkan.image;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
@@ -22,7 +24,6 @@ class SamplerTest {
 			assertEquals(0f, pCreateInfo.mipLodBias);
 			assertEquals(0f, pCreateInfo.minLod);
 			assertEquals(1000f, pCreateInfo.maxLod);
-			assertEquals(1f, pCreateInfo.maxAnisotropy);
 			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeU);
 			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeV);
 			assertEquals(VkSamplerAddressMode.REPEAT, pCreateInfo.addressModeW);
@@ -72,6 +73,47 @@ class SamplerTest {
 		@Test
 		void invalid() {
 			assertThrows(IllegalStateException.class, () -> AddressMode.BORDER.mirror());
+		}
+	}
+
+	@Nested
+	class AnisotropyTest {
+		private Sampler.Builder builder;
+		private LogicalDevice device;
+
+		@BeforeEach
+		void before() {
+			device = new MockLogicalDevice(mockery.proxy()) {
+				@Override
+				public DeviceFeatures features() {
+					return new DeviceFeatures(Set.of("samplerAnisotropy"));
+				}
+
+				@Override
+				public DeviceLimits limits() {
+					final var limits = new VkPhysicalDeviceLimits();
+					limits.maxSamplerAnisotropy = 4;
+					return new DeviceLimits(limits);
+				}
+			};
+
+			builder = new Sampler.Builder().anisotropy(4);
+		}
+
+		@Test
+		void anisotropy() {
+			builder.build(device);
+		}
+
+		@Test
+		void feature() {
+			assertThrows(UnsupportedOperationException.class, () -> builder.build(new MockLogicalDevice()));
+		}
+
+		@Test
+		void max() {
+			builder.anisotropy(8);
+			assertThrows(IllegalArgumentException.class, () -> builder.build(device));
 		}
 	}
 

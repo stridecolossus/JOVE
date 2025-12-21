@@ -8,8 +8,7 @@ import java.util.*;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.VulkanObject;
-import org.sarge.jove.platform.vulkan.core.LogicalDevice;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.render.DescriptorSet;
 import org.sarge.jove.util.EnumMask;
 
@@ -228,7 +227,8 @@ public class Sampler extends VulkanObject {
 		}
 
 		/**
-		 * Sets the texture border colour (default is {@link VkBorderColor#FLOAT_TRANSPARENT_BLACK}).
+		 * Sets the texture border colour.
+		 * The default is {@link VkBorderColor#FLOAT_TRANSPARENT_BLACK}.
 		 * Note this is only relevant for the {@link VkSamplerAddressMode#CLAMP_TO_BORDER} address mode.
 		 * @param border Border colour
 		 * @see #mode(VkSamplerAddressMode)
@@ -239,7 +239,7 @@ public class Sampler extends VulkanObject {
 		}
 
 		/**
-		 * Sets the number of texel samples for anisotropy filtering (default is disabled).
+		 * Sets the number of texel samples for anisotropic filtering.
 		 * @param anisotropy Number of texel samples
 		 */
 		public Builder anisotropy(float anisotropy) {
@@ -247,6 +247,7 @@ public class Sampler extends VulkanObject {
 			info.anisotropyEnable = anisotropy > 1;
 			return this;
 		}
+		// TODO - device limit
 
 		/**
 		 * Sets and enables the comparison operation.
@@ -259,7 +260,7 @@ public class Sampler extends VulkanObject {
 		}
 
 		/**
-		 * Sets whether to use un-normalized texel coordinates (default is {@code false}).
+		 * Sets whether to use un-normalized texel coordinates.
 		 * @param unnormalizedCoordinates Whether to use un-normalized coordinates
 		 */
 		public Builder unnormalizedCoordinates(boolean unnormalizedCoordinates) {
@@ -269,14 +270,28 @@ public class Sampler extends VulkanObject {
 
 		/**
 		 * Builds this sampler.
-		 * @param dev Logical device
+		 * @param device Logical device
 		 * @return New sampler
 		 * @throws IllegalArgumentException if the LOD levels are illogical
+		 * @throws IllegalArgumentException if the {@link #anisotropy(float)} level exceeds the hardware limit
+		 * @throws UnsupportedOperationException if {@link #anisotropy(float)} is configured but not enabled
 		 */
-		public Sampler build(LogicalDevice dev) {
+		public Sampler build(LogicalDevice device) {
 			// Validate
 			if(info.minLod > info.maxLod) {
 				throw new IllegalArgumentException("Invalid min/max LOD");
+			}
+
+			// Validate anisotropy feature
+			if(info.anisotropyEnable) {
+				if(!device.features().contains("samplerAnisotropy")) {
+					throw new UnsupportedOperationException("Anisotropy feature not enabled");
+				}
+
+				final float max = device.limits().get("maxSamplerAnisotropy");
+				if(info.maxAnisotropy > max) {
+					throw new IllegalArgumentException("Anisotropy level %s higher than maximum %s".formatted(info.maxAnisotropy, max));
+				}
 			}
 
 			// Init descriptor
@@ -284,12 +299,12 @@ public class Sampler extends VulkanObject {
 			info.flags = new EnumMask<>(flags);
 
 			// Instantiate sampler
-			final Library library = dev.library();
+			final Library library = device.library();
 			final Pointer pointer = new Pointer();
-			library.vkCreateSampler(dev, info, null, pointer);
+			library.vkCreateSampler(device, info, null, pointer);
 
 			// Create domain object
-			return new Sampler(pointer.handle(), dev);
+			return new Sampler(pointer.handle(), device);
 		}
 	}
 

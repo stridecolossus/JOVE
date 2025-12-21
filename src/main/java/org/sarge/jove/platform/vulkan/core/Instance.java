@@ -8,7 +8,6 @@ import java.util.*;
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 
 /**
  * The <i>instance</i> is the root object for a Vulkan application.

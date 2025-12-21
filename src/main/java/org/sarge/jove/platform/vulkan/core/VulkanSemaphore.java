@@ -3,7 +3,6 @@ package org.sarge.jove.platform.vulkan.core;
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.common.*;
 
 /**
  * A <i>semaphore</i> is used to synchronise operations within or across command queues.
