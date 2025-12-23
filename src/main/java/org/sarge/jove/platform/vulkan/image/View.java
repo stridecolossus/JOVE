@@ -120,7 +120,7 @@ public class View extends VulkanObject {
 		 */
 		public View build(LogicalDevice device, Image image) {
 			// Validate
-			if(release && !(image instanceof TransientNativeObject)) {
+			if(release && !(image instanceof AbstractNativeObject)) {
 				throw new IllegalStateException("Only default images can be released");
 			}
 

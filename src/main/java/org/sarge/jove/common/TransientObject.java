@@ -14,7 +14,5 @@ public interface TransientObject {
 	/**
 	 * @return Whether this object has been destroyed
 	 */
-	default boolean isDestroyed() {
-		return false;
-	}
+	boolean isDestroyed();
 }

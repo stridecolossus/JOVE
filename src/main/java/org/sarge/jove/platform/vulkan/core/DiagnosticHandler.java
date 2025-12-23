@@ -20,7 +20,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see Vulkan#STANDARD_VALIDATION
  * @author Sarge
  */
-public class DiagnosticHandler extends TransientNativeObject {
+public class DiagnosticHandler extends AbstractNativeObject {
 	/**
 	 * Debug utility extension name.
 	 */

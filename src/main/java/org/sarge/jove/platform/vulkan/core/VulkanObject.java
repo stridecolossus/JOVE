@@ -8,7 +8,7 @@ import org.sarge.jove.common.*;
  * A <i>Vulkan object</i> is a template base-class for objects derived from the logical device.
  * @author Sarge
  */
-public abstract class VulkanObject extends TransientNativeObject {
+public abstract class VulkanObject extends AbstractNativeObject {
 	private final LogicalDevice device;
 
 	/**
@@ -58,10 +58,5 @@ public abstract class VulkanObject extends TransientNativeObject {
 		final Destructor destructor = this.destructor();
 		destructor.destroy(device, this, null);
 		super.destroy();
-	}
-
-	@Override
-	protected void release() {
-		// Does nowt
 	}
 }

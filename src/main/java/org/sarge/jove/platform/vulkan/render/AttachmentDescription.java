@@ -40,7 +40,6 @@ public record AttachmentDescription(VkSampleCountFlags samples, LoadStore operat
 	 * @param stencil			Stencil operations
 	 * @param initialLayout		Initial layout
 	 * @param finalLayout		Final layout
-	 * @throws IllegalArgumentException if {@link #format} is undefined
 	 * @throws IllegalArgumentException if {@link #finalLayout} is invalid for this attachment
 	 * @throws IllegalArgumentException if {@link #initialLayout} is undefined and any load operation is {@link VkAttachmentLoadOp#LOAD}
 	 */
@@ -66,6 +65,7 @@ public record AttachmentDescription(VkSampleCountFlags samples, LoadStore operat
 	 * Builds the descriptor for this attachment.
 	 * @param format Image format
 	 * @return Attachment descriptor
+	 * @throws IllegalArgumentException if {@link #format} is undefined
 	 */
 	VkAttachmentDescription populate(VkFormat format) {
 		if(format == VkFormat.UNDEFINED) {

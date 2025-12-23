@@ -25,7 +25,7 @@ import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
  * <p>
  * @author Sarge
  */
-public class VulkanSurface extends TransientNativeObject {
+public class VulkanSurface extends AbstractNativeObject {
 	private final Window window;
 	private final Instance instance;
 	private final Library library;

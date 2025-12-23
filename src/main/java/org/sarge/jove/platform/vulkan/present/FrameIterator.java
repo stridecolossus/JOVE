@@ -4,21 +4,23 @@ import static org.sarge.jove.util.Validation.requireOneOrMore;
 
 import java.util.Arrays;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 
 /**
  * The <i>frame iterator</i> cycles through an array of in-flight frames.
+ * The size of the array is usually the same as the number of swapchain attachments.
+ * @see FrameState
  * @author Sarge
  */
-public class FrameIterator implements TransientObject {
+public class FrameIterator extends AbstractTransientObject {
 	private final FrameState[] frames;
 	private int next;
 
 	/**
 	 * Constructor.
 	 * @param device		Logical device
-	 * @param count			Number of frames
+	 * @param count			Number of in-flight frames
 	 */
 	public FrameIterator(LogicalDevice device, int count) {
 		requireOneOrMore(count);
@@ -48,7 +50,7 @@ public class FrameIterator implements TransientObject {
 	}
 
 	@Override
-	public void destroy() {
+	protected void release() {
 		for(FrameState f : frames) {
 			f.destroy();
 		}

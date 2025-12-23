@@ -4,16 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.*;
 
-public class TransientNativeObjectTest {
-	private TransientNativeObject obj;
-	private Handle handle;
+public class AbstractTransientObjectTest {
+	private AbstractTransientObject object;
 	private boolean destroyed;
 
 	@BeforeEach
 	void before() {
-		handle = new Handle(1);
 		destroyed = false;
-		obj = new TransientNativeObject(handle) {
+		object = new AbstractTransientObject() {
 			@Override
 			protected void release() {
 				destroyed = true;
@@ -21,31 +19,25 @@ public class TransientNativeObjectTest {
 		};
 	}
 
-	@DisplayName("A transient object has a native handle")
-	@Test
-	void constructor() {
-		assertEquals(handle, obj.handle());
-	}
-
 	@DisplayName("A new transient object is not destroyed")
 	@Test
 	void isDestroyed() {
-		assertEquals(false, obj.isDestroyed());
+		assertEquals(false, object.isDestroyed());
 		assertEquals(false, destroyed);
 	}
 
 	@DisplayName("A transient object can be destroyed")
 	@Test
 	void destroy() {
-		obj.destroy();
-		assertEquals(true, obj.isDestroyed());
+		object.destroy();
+		assertEquals(true, object.isDestroyed());
 		assertEquals(true, destroyed);
 	}
 
 	@DisplayName("A transient object cannot be destroyed more than once")
 	@Test
-	void destroyAlreadyDestroyed() {
-		obj.destroy();
-		assertThrows(IllegalStateException.class, () -> obj.destroy());
+	void already() {
+		object.destroy();
+		assertThrows(IllegalStateException.class, () -> object.destroy());
 	}
 }

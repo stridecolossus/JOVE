@@ -5,7 +5,7 @@ import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.Set;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
@@ -13,9 +13,10 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
  * A <i>frame state</i> manages the synchronisation state of an <i>in-flight</i> frame during rendering.
+ * @see FrameIterator
  * @author Sarge
  */
-public class FrameState implements TransientObject {
+public class FrameState extends AbstractTransientObject {
 	/**
 	 * Creates a frame state instance.
 	 * @param index		Frame index
@@ -121,7 +122,7 @@ public class FrameState implements TransientObject {
 	}
 
 	@Override
-	public void destroy() {
+	protected void release() {
 		available.destroy();
 		ready.destroy();
 		fence.destroy();

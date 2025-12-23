@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.image.*;
  * Skeleton implementation that also manages recreation of the attachment image-views.
  * @author Sarge
  */
-public abstract class AbstractAttachment implements Attachment, TransientObject {
+public abstract class AbstractAttachment extends AbstractTransientObject implements Attachment {
 	private final AttachmentType type;
 	private final AttachmentDescription description;
 	private List<View> views;
@@ -62,7 +62,7 @@ public abstract class AbstractAttachment implements Attachment, TransientObject 
 	/**
 	 * Sets the clear value of this attachment.
 	 * @param clear Clear value
-	 * @throws IllegalStateException if this attachment is not cleared
+	 * @throws IllegalStateException if this attachment is configured to be cleared
 	 */
 	protected void clear(ClearValue clear) {
 		if(description.operation().load() != VkAttachmentLoadOp.CLEAR) {
@@ -75,7 +75,7 @@ public abstract class AbstractAttachment implements Attachment, TransientObject 
 	@Override
 	public final void recreate(LogicalDevice device, Dimensions extents) {
 		if(views != null) {
-			destroy();
+			release();
 		}
 
 		this.views = views(device, extents);
@@ -90,7 +90,7 @@ public abstract class AbstractAttachment implements Attachment, TransientObject 
 	protected abstract List<View> views(LogicalDevice device, Dimensions extents);
 
 	@Override
-	public void destroy() {
+	protected void release() {
 		for(View view : views) {
 			view.destroy();
 		}

@@ -18,7 +18,7 @@ import org.sarge.jove.util.*;
  * The <i>logical device</i> is an instance of a {@link PhysicalDevice}.
  * @author Sarge
  */
-public class LogicalDevice extends TransientNativeObject {
+public class LogicalDevice extends AbstractNativeObject {
 	private final Map<Family, List<WorkQueue>> queues;
 	private final DeviceFeatures features;
 	private final DeviceLimits limits;

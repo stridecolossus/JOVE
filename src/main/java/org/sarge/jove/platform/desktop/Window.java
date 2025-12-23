@@ -15,7 +15,7 @@ import org.sarge.jove.platform.desktop.WindowLibrary.*;
  * Native window implemented using GLFW.
  * @author Sarge
  */
-public class Window extends TransientNativeObject {
+public class Window extends AbstractNativeObject {
 	/**
 	 * Window creation hints.
 	 */

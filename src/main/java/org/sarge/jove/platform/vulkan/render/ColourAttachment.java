@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.present.Swapchain;
 
 /**
- * A <i>colour attachment</i> specifies the properties of the swapchain attachments.
+ * A <i>colour attachment</i> specifies the properties of the swapchain colour images.
  * @author Sarge
  */
 public class ColourAttachment extends AbstractAttachment {

@@ -5,7 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
 
 /**
@@ -18,7 +18,7 @@ import org.sarge.jove.platform.vulkan.memory.Block.BlockDeviceMemory;
  * <p>
  * @author Sarge
  */
-public class MemoryPool implements TransientObject {
+public class MemoryPool extends AbstractTransientObject {
 	private final MemoryType type;
 	private final List<Block> blocks = new ArrayList<>();
 	private long total;
@@ -107,6 +107,7 @@ public class MemoryPool implements TransientObject {
 	/**
 	 * Releases <b>all</b> memory allocated back to this pool.
 	 */
+	@Override
 	public void release() {
 		this.allocations().forEach(DeviceMemory::destroy);
 		assert free() == total;
@@ -114,10 +115,13 @@ public class MemoryPool implements TransientObject {
 
 	@Override
 	public void destroy() {
+		super.destroy();
+
 		for(Block b : blocks) {
 			b.destroy();
 		}
 		blocks.clear();
+
 		total = 0;
 		assert free() == 0;
 	}

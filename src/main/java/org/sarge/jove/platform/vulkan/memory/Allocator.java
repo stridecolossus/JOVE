@@ -3,6 +3,7 @@ package org.sarge.jove.platform.vulkan.memory;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireOneOrMore;
 
+import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
@@ -11,7 +12,7 @@ import org.sarge.jove.platform.vulkan.core.*;
  * An <i>allocator</i> is responsible for allocating device memory for a given request.
  * @author Sarge
  */
-public class Allocator {
+public class Allocator extends AbstractTransientObject {
 	/**
 	 * An <i>allocation exception</i> is thrown when this allocator fails to allocate memory.
 	 */
@@ -179,11 +180,4 @@ public class Allocator {
 		return 1 + (size - 1) / page;
 	}
 	// TODO - this feels a bit 'contrived', can it be made simpler and more expressive?
-
-	/**
-	 * Clears the allocation count.
-	 */
-	protected final void reset() {
-		count = 0;
-	}
 }

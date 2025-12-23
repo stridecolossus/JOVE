@@ -13,7 +13,7 @@ import org.sarge.jove.platform.vulkan.*;
  * The <i>instance</i> is the root object for a Vulkan application.
  * @author Sarge
  */
-public class Instance extends TransientNativeObject {
+public class Instance extends AbstractNativeObject {
 	private final Library library;
 
 	/**

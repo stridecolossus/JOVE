@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.*;
 
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
@@ -15,7 +15,7 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.*;
  * @see SwapchainConfiguration
  * @author Sarge
  */
-public class SwapchainManager implements TransientObject {
+public class SwapchainManager extends AbstractTransientObject {
 	/**
 	 * A <i>swapchain configuration</i> is used to select and configure a property of the swapchain prior to construction.
 	 */
@@ -67,7 +67,7 @@ public class SwapchainManager implements TransientObject {
 	 * @return New swapchain
 	 */
 	public Swapchain recreate() {
-		destroy();
+		release();
 		swapchain = build();
 		return swapchain;
 	}
@@ -88,7 +88,7 @@ public class SwapchainManager implements TransientObject {
 	}
 
 	@Override
-	public void destroy() {
+	protected void release() {
 		swapchain.destroy();
 		swapchain = null;
 	}

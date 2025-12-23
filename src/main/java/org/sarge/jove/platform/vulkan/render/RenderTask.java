@@ -13,13 +13,15 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  * <p>
  * The rendering process is as follows:
  * <ol>
+ * <li>Select the next in-flight frame</li>
  * <li>Acquire the framebuffer to be rendered from the swapchain</li>
  * <li>Compose the render sequence for the frame</li>
  * <li>Submit the render task</li>
  * <li>Present the completed frame to the swapchain</li>
  * </ol>
  * <p>
- * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frames concurrently.
+ * This implementation aims to fully utilise the multi-threaded nature of the hardware.
+ * Multiple <i>in flight</i> frames are rendered and presented concurrently, synchronised by a {@link FrameState}.
  * <p>
  * The swapchain and frame buffers are recreated on demand if the swapchain is {@link Invalidated}.
  * <p>

@@ -108,7 +108,7 @@ public class Framebuffer extends VulkanObject {
 	/**
 	 * The <i>frame buffer factory</i> generates new framebuffer instances.
 	 */
-	public static class Factory implements TransientObject {
+	public static class Factory extends AbstractTransientObject {
 		private final RenderPass pass;
 		private final List<Framebuffer> framebuffers = new ArrayList<>();
 
@@ -142,7 +142,7 @@ public class Framebuffer extends VulkanObject {
 		 * @param swapchain Swapchain
 		 */
 		protected void recreate(Swapchain swapchain) {
-			destroy();
+			release();
 			build(swapchain);
 		}
 
@@ -196,7 +196,7 @@ public class Framebuffer extends VulkanObject {
 		}
 
 		@Override
-		public void destroy() {
+		protected void release() {
 			for(Framebuffer buffer : framebuffers) {
 				buffer.destroy();
 			}

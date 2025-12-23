@@ -14,7 +14,7 @@ import org.sarge.jove.platform.vulkan.memory.*;
 import org.sarge.jove.util.*;
 
 /**
- * A <i>depth attachment</i> specifies the properties of the depth-stencil attachment.
+ * The <i>depth stencil attachment</i> specifies the properties of the depth-stencil attachment.
  * @author Sarge
  */
 public class DepthStencilAttachment extends AbstractAttachment {

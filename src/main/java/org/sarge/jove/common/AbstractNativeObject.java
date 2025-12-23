@@ -6,15 +6,14 @@ import static java.util.Objects.requireNonNull;
  * Template implementation for a native object managed by the application.
  * @author Sarge
  */
-public abstract class TransientNativeObject implements NativeObject, TransientObject {
+public abstract class AbstractNativeObject extends AbstractTransientObject implements NativeObject {
 	private final Handle handle;
-	private boolean destroyed;
 
 	/**
 	 * Constructor.
 	 * @param handle Handle
 	 */
-	protected TransientNativeObject(Handle handle) {
+	protected AbstractNativeObject(Handle handle) {
 		this.handle = requireNonNull(handle);
 	}
 
@@ -22,26 +21,6 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 	public final Handle handle() {
 		return handle;
 	}
-
-	@Override
-	public final boolean isDestroyed() {
-		return destroyed;
-	}
-
-	@Override
-	public void destroy() {
-		if(destroyed) {
-			throw new IllegalStateException("Transient object has already been destroyed: " + this);
-		}
-		release();
-		destroyed = true;
-	}
-
-	/**
-	 * Releases resources managed by this object.
-	 * @see #destroy()
-	 */
-	protected abstract void release();
 
 	@Override
 	public int hashCode() {
@@ -52,7 +31,7 @@ public abstract class TransientNativeObject implements NativeObject, TransientOb
 	public boolean equals(Object obj) {
 		return
 				(obj == this) ||
-				(obj instanceof TransientNativeObject that) &&
+				(obj instanceof AbstractNativeObject that) &&
 				this.handle.equals(that.handle());
 	}
 

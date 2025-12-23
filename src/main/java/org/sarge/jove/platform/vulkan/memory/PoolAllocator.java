@@ -5,8 +5,6 @@ import static org.sarge.jove.util.Validation.requireOneOrMore;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.sarge.jove.common.TransientObject;
-
 /**
  * A <i>pool allocator</i> delegates allocation requests to a {@link MemoryPool}.
  * <p>
@@ -15,7 +13,7 @@ import org.sarge.jove.common.TransientObject;
  * <p>
  * @author Sarge
  */
-public class PoolAllocator extends Allocator implements TransientObject {
+public class PoolAllocator extends Allocator {
 	private final Map<MemoryType, MemoryPool> pools = new ConcurrentHashMap<>();
 	private final int pages;
 
@@ -111,15 +109,23 @@ public class PoolAllocator extends Allocator implements TransientObject {
 	/**
 	 * Releases <b>all</b> allocated memory back to the pool.
 	 */
+	@Override
 	public void release() {
-		pools.values().forEach(MemoryPool::release);
+		for(MemoryPool p : pools.values()) {
+			p.release();
+		}
+
 		assert free() == size();
 	}
 
 	@Override
 	public void destroy() {
-		pools.values().forEach(MemoryPool::destroy);
-		super.reset();
+		super.destroy();
+
+		for(MemoryPool p : pools.values()) {
+			p.destroy();
+		}
+
 		assert size() == 0;
 		assert free() == 0;
 	}

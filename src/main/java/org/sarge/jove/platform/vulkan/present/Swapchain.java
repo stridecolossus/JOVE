@@ -17,7 +17,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
 /**
  * A <i>swapchain</i> presents rendered images to a {@link VulkanSurface}.
  * <p>
- * A swapchain is comprised of an array of colour image <i>attachments</i> which are accessed via {@link #attachment(int)}.
+ * A swapchain is comprised of an array of colour image <i>attachments</i> accessed via {@link #attachments}.
  * Note that swapchain images are created and managed by Vulkan, however the application is responsible for allocating and releasing the {@link View} for each attachment.
  * <p>
  * The process of rendering a frame is comprised of two operations:
@@ -117,6 +117,20 @@ public class Swapchain extends VulkanObject {
 		public void destroy() {
 			throw new RuntimeException();
 		}
+
+		@Override
+		public boolean isDestroyed() {
+			return false;
+		}
+	}
+
+	/**
+	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
+	 */
+	public static final class Invalidated extends VulkanException {
+		protected Invalidated(VkResult result) {
+			super(result);
+		}
 	}
 
 	/**
@@ -189,15 +203,6 @@ public class Swapchain extends VulkanObject {
 	@Override
 	protected Destructor<Swapchain> destructor() {
 		return library::vkDestroySwapchainKHR;
-	}
-
-	/**
-	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
-	 */
-	public static final class Invalidated extends VulkanException {
-		protected Invalidated(VkResult result) {
-			super(result);
-		}
 	}
 
 	/**

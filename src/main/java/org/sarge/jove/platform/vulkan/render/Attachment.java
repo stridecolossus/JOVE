@@ -42,7 +42,9 @@ public interface Attachment {
 	AttachmentDescription description();
 
 	/**
-	 * @param index Image index
+	 * Retrieves an image view of this attachment by index.
+	 * Attachments with a single view (such as the depth-stencil) should ignore the index and return the same view for all frames.
+	 * @param index Frame index
 	 * @return Attachment view for the given index
 	 */
 	View view(int index);
