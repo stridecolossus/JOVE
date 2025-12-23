@@ -7,11 +7,23 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+sort out transient/native release()
+
 need to recreate depth buffer for new swapchain resolution!
 ditto if we use a MSAA attachment
 => a more structured recreate mechanism: swapchain, image views, framebuffers, other attachments 
 
+resize handler -> recreate swapchain
+minimised window -> glfwGetFramebufferSize returns 0, glfwWaitEvents() pauses?
+
 test for RenderTask and SwapchainManager are nasty
+
+MSAA
+- render target with > 1 samples, and rasterizer
+- resolve attachment
+- depth ditto
+- usage: transient, colour
+- final layout = colour optimal
 
 blog
 - move mesh load/persist -> model loader chapter

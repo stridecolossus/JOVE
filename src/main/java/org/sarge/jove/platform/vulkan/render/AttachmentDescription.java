@@ -12,7 +12,7 @@ import org.sarge.jove.util.IntEnum.ReverseMapping;
  * @see VkAttachmentDescription
  * @author Sarge
  */
-public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples, LoadStore operation, LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
+public record AttachmentDescription(VkSampleCountFlags samples, LoadStore operation, LoadStore stencil, VkImageLayout initialLayout, VkImageLayout finalLayout) {
 	/**
 	 * Convenience wrapper for a load-store pair.
 	 */
@@ -35,7 +35,6 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 
 	/**
 	 * Constructor.
-	 * @param format			Image format
 	 * @param samples			Number of samples
 	 * @param operation			Attachment operations
 	 * @param stencil			Stencil operations
@@ -46,16 +45,11 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	 * @throws IllegalArgumentException if {@link #initialLayout} is undefined and any load operation is {@link VkAttachmentLoadOp#LOAD}
 	 */
 	public AttachmentDescription {
-		requireNonNull(format);
 		requireNonNull(samples);
 		requireNonNull(operation);
 		requireNonNull(stencil);
 		requireNonNull(initialLayout);
 		requireNonNull(finalLayout);
-
-		if(format == VkFormat.UNDEFINED) {
-			throw new IllegalArgumentException("Format cannot be undefined");
-		}
 
 		switch(finalLayout) {
     		case UNDEFINED, PREINITIALIZED -> {
@@ -69,11 +63,17 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	}
 
 	/**
+	 * Builds the descriptor for this attachment.
+	 * @param format Image format
 	 * @return Attachment descriptor
 	 */
-	VkAttachmentDescription populate() {
+	VkAttachmentDescription populate(VkFormat format) {
+		if(format == VkFormat.UNDEFINED) {
+			throw new IllegalArgumentException("Format cannot be undefined");
+		}
+
 		final var attachment = new VkAttachmentDescription();
-		attachment.format = format;
+		attachment.format = requireNonNull(format);
 		attachment.samples = new EnumMask<>(samples);
 		attachment.loadOp = operation.load;
 		attachment.storeOp = operation.store;
@@ -85,26 +85,22 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	}
 
 	/**
-	 * Creates the description for a colour attachment for presentation.
-	 * @param format Colour image layout
+	 * Creates a default description for a colour attachment.
 	 * @return Colour attachment description
 	 */
-	public static AttachmentDescription colour(VkFormat format) {
+	public static AttachmentDescription colour() {
 		return new Builder()
-				.format(format)
 				.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE))
 				.finalLayout(VkImageLayout.PRESENT_SRC_KHR)
 				.build();
 	}
 
 	/**
-	 * Creates the description for a depth-stencil attachment.
-	 * @param format Depth format
+	 * Creates a default description for the depth-stencil attachment.
 	 * @return Depth-stencil attachment description
 	 */
-	public static AttachmentDescription depth(VkFormat format) {
+	public static AttachmentDescription depth() {
 		return new Builder()
-				.format(format)
 				.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
@@ -116,21 +112,11 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 	public static class Builder {
 		private final ReverseMapping<VkSampleCountFlags> mapping = ReverseMapping.mapping(VkSampleCountFlags.class);
 
-		private VkFormat format;
 		private VkSampleCountFlags samples = VkSampleCountFlags.COUNT_1;
 		private LoadStore operation = LoadStore.DONT_CARE;
 		private LoadStore stencil = LoadStore.DONT_CARE;
 		private VkImageLayout initialLayout = VkImageLayout.UNDEFINED;
 		private VkImageLayout finalLayout;
-
-		/**
-		 * Sets the image format of this attachment.
-		 * @param format Image format
-		 */
-		public Builder format(VkFormat format) {
-			this.format = format;
-			return this;
-		}
 
 		/**
 		 * Sets the number of samples (default is one).
@@ -189,11 +175,11 @@ public record AttachmentDescription(VkFormat format, VkSampleCountFlags samples,
 		}
 
 		/**
-		 * Constructs this attachment.
-		 * @return New attachment
+		 * Constructs this attachment description.
+		 * @return Attachment description
 		 */
 		public AttachmentDescription build() {
-			return new AttachmentDescription(format, samples, operation, stencil, initialLayout, finalLayout);
+			return new AttachmentDescription(samples, operation, stencil, initialLayout, finalLayout);
 		}
 	}
 }

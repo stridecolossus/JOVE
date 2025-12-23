@@ -133,8 +133,7 @@ public class RenderPass extends VulkanObject {
 			info.attachmentCount = attachments.size();
 			info.pAttachments = attachments
 					.stream()
-					.map(Attachment::description)
-					.map(AttachmentDescription::populate)
+					.map(Builder::description)
 					.toArray(VkAttachmentDescription[]::new);
 
 			// Populate subpasses
@@ -152,6 +151,14 @@ public class RenderPass extends VulkanObject {
 					.toArray(VkSubpassDependency[]::new);
 
 			return info;
+		}
+
+		/**
+		 * @return Attachment description including image format
+		 */
+		private static VkAttachmentDescription description(Attachment attachment) {
+			final VkFormat format = attachment.format();
+			return attachment.description().populate(format);
 		}
 	}
 

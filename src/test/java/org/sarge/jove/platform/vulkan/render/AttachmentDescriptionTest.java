@@ -15,7 +15,6 @@ class AttachmentDescriptionTest {
 	@BeforeEach
 	void before() {
 		attachment = new AttachmentDescription(
-				FORMAT,
 				VkSampleCountFlags.COUNT_1,
 				new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.STORE),
 				LoadStore.DONT_CARE,
@@ -31,13 +30,6 @@ class AttachmentDescriptionTest {
 		@BeforeEach
 		void before() {
 			builder = new AttachmentDescription.Builder();
-			builder.format(FORMAT);
-		}
-
-		@DisplayName("The image format of an attachment cannot be undefined")
-		@Test
-		void undefined() {
-			assertThrows(NullPointerException.class, () -> builder.format(VkFormat.UNDEFINED).build());
 		}
 
 		@DisplayName("The final image layout of an attachment cannot be undefined")
@@ -58,7 +50,7 @@ class AttachmentDescriptionTest {
 
 	@Test
 	void populate() {
-		final var descriptor = attachment.populate();
+		final var descriptor = attachment.populate(FORMAT);
 		assertEquals(FORMAT, descriptor.format);
 		assertEquals(new EnumMask<>(VkSampleCountFlags.COUNT_1), descriptor.samples);
 		assertEquals(VkAttachmentLoadOp.CLEAR, descriptor.loadOp);
@@ -69,20 +61,25 @@ class AttachmentDescriptionTest {
 		assertEquals(VkImageLayout.PRESENT_SRC_KHR, descriptor.finalLayout);
 	}
 
+	@DisplayName("The image format of an attachment cannot be undefined")
+	@Test
+	void undefined() {
+		assertThrows(IllegalArgumentException.class, () -> attachment.populate(VkFormat.UNDEFINED));
+	}
+
 	@Test
 	void colour() {
-		assertEquals(attachment, AttachmentDescription.colour(FORMAT));
+		assertEquals(attachment, AttachmentDescription.colour());
 	}
 
 	@Test
 	void depth() {
 		final var expected = new AttachmentDescription.Builder()
-				.format(VkFormat.D32_SFLOAT)
 				.operation(new LoadStore(VkAttachmentLoadOp.CLEAR, VkAttachmentStoreOp.DONT_CARE))
 				.finalLayout(VkImageLayout.DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 				.build();
 
-		assertEquals(expected, AttachmentDescription.depth(VkFormat.D32_SFLOAT));
+		assertEquals(expected, AttachmentDescription.depth());
 	}
 
 	@Test

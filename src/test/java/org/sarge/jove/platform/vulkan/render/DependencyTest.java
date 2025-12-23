@@ -7,8 +7,8 @@ import static org.sarge.jove.platform.vulkan.VkPipelineStageFlags.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
+import org.sarge.jove.platform.vulkan.VkSubpassDependency;
+import org.sarge.jove.platform.vulkan.present.MockSwapchain;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
 import org.sarge.jove.util.EnumMask;
 
@@ -18,8 +18,7 @@ class DependencyTest {
 
 	@BeforeEach
 	void before() {
-		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
-		final var attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
+		final var attachment = new ColourAttachment(AttachmentDescription.colour(), () -> new MockSwapchain());
 		final var reference = attachment.reference();
 		one = new Subpass(Set.of(), List.of(reference));
 		two = new Subpass(Set.of(), List.of(reference, reference));

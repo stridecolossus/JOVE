@@ -2,10 +2,10 @@ package org.sarge.jove.platform.vulkan.present;
 
 import java.util.*;
 
-import org.sarge.jove.common.Handle;
-import org.sarge.jove.platform.vulkan.VkResult;
+import org.sarge.jove.common.*;
+import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.image.MockImage;
+import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.util.Mockery;
 
 public class MockSwapchain extends Swapchain {
@@ -13,7 +13,12 @@ public class MockSwapchain extends Swapchain {
 
 	public MockSwapchain() {
 		final var library = new Mockery(Swapchain.Library.class).proxy();
-		super(new Handle(2), new MockLogicalDevice(library), List.of(new MockImage()));
+		super(new Handle(2), new MockLogicalDevice(library), VkFormat.B8G8R8_UNORM, new Dimensions(640, 480));
+	}
+
+	@Override
+	public List<Image> attachments() {
+		return List.of(new MockImage());
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
-import org.sarge.jove.platform.vulkan.render.Attachment.AttachmentType;
+import org.sarge.jove.platform.vulkan.present.MockSwapchain;
 import org.sarge.jove.platform.vulkan.render.Dependency.Properties;
 import org.sarge.jove.util.*;
 
@@ -30,14 +30,13 @@ class RenderPassTest {
 	}
 
 	private RenderPass pass;
-	private Attachment attachment;
+	private ColourAttachment attachment;
 	private Mockery mockery;
 
 	@BeforeEach
 	void before() {
 		// Create an attachment
-		final var description = AttachmentDescription.colour(VkFormat.R32G32B32A32_SFLOAT);
-		attachment = new Attachment(AttachmentType.COLOUR, description, _ -> null);
+		attachment = new ColourAttachment(AttachmentDescription.colour(), () -> new MockSwapchain());
 
 		// Create subpass
 		final var subpass = new Subpass(Set.of(), List.of(attachment.reference()));

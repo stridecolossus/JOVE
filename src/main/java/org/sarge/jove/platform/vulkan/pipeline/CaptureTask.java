@@ -47,7 +47,9 @@ public class CaptureTask {
 	 */
 	public Image capture(Swapchain swapchain, Allocator allocator) {
 		// Retrieve latest rendered swapchain image
-		final Image image = swapchain.attachments().getFirst(); // TODO - where to get 'latest' COMPLETED framebuffer index?
+		final Image image = swapchain.attachments().getFirst();
+		// TODO - where to get 'latest' COMPLETED framebuffer index?
+		// TODO - this will RECREATE the attachments!!!
 
 		// Create destination screenshot image
 		final LogicalDevice device = swapchain.device();

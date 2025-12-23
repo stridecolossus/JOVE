@@ -40,7 +40,7 @@ class SwapchainTest {
 			return VkResult.VK_SUCCESS;
 		}
 
-		public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
+		public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
 			pSwapchainImageCount.set(1);
 			init(pSwapchainImages);
 			return VkResult.VK_SUCCESS;
@@ -61,7 +61,7 @@ class SwapchainTest {
 	void before() {
 		mockery = new Mockery(new MockSwapchainLibrary(), Swapchain.Library.class, View.Library.class);
 		device = new MockLogicalDevice(mockery.proxy());
-		swapchain = new Swapchain(new Handle(2), device, List.of(new MockImage()));
+		swapchain = new Swapchain(new Handle(2), device, VkFormat.B8G8R8A8_UNORM, new Dimensions(640, 480));
 	}
 
 	@Test
@@ -72,7 +72,12 @@ class SwapchainTest {
 
 	@Test
 	void attachments() {
-		assertEquals(1, swapchain.attachments().size());
+		final List<Image> attachments = swapchain.attachments();
+		assertEquals(1, attachments.size());
+
+		final Image.Descriptor descriptor = attachments.getFirst().descriptor();
+		assertEquals(VkFormat.B8G8R8A8_UNORM, descriptor.format());
+		assertEquals(new Dimensions(640, 480), descriptor.extents().size());
 	}
 
 	@Test

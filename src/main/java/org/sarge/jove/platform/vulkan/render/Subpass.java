@@ -49,18 +49,27 @@ public record Subpass(Set<VkSubpassDescriptionFlags> flags, List<Reference> refe
 				.collect(groupingBy(ref -> ref.attachment().type()));
 
 		// Add colour attachments
-		final List<Reference> colour = attachments.getOrDefault(AttachmentType.COLOUR, List.of());
-		description.colorAttachmentCount = colour.size();
-		description.pColorAttachments = colour
+		description.pColorAttachments = attachments
+				.getOrDefault(AttachmentType.COLOUR, List.of())
 				.stream()
 				.map(indexer::reference)
 				.toArray(VkAttachmentReference[]::new);
+
+		// Init colour attachment count
+		description.colorAttachmentCount = description.pColorAttachments.length;
 
 		// Add optional depth-stencil attachment
 		final List<Reference> depth = attachments.get(AttachmentType.DEPTH);
 		if(depth != null) {
 			description.pDepthStencilAttachment = indexer.reference(depth.getFirst());
 		}
+
+// TODO
+//		// Add resolve attachments
+//		description.pResolveAttachments = attachments
+//				.getOrDefault(AttachmentType.RESOLVE, List.of())
+//				.stream()
+//				.toArray(VkAttachmentReference[]::new);
 
 		return description;
 	}

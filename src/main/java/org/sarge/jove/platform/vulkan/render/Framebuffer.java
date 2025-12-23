@@ -121,34 +121,41 @@ public class Framebuffer extends VulkanObject {
 		}
 
 		/**
+		 * @return Render pass
+		 */
+		public RenderPass pass() {
+			return pass;
+		}
+
+		/**
 		 * Retrieves the framebuffer with the given index.
 		 * @param index Framebuffer index
 		 * @return Framebuffer
 		 * @throws IndexOutOfBoundsException if the index is invalid
 		 */
-		public Framebuffer framebuffer(int index) {
+		public Framebuffer get(int index) {
 			return framebuffers.get(index);
 		}
 
 		/**
-		 * Recreates the framebuffers for the given swapchain.
+		 * Recreates the framebuffers.
 		 * @param swapchain Swapchain
 		 */
-		public void build(Swapchain swapchain) {
+		protected void recreate(Swapchain swapchain) {
 			destroy();
-			create(swapchain);
+			build(swapchain);
 		}
 
 		/**
-		 * Recreates the framebuffers.
+		 * Builds the framebuffers.
 		 */
-		private void create(Swapchain swapchain) {
+		private void build(Swapchain swapchain) {
 			final int count = swapchain.attachments().size();
 			final Dimensions extents = swapchain.extents();
 			for(int n = 0; n < count; ++n) {
 				final List<View> views = views(n);
-				final Framebuffer buffer = create(views, extents);
-				framebuffers.add(buffer);
+				final Framebuffer b = create(views, extents);
+				framebuffers.add(b);
 			}
 		}
 
@@ -166,7 +173,7 @@ public class Framebuffer extends VulkanObject {
 		/**
 		 * Creates a new framebuffer.
 		 */
-		private Framebuffer create(List<View> views, Dimensions extents) {
+		protected Framebuffer create(List<View> views, Dimensions extents) {
 			// Build descriptor
 			final var info = new VkFramebufferCreateInfo();
 			info.sType = VkStructureType.FRAMEBUFFER_CREATE_INFO;

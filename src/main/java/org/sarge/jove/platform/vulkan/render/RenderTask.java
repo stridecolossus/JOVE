@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.present.*;
+import org.sarge.jove.platform.vulkan.present.Swapchain;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
@@ -30,24 +30,19 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  * @author Sarge
  */
 public class RenderTask implements Runnable, TransientObject {
-	private final SwapchainManager manager;
-	private final Framebuffer.Factory factory;
 	private final FrameComposer composer;
+	private final RenderController controller;
 	private final FrameStateIterator iterator;
 
 	/**
 	 * Constructor.
-	 * @param manager		Swapchain manager
-	 * @param factory		Frame buffer factory
+	 * @param controller	Rendering controller
 	 * @param composer		Composer for the render sequence
 	 */
-	public RenderTask(SwapchainManager manager, Framebuffer.Factory factory, FrameComposer composer) {
-		final var swapchain = manager.swapchain();
-		this.manager = requireNonNull(manager);
-		this.factory = requireNonNull(factory);
+	public RenderTask(RenderController controller, FrameComposer composer) {
+		this.controller = requireNonNull(controller);
 		this.composer = requireNonNull(composer);
-		this.iterator = new FrameStateIterator(swapchain);
-		factory.build(swapchain);
+		this.iterator = new FrameStateIterator();
 	}
 
 	/**
@@ -57,12 +52,13 @@ public class RenderTask implements Runnable, TransientObject {
 		private final List<FrameState> frames;
 		private int index = -1;
 
-		public FrameStateIterator(Swapchain swapchain) {
-			final int number = swapchain.attachments().size();
+		public FrameStateIterator() {
+			final Swapchain swapchain = controller.swapchain();
+			final int count = count(swapchain);
 			final LogicalDevice device = swapchain.device();
 
 			this.frames = IntStream
-					.range(0, number)
+					.range(0, count)
 					.mapToObj(_ -> frame(device))
 					.toList();
 		}
@@ -88,6 +84,16 @@ public class RenderTask implements Runnable, TransientObject {
 	}
 
 	/**
+	 * Determines the number of in-flight frames.
+	 * Default is the same as the number swapchain attachments.
+	 * @param swapchain Swapchain
+	 * @return Number of in-flight frames
+	 */
+	protected int count(Swapchain swapchain) {
+		return swapchain.attachments().size();
+	}
+
+	/**
 	 * Creates a frame instance.
 	 * @param device Logical device
 	 * @return New frame instance
@@ -102,7 +108,7 @@ public class RenderTask implements Runnable, TransientObject {
 			render();
 		}
 		catch(Invalidated e) {
-			recreate();
+			controller.recreate();
 		}
 	}
 
@@ -114,9 +120,9 @@ public class RenderTask implements Runnable, TransientObject {
 		final FrameState frame = iterator.next();
 
 		// Acquire frame buffer
-		final Swapchain swapchain = manager.swapchain();
+		final Swapchain swapchain = controller.swapchain();
 		final int index = frame.acquire(swapchain);
-		final Framebuffer framebuffer = factory.framebuffer(index);
+		final Framebuffer framebuffer = controller.framebuffers().get(index);
 
 		// Render frame
 		final Buffer sequence = composer.compose(iterator.index, framebuffer);
@@ -125,21 +131,6 @@ public class RenderTask implements Runnable, TransientObject {
 
 		// Present frame
 		frame.present(sequence, index, swapchain);
-	}
-
-	/**
-	 * Recreates the swapchain and framebuffers.
-	 */
-	private void recreate() {
-		// Wait for pending rendering tasks
-		final LogicalDevice device = manager.device();
-		device.waitIdle();
-
-		// Recreate the swapchain
-		final Swapchain swapchain = manager.recreate();
-
-		// Rebuild the framebuffers
-		factory.build(swapchain);
 	}
 
 	@Override

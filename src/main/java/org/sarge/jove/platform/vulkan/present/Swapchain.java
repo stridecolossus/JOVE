@@ -39,49 +39,84 @@ public class Swapchain extends VulkanObject {
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
 
+	/**
+	 * Maps the multiple return codes of the swapchain accessors.
+	 */
 	private static final ReverseMapping<VkResult> MAPPING = ReverseMapping.mapping(VkResult.class);
 
 	private final Library library;
-	private final List<Image> attachments;
+	private final VkFormat format;
+	private final Dimensions extents;
+	private List<Image> attachments;
 
 	/**
 	 * Constructor.
 	 * @param handle 		Swapchain handle
 	 * @param device		Logical device
-	 * @param views			Colour attachments
+	 * @param format		Image format
+	 * @param extents		Swapchain extents
 	 */
-	Swapchain(Handle handle, LogicalDevice device, List<Image> attachments) {
+	Swapchain(Handle handle, LogicalDevice device, VkFormat format, Dimensions extents) {
 		super(handle, device);
 		this.library = device.library();
-		this.attachments = List.copyOf(attachments);
+		this.format = requireNonNull(format);
+		this.extents = requireNonNull(extents);
 	}
 
 	/**
 	 * @return Swapchain Image format
 	 */
 	public VkFormat format() {
-		return this.descriptor().format();
+		return format;
 	}
 
 	/**
 	 * @return Swapchain extents
 	 */
 	public Dimensions extents() {
-		return this.descriptor().extents().size();
+		return extents;
 	}
 
 	/**
-	 * @return Image descriptor for the first attachment
-	 */
-	private Image.Descriptor descriptor() {
-		return attachments.getFirst().descriptor();
-	}
-
-	/**
-	 * @return Swapchain images
+	 * @return Swapchain attachments
 	 */
 	public List<Image> attachments() {
+		if(attachments == null) {
+			attachments = createAttachments();
+		}
+
 		return attachments;
+	}
+
+	private List<Image> createAttachments() {
+		// Retrieve swapchain image handles
+		final LogicalDevice device = this.device();
+		final Library library = device.library();
+		final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, this, count, array);
+		final Handle[] handles = VulkanFunction.invoke(function, Handle[]::new);
+
+		// Build the common image descriptor
+		final var descriptor = new Image.Descriptor.Builder()
+				.format(format)
+				.extents(extents)
+				.aspect(VkImageAspectFlags.COLOR)
+				.build();
+
+		// Create attachment images
+		return Arrays
+				.stream(handles)
+				.map(handle -> (Image) new SwapchainImage(handle, descriptor))
+				.toList();
+	}
+
+	/**
+	 * Swapchain colour attachment.
+	 */
+	private record SwapchainImage(Handle handle, Image.Descriptor descriptor) implements Image {
+		@Override
+		public void destroy() {
+			throw new RuntimeException();
+		}
 	}
 
 	/**
@@ -174,7 +209,8 @@ public class Swapchain extends VulkanObject {
 		private final Set<VkImageUsageFlags> usage = new HashSet<>();
 
 		public Builder() {
-			info.imageFormat = VkFormat.UNDEFINED;
+			info.imageFormat = VkFormat.B8G8R8A8_UNORM;
+			info.imageColorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
 			info.preTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
 			info.imageArrayLayers = 1;
 			info.compositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
@@ -370,18 +406,12 @@ public class Swapchain extends VulkanObject {
 		 * @throws IllegalArgumentException if any swapchain property is out-of-bounds or unsupported by the surface
 		 */
 		public Swapchain build(LogicalDevice device, VulkanSurface.Properties properties) {
-			// Initialise and validate swapchain descriptor
 			init(properties);
 			validate(properties);
 
-			// Create swapchain
 			final Handle handle = create(device, info);
-
-			// Create colour attachments
-			final List<Image> attachments = attachments(device, handle);
-
-			// Create swapchain
-			return new Swapchain(handle, device, attachments);
+			final Dimensions extents = dimensions(info.imageExtent);
+			return new Swapchain(handle, device, info.imageFormat, extents);
 		}
 
 		/**
@@ -408,38 +438,6 @@ public class Swapchain extends VulkanObject {
 			final Pointer pointer = new Pointer();
 			library.vkCreateSwapchainKHR(device, info, null, pointer);
 			return pointer.handle();
-		}
-
-		/**
-		 * Creates the colour attachments.
-		 */
-		private List<Image> attachments(LogicalDevice device, Handle swapchain) {
-			// Retrieve swapchain image handles
-			final Library library = device.library();
-			final VulkanFunction<Handle[]> function = (count, array) -> library.vkGetSwapchainImagesKHR(device, swapchain, count, array);
-			final Handle[] handles = VulkanFunction.invoke(function, Handle[]::new);
-
-			// Build the common image descriptor
-			final var descriptor = new Image.Descriptor.Builder()
-    				.format(info.imageFormat)
-    				.extents(dimensions(info.imageExtent))
-    				.aspect(VkImageAspectFlags.COLOR)
-    				.build();
-
-			return Arrays
-					.stream(handles)
-					.map(handle -> (Image) new SwapchainImage(handle, descriptor))
-					.toList();
-		}
-
-		/**
-		 * Swapchain colour attachment.
-		 */
-		private record SwapchainImage(Handle handle, Descriptor descriptor) implements Image {
-			@Override
-			public void destroy() {
-				throw new RuntimeException();
-			}
 		}
 	}
 
@@ -473,7 +471,7 @@ public class Swapchain extends VulkanObject {
 		 * @param pSwapchainImages			Image handles
 		 * @return Result code
 		 */
-		VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Handle swapchain, IntegerReference pSwapchainImageCount, @Updated Handle[] pSwapchainImages);
+		VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntegerReference pSwapchainImageCount, @Updated Handle[] pSwapchainImages);
 
 		/**
 		 * Acquires the next image in the swapchain.

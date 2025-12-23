@@ -91,9 +91,9 @@ class FramebufferTest {
 			}
 		};
 		final var factory = new Framebuffer.Factory(pass);
-		final var swapchain = new MockSwapchain();
-		factory.build(swapchain);
+		pass.attachments().forEach(attachment -> attachment.recreate(device, new Dimensions(640, 480)));
+		factory.recreate(new MockSwapchain());
 		assertEquals(1, mockery.mock("vkCreateFramebuffer").count());
-		assertNotNull(factory.framebuffer(0));
+		assertNotNull(factory.get(0));
 	}
 }

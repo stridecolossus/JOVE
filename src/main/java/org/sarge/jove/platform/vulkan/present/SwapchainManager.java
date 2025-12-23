@@ -3,12 +3,10 @@ package org.sarge.jove.platform.vulkan.present;
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
-import java.util.function.IntFunction;
 
 import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
 
 /**
@@ -36,7 +34,6 @@ public class SwapchainManager implements TransientObject {
 	private final Collection<SwapchainConfiguration> configuration;
 
 	private Swapchain swapchain;
-	private List<View> views;
 
 	/**
 	 * Constructor.
@@ -55,16 +52,7 @@ public class SwapchainManager implements TransientObject {
 
 	private void init() {
 		builder.init(properties.capabilities());
-		build();
-		assert swapchain != null;
-		assert views.size() == swapchain.attachments().size();
-	}
-
-	/**
-	 * @return Logical device
-	 */
-	public LogicalDevice device() {
-		return device;
+		swapchain = build();
 	}
 
 	/**
@@ -75,30 +63,20 @@ public class SwapchainManager implements TransientObject {
 	}
 
 	/**
-	 * Helper.
-	 * Creates a provider for the swapchain colour attachments.
-	 * @return Swapchain attachment provider
-	 */
-	public IntFunction<View> views() {
-		return views::get;
-	}
-
-	/**
 	 * Recreates the swapchain.
 	 * @return New swapchain
 	 */
 	public Swapchain recreate() {
 		destroy();
-		build();
+		swapchain = build();
 		return swapchain;
 	}
 
 	/**
 	 * Applies the swapchain configuration and creates a new instance.
 	 */
-	private void build() {
+	protected Swapchain build() {
 		assert swapchain == null;
-		assert views == null;
 
 		// Apply swapchain configuration
 		for(var c : configuration) {
@@ -106,27 +84,11 @@ public class SwapchainManager implements TransientObject {
 		}
 
 		// Recreate swapchain
-		swapchain = builder.build(device, properties);
-
-		// Rebuild colour attachment views
-		views = swapchain
-				.attachments()
-				.stream()
-				.map(this::view)
-				.toList();
-	}
-
-	protected View view(Image image) {
-		return View.of(device, image);
+		return builder.build(device, properties);
 	}
 
 	@Override
 	public void destroy() {
-		for(View view : views) {
-			view.destroy();
-		}
-		views = null;
-
 		swapchain.destroy();
 		swapchain = null;
 	}

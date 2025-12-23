@@ -8,7 +8,6 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
-import org.sarge.jove.platform.vulkan.image.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
 
@@ -55,12 +54,7 @@ class SwapchainManagerTest {
 
 		configuration = new MockConfiguration();
 
-		manager = new SwapchainManager(device, properties, builder, List.of(configuration)) {
-			@Override
-			protected View view(Image image) {
-				return new MockView();
-			}
-		};
+		manager = new SwapchainManager(device, properties, builder, List.of(configuration));
 	}
 
 	@Test
@@ -68,11 +62,6 @@ class SwapchainManagerTest {
 		final Swapchain swapchain = manager.swapchain();
 		assertEquals(false, swapchain.isDestroyed());
 		assertEquals(true, configuration.applied);
-	}
-
-	@Test
-	void views() {
-		assertNotNull(manager.views().apply(0));
 	}
 
 	@Test
