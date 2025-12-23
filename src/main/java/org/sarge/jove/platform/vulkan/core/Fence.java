@@ -117,6 +117,7 @@ public class Fence extends VulkanObject {
 	/**
 	 * Fence API.
 	 */
+	public // TODO
 	interface Library {
 		/**
 		 * Creates a fence.

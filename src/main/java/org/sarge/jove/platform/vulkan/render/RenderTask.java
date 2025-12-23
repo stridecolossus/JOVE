@@ -2,13 +2,10 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
-import java.util.stream.IntStream;
-
-import org.sarge.jove.common.TransientObject;
+import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.present.Swapchain;
+import org.sarge.jove.platform.vulkan.present.*;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
@@ -23,83 +20,30 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
  * </ol>
  * <p>
  * This implementation aims to fully utilise the multi-threaded nature of the hardware by rendering multiple <i>in flight</i> frames concurrently.
- * @see Swapchain#frames()
  * <p>
  * The swapchain and frame buffers are recreated on demand if the swapchain is {@link Invalidated}.
  * <p>
  * @author Sarge
  */
-public class RenderTask implements Runnable, TransientObject {
+public class RenderTask implements Runnable {
+	private final SwapchainManager manager;
+	private final Framebuffer.Factory framebuffers;
 	private final FrameComposer composer;
-	private final RenderController controller;
-	private final FrameStateIterator iterator;
+	private final FrameIterator iterator;
 
 	/**
 	 * Constructor.
-	 * @param controller	Rendering controller
-	 * @param composer		Composer for the render sequence
+	 * @param manager			Swapchain manager
+	 * @param framebuffers		Framebuffers
+	 * @param composer			Composer for the render sequence
+	 * @param iterator			In-flight frame iterator
 	 */
-	public RenderTask(RenderController controller, FrameComposer composer) {
-		this.controller = requireNonNull(controller);
+	public RenderTask(SwapchainManager manager, Framebuffer.Factory framebuffers, FrameComposer composer, FrameIterator iterator) {
+		this.manager = requireNonNull(manager);
+		this.framebuffers = requireNonNull(framebuffers);
 		this.composer = requireNonNull(composer);
-		this.iterator = new FrameStateIterator();
-	}
-
-	/**
-	 * Cycle iterator for in-flight frames.
-	 */
-	private class FrameStateIterator {
-		private final List<FrameState> frames;
-		private int index = -1;
-
-		public FrameStateIterator() {
-			final Swapchain swapchain = controller.swapchain();
-			final int count = count(swapchain);
-			final LogicalDevice device = swapchain.device();
-
-			this.frames = IntStream
-					.range(0, count)
-					.mapToObj(_ -> frame(device))
-					.toList();
-		}
-
-		/**
-		 * @return Next in-flight frame
-		 */
-		public synchronized FrameState next() {
-			if(++index == frames.size()) {
-				index = 0;
-			}
-			return frames.get(index);
-		}
-
-		/**
-		 * Releases resources.
-		 */
-		public void destroy() {
-			for(FrameState f : frames) {
-				f.destroy();
-			}
-		}
-	}
-
-	/**
-	 * Determines the number of in-flight frames.
-	 * Default is the same as the number swapchain attachments.
-	 * @param swapchain Swapchain
-	 * @return Number of in-flight frames
-	 */
-	protected int count(Swapchain swapchain) {
-		return swapchain.attachments().size();
-	}
-
-	/**
-	 * Creates a frame instance.
-	 * @param device Logical device
-	 * @return New frame instance
-	 */
-	protected FrameState frame(LogicalDevice device) {
-		return FrameState.create(device);
+		this.iterator = requireNonNull(iterator);
+		recreate();
 	}
 
 	@Override
@@ -108,7 +52,7 @@ public class RenderTask implements Runnable, TransientObject {
 			render();
 		}
 		catch(Invalidated e) {
-			controller.recreate();
+			recreate();
 		}
 	}
 
@@ -120,21 +64,36 @@ public class RenderTask implements Runnable, TransientObject {
 		final FrameState frame = iterator.next();
 
 		// Acquire frame buffer
-		final Swapchain swapchain = controller.swapchain();
+		final Swapchain swapchain = manager.swapchain();
 		final int index = frame.acquire(swapchain);
-		final Framebuffer framebuffer = controller.framebuffers().get(index);
+		final Framebuffer framebuffer = framebuffers.get(index);
 
 		// Render frame
-		final Buffer sequence = composer.compose(iterator.index, framebuffer);
+		final Buffer sequence = composer.compose(frame.index(), framebuffer);
 		frame.render(sequence);
-		// TODO - how/where to record 'latest' COMPLETED framebuffer index? i.e. only ready/valid after render completed (?)
 
 		// Present frame
 		frame.present(sequence, index, swapchain);
 	}
 
-	@Override
-	public void destroy() {
-		iterator.destroy();
+	/**
+	 * Recreates the swapchain, attachment views and framebuffers.
+	 */
+	private void recreate() {
+		// Wait for rendering work to complete
+		final LogicalDevice device = manager.swapchain().device();
+		device.waitIdle();
+
+		// Recreate swapchain
+		final Swapchain swapchain = manager.recreate();
+
+		// Recreate attachment image-views
+		final Dimensions extents = swapchain.extents();
+		for(Attachment attachment : framebuffers.pass().attachments()) {
+			attachment.recreate(device, extents);
+		}
+
+		// Recreate framebuffers
+		framebuffers.recreate(swapchain);
 	}
 }

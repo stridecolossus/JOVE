@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -7,11 +7,11 @@ import java.util.Set;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.present.MockSwapchain;
 
 class FrameStateTest {
 	private FrameState frame;
 	private MockSwapchain swapchain;
+	private MockVulkanSemaphore available, ready;
 	private MockFence fence;
 	private Buffer sequence;
 	private boolean presented;
@@ -19,8 +19,8 @@ class FrameStateTest {
 	@BeforeEach
 	void before() {
 		// Init synchronisation primitives
-		final var available = new MockVulkanSemaphore();
-		final var ready = new MockVulkanSemaphore();
+		available = new MockVulkanSemaphore();
+		ready = new MockVulkanSemaphore();
 		fence = new MockFence();
 
 		// Init command sequence
@@ -38,6 +38,7 @@ class FrameStateTest {
 
 			@Override
 			public void present(WorkQueue queue, int index, Set<VulkanSemaphore> semaphores) throws Invalidated {
+				assertEquals(3, index);
 				assertEquals(sequence.pool().queue(), queue);
 				assertEquals(Set.of(ready), semaphores);
 				presented = true;
@@ -46,7 +47,12 @@ class FrameStateTest {
 
 		// Create in-flight frame
 		presented = false;
-		frame = new FrameState(available, ready, fence);
+		frame = new FrameState(1, available, ready, fence);
+	}
+
+	@Test
+	void index() {
+		assertEquals(1, frame.index());
 	}
 
 	@Test
@@ -65,13 +71,21 @@ class FrameStateTest {
 
 	@Test
 	void present() {
-		frame.present(sequence, 0, swapchain);
+		frame.present(sequence, 3, swapchain);
 		assertEquals(true, presented);
 	}
 
 	@Test
 	void invalid() {
 		final var semaphore = new MockVulkanSemaphore();
-		assertThrows(IllegalArgumentException.class, () -> new FrameState(semaphore, semaphore, fence));
+		assertThrows(IllegalArgumentException.class, () -> new FrameState(1, semaphore, semaphore, fence));
+	}
+
+	@Test
+	void destroy() {
+		frame.destroy();
+		assertEquals(true, available.isDestroyed());
+		assertEquals(true, ready.isDestroyed());
+		assertEquals(true, fence.isDestroyed());
 	}
 }

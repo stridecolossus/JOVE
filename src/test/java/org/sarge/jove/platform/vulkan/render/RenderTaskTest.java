@@ -15,7 +15,6 @@ class RenderTaskTest {
 
 	@BeforeEach
 	void before() {
-
 		final var device = new MockLogicalDevice();
 
 		final var builder = new Swapchain.Builder() {
@@ -34,8 +33,6 @@ class RenderTaskTest {
 			}
 		};
 
-		final var controller = new RenderController(manager, framebuffers, new MockLogicalDevice());
-
 		final var sequence = new RenderSequence() {
 			@Override
 			public void build(int index, Buffer buffer) {
@@ -45,7 +42,14 @@ class RenderTaskTest {
 
 		final var composer = new FrameComposer(new MockCommandPool(), sequence);
 
-		task = new RenderTask(controller, composer);
+		final var iterator = new FrameIterator(device, 2) {
+			@Override
+			protected FrameState create(int index, LogicalDevice device) {
+				return new FrameState(index, new MockVulkanSemaphore(), new MockVulkanSemaphore(), new MockFence());
+			}
+		};
+
+		task = new RenderTask(manager, framebuffers, composer, iterator);
 	}
 
 	@Test

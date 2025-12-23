@@ -1,6 +1,7 @@
-package org.sarge.jove.platform.vulkan.render;
+package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.Set;
 
@@ -8,7 +9,6 @@ import org.sarge.jove.common.TransientObject;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.present.Swapchain;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 
 /**
@@ -18,33 +18,44 @@ import org.sarge.jove.platform.vulkan.present.Swapchain.Invalidated;
 public class FrameState implements TransientObject {
 	/**
 	 * Creates a frame state instance.
-	 * @param device Logical device
+	 * @param index		Frame index
+	 * @param device	Logical device
 	 * @return New frame state
 	 */
-	public static FrameState create(LogicalDevice device) {
+	public static FrameState create(int index, LogicalDevice device) {
 		final var available = VulkanSemaphore.create(device);
 		final var ready = VulkanSemaphore.create(device);
 		final var fence = Fence.create(device, VkFenceCreateFlags.SIGNALED);
-		return new FrameState(available, ready, fence);
+		return new FrameState(index, available, ready, fence);
 	}
 
+	private final int index;
 	private final VulkanSemaphore available, ready;
 	private final Fence fence;
 
 	/**
 	 * Constructor.
+	 * @param index			Frame index
 	 * @param available		Signals the frame is available for rendering
 	 * @param ready			Signals the frame has been rendered and is ready for presentation
 	 * @param fence			Synchronises the rendering work
 	 * @throws IllegalArgumentException if {@link #available} and {@link #ready} are the same semaphore
 	 */
-	FrameState(VulkanSemaphore available, VulkanSemaphore ready, Fence fence) {
+	public FrameState(int index, VulkanSemaphore available, VulkanSemaphore ready, Fence fence) {
 		if(available.equals(ready)) {
 			throw new IllegalArgumentException("Available and ready semaphores cannot be the same");
 		}
+		this.index = requireZeroOrMore(index);
 		this.available = requireNonNull(available);
 		this.ready = requireNonNull(ready);
 		this.fence = requireNonNull(fence);
+	}
+
+	/**
+	 * @return Frame index
+	 */
+	public int index() {
+		return index;
 	}
 
 	/**
@@ -114,5 +125,10 @@ public class FrameState implements TransientObject {
 		available.destroy();
 		ready.destroy();
 		fence.destroy();
+	}
+
+	@Override
+	public String toString() {
+		return String.format("FrameState[%d]", index);
 	}
 }
