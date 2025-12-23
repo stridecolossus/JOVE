@@ -7,10 +7,9 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
-sort out transient/native release()
-
-resize handler -> recreate swapchain
-minimised window -> glfwGetFramebufferSize returns 0, glfwWaitEvents() pauses?
+resize handler -> recreate swapchain => need to re-query surface properties!!!
+also constrain min/max in all cases?
+also sometimes happens when minimised => need to check if w/h are 0?
 
 MSAA
 - render target with > 1 samples, and rasterizer
@@ -20,6 +19,7 @@ MSAA
 - final layout = colour optimal
 
 blog
+- add GLFW callbacks -> input handling for model demo: close, resize, minimise, etc
 - move mesh load/persist -> model loader chapter
 - check cube vertices in perspective.md
 - physical device refers to NativeParameter

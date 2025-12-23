@@ -3,13 +3,13 @@ package org.sarge.jove.platform.desktop;
 import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireNotEmpty;
 
+import java.lang.foreign.MemorySegment;
 import java.util.*;
 import java.util.function.BiConsumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Desktop.MainThread;
-import org.sarge.jove.platform.desktop.WindowLibrary.*;
 
 /**
  * Native window implemented using GLFW.
@@ -179,18 +179,54 @@ public class Window extends AbstractNativeObject {
 //	}
 
 	/**
+	 * Listener for window events represented by a boolean state, e.g. window focus.
+	 */
+	@FunctionalInterface
+	public interface WindowStateListener extends Callback {
+		/**
+		 * Listener event type.
+		 */
+		enum Type {
+			ENTER,
+			FOCUS,
+			MINIMISE,
+			CLOSE
+		}
+
+		/**
+		 * Notifies that a window state change.
+		 * @param window		Window
+		 * @param state			State
+		 */
+		void state(MemorySegment window, int state);
+	}
+
+	/**
 	 * Sets the listener for window state changes.
 	 * @param listener Listener for window state changes or {@code null} to remove the listener
 	 */
 	@MainThread
 	public void listener(WindowStateListener.Type type, WindowStateListener listener) {
 		final BiConsumer<Window, WindowStateListener> method = switch(type) {
-			case ENTER			-> library::glfwSetCursorEnterCallback;
-			case FOCUS			-> library::glfwSetWindowFocusCallback;
-			case ICONIFIED		-> library::glfwSetWindowIconifyCallback;
-			case CLOSED			-> library::glfwSetWindowCloseCallback;
+			case ENTER		-> library::glfwSetCursorEnterCallback;
+			case FOCUS		-> library::glfwSetWindowFocusCallback;
+			case MINIMISE	-> library::glfwSetWindowIconifyCallback;
+			case CLOSE		-> library::glfwSetWindowCloseCallback;
 		};
 		method.accept(this, listener);
+	}
+
+	/**
+	 * Listener for window resize events.
+	 */
+	public interface WindowResizeListener extends Callback {
+		/**
+		 * Notifies a window resize event.
+		 * @param window		Window
+		 * @param width			Width
+		 * @param height		Height
+		 */
+		void resize(MemorySegment window, int width, int height);
 	}
 
 	/**

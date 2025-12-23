@@ -12,10 +12,10 @@ import org.sarge.jove.common.*;
 import org.sarge.jove.control.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.DesktopTest.MockDesktopLibrary;
-import org.sarge.jove.platform.desktop.Window.Hint;
-import org.sarge.jove.platform.desktop.WindowLibrary.WindowStateListener;
+import org.sarge.jove.platform.desktop.Window.*;
 
 class WindowTest {
+	// TODO - refactor using mockery?
 	static class MockWindowLibrary implements WindowLibrary {
 		private Map<Integer, Integer> hints;
 		private Dimensions size = new Dimensions(100, 200);
@@ -187,7 +187,7 @@ class WindowTest {
 	class Listeners {
 		private static class MockWindowStateListener implements WindowStateListener {
 			@Override
-			public void state(MemorySegment window, boolean state) {
+			public void state(MemorySegment window, int state) {
 				// Empty
 			}
 		}

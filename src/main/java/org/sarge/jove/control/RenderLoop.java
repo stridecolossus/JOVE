@@ -102,6 +102,20 @@ public class RenderLoop implements AutoCloseable {
 		future = null;
 	}
 
+	/**
+	 * Toggles whether this render loop is paused.
+	 * @param paused Whether paused
+	 */
+	public void pause(boolean paused) {
+		if(paused) {
+			stop();
+		}
+		else {
+			start();
+		}
+	}
+	// TODO - separate control class? +test
+
 	@Override
 	public synchronized void close() throws Exception {
 		if(isRunning()) {

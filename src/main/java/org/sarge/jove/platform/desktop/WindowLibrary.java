@@ -1,9 +1,8 @@
 package org.sarge.jove.platform.desktop;
 
-import java.lang.foreign.MemorySegment;
-
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.platform.desktop.Window.*;
 
 /**
  * GLFW window API.
@@ -98,28 +97,10 @@ interface WindowLibrary {
 // TODO
 
 	/**
-	 * Listener for window events represented by a boolean state, e.g. window focus.
+	 * Sets the listener for a close window event.
+	 * @param window		Window
+	 * @param listener		Close listener
 	 */
-	@FunctionalInterface
-	interface WindowStateListener extends Callback {
-		/**
-		 * Listener event type.
-		 */
-		enum Type {
-			ENTER,
-			FOCUS,
-			ICONIFIED,
-			CLOSED
-		}
-
-		/**
-		 * Notifies that a window state change.
-		 * @param window		Window
-		 * @param state			State
-		 */
-		void state(MemorySegment window, boolean state);
-	}
-
 	void glfwSetWindowCloseCallback(Window window, WindowStateListener listener);
 
 	/**
@@ -142,19 +123,6 @@ interface WindowLibrary {
 	 * @param listener		Iconify listener
 	 */
 	void glfwSetWindowIconifyCallback(Window window, WindowStateListener listener);
-
-	/**
-	 * Listener for window resize events.
-	 */
-	interface WindowResizeListener extends Callback {
-		/**
-		 * Notifies a window resize event.
-		 * @param window		Window
-		 * @param width			Width
-		 * @param height		Height
-		 */
-		void resize(MemorySegment window, int width, int height);
-	}
 
 	/**
 	 * Sets the resize listener of a window.

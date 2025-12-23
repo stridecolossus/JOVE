@@ -20,6 +20,7 @@ import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfigur
 public class ExtentSwapchainConfiguration implements SwapchainConfiguration {
 	@Override
 	public void configure(Builder builder, Properties properties) {
+		// TODO - need to re-query properties!!!
 		final var capabilities = properties.capabilities();
 		final VkExtent2D current = capabilities.currentExtent;
 		if(current.width < Integer.MAX_VALUE) {
