@@ -14,9 +14,9 @@ class ExtentSwapchainConfigurationTest {
 		VkExtent2D extent;
 
 		@Override
-		public Builder extent(VkExtent2D extent) {
+		public Builder extents(VkExtent2D extent) {
 			this.extent = extent;
-			return super.extent(extent);
+			return super.extents(extent);
 		}
 	}
 
@@ -49,7 +49,7 @@ class ExtentSwapchainConfigurationTest {
 
 	@Test
 	void current() {
-		properties.capabilities.currentExtent = Vulkan.extent(new Dimensions(640, 480));
+		properties.capabilities.currentExtent = Vulkan.extents(new Dimensions(640, 480));
 		configuration.configure(builder, properties);
 		assertEquals(640, builder.extent.width);
 		assertEquals(480, builder.extent.height);

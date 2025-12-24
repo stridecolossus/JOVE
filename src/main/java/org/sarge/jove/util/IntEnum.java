@@ -77,7 +77,7 @@ public interface IntEnum {
 			final E constant = map.get(value);
 			if(constant == null) {
 				// TODO
-				System.err.println(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
+//				System.err.println(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
 //				throw new IllegalArgumentException(String.format("Invalid enumeration literal: value=%d enum=%s", value, def.getClass()));
 				return def;
 			}

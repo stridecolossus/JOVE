@@ -3,11 +3,12 @@ package org.sarge.jove.platform.vulkan.present;
 import static java.util.Objects.requireNonNull;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import org.sarge.jove.common.AbstractTransientObject;
 import org.sarge.jove.platform.vulkan.core.LogicalDevice;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.*;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface.Properties;
 
 /**
  * The <i>swapchain manager</i> recreates and configures the swapchain on-demand.
@@ -29,7 +30,7 @@ public class SwapchainManager extends AbstractTransientObject {
 	}
 
 	private final LogicalDevice device;
-	private final Properties properties;
+	private final Supplier<Properties> provider;
 	private final Builder builder;
 	private final Collection<SwapchainConfiguration> configuration;
 
@@ -38,21 +39,16 @@ public class SwapchainManager extends AbstractTransientObject {
 	/**
 	 * Constructor.
 	 * @param device			Logical device
-	 * @param properties		Surface properties
+	 * @param provider			Surface properties provider
 	 * @param builder			Swapchain builder
 	 * @param configuration		Swapchain configuration
 	 */
-	public SwapchainManager(LogicalDevice device, Properties properties, Builder builder, List<SwapchainConfiguration> configuration) {
+	public SwapchainManager(LogicalDevice device, Supplier<Properties> provider, Builder builder, List<SwapchainConfiguration> configuration) {
 		this.device = requireNonNull(device);
-		this.properties = requireNonNull(properties);
+		this.provider = requireNonNull(provider);
 		this.builder = requireNonNull(builder);
 		this.configuration = List.copyOf(configuration);
-		init();
-	}
-
-	private void init() {
-		builder.init(properties.capabilities());
-		swapchain = build();
+		this.swapchain = build();
 	}
 
 	/**
@@ -67,6 +63,7 @@ public class SwapchainManager extends AbstractTransientObject {
 	 * @return New swapchain
 	 */
 	public Swapchain recreate() {
+		device.waitIdle();
 		release();
 		swapchain = build();
 		return swapchain;
@@ -79,6 +76,7 @@ public class SwapchainManager extends AbstractTransientObject {
 		assert swapchain == null;
 
 		// Apply swapchain configuration
+		final var properties = provider.get();
 		for(var c : configuration) {
 			c.configure(builder, properties);
 		}
@@ -88,7 +86,7 @@ public class SwapchainManager extends AbstractTransientObject {
 	}
 
 	@Override
-	protected void release() {
+	protected synchronized void release() {
 		swapchain.destroy();
 		swapchain = null;
 	}

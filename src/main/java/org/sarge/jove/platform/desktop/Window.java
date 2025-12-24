@@ -235,7 +235,7 @@ public class Window extends AbstractNativeObject {
 	 */
 	@MainThread
 	public void resize(WindowResizeListener listener) {
-		library.glfwSetWindowSizeCallback(this, listener);
+		library.glfwSetFramebufferSizeCallback(this, listener);
 	}
 
 	@Override

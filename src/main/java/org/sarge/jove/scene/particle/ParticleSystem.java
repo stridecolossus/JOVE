@@ -14,7 +14,7 @@ import org.sarge.jove.geometry.*;
 import org.sarge.jove.geometry.Ray.IntersectedSurface;
 import org.sarge.jove.geometry.Vector;
 import org.sarge.jove.model.Mesh;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface;
 
 /**
  * A <i>particle system</i> is a controller for a particle animation.

@@ -1,7 +1,9 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.present;
 
 import org.sarge.jove.platform.desktop.MockWindow;
-import org.sarge.jove.platform.vulkan.core.VulkanSurfaceTest.MockVulkanSurfaceLibrary;
+import org.sarge.jove.platform.vulkan.core.MockInstance;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface;
+import org.sarge.jove.platform.vulkan.present.VulkanSurfaceTest.MockVulkanSurfaceLibrary;
 
 public class MockVulkanSurface extends VulkanSurface {
 	public MockVulkanSurface() {

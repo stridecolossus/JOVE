@@ -3,8 +3,8 @@ package org.sarge.jove.platform.vulkan.present;
 import java.util.List;
 
 import org.sarge.jove.platform.vulkan.VkPresentModeKHR;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.SwapchainManager.SwapchainConfiguration;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface.Properties;
 import org.sarge.jove.util.PrioritySelector;
 
 /**

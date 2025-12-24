@@ -81,16 +81,13 @@ public class RenderTask implements Runnable {
 	/**
 	 * Recreates the swapchain, attachment views and framebuffers.
 	 */
-	private void recreate() {
-		// Wait for rendering work to complete
-		final LogicalDevice device = manager.swapchain().device();
-		device.waitIdle();
-
+	public synchronized void recreate() {
 		// Recreate swapchain
 		final Swapchain swapchain = manager.recreate();
 
 		// Recreate attachment image-views
 		final Dimensions extents = swapchain.extents();
+		final LogicalDevice device = swapchain.device();
 		for(Attachment attachment : framebuffers.pass().attachments()) {
 			attachment.recreate(device, extents);
 		}

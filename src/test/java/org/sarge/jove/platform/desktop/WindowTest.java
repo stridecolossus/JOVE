@@ -112,7 +112,7 @@ class WindowTest {
 		}
 
 		@Override
-		public void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener) {
+		public void glfwSetFramebufferSizeCallback(Window window, WindowResizeListener listener) {
 		}
 	}
 

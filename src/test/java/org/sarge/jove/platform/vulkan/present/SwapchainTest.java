@@ -137,7 +137,7 @@ class SwapchainTest {
 			final Swapchain swapchain = builder
 					.count(1)
 					.format(MockSurfaceProperties.FORMAT)
-					.extent(new Dimensions(640, 480))
+					.extents(Vulkan.extents(new Dimensions(640, 480)))
 					.build(device, properties);
 
 			assertEquals(new Dimensions(640, 480), swapchain.extents());

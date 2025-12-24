@@ -108,7 +108,9 @@ public class RenderLoop implements AutoCloseable {
 	 */
 	public void pause(boolean paused) {
 		if(paused) {
-			stop();
+			if(isRunning()) {
+				stop();
+			}
 		}
 		else {
 			start();

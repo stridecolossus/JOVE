@@ -68,7 +68,7 @@ public interface Vulkan {
 	 * @param dimensions Dimensions
 	 * @return Extents
 	 */
-	static VkExtent2D extent(Dimensions dimensions) {
+	static VkExtent2D extents(Dimensions dimensions) {
 		final var extent = new VkExtent2D();
 		extent.width = dimensions.width();
 		extent.height = dimensions.height();
@@ -86,7 +86,7 @@ public interface Vulkan {
 		result.offset = new VkOffset2D();
 		result.offset.x = rectangle.x();
 		result.offset.y = rectangle.y();
-		result.extent = extent(rectangle.dimensions());
+		result.extent = extents(rectangle.dimensions());
 		return result;
 	}
 }

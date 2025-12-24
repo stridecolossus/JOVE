@@ -129,7 +129,8 @@ interface WindowLibrary {
 	 * @param window		Window
 	 * @param listener		Resize listener
 	 */
-	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
+//	void glfwSetWindowSizeCallback(Window window, WindowResizeListener listener);
+	void glfwSetFramebufferSizeCallback(Window window, WindowResizeListener listener);
 
 	/**
 	 * Destroys the given window.

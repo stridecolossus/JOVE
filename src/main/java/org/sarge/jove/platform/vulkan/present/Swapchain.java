@@ -128,7 +128,8 @@ public class Swapchain extends VulkanObject {
 	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
 	 */
 	public static final class Invalidated extends VulkanException {
-		protected Invalidated(VkResult result) {
+		//protected
+		public Invalidated(VkResult result) {
 			super(result);
 		}
 	}
@@ -225,17 +226,6 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Initialises the properties of this swapchain that are dependant on the surface.
-		 * @param capabilities Surface capabilities
-		 */
-		public Builder init(VkSurfaceCapabilitiesKHR capabilities) {
-			info.minImageCount = capabilities.minImageCount;
-			info.preTransform = capabilities.currentTransform;
-			info.imageExtent = capabilities.currentExtent;
-			return this;
-		}
-
-		/**
 		 * Adds a creation flag for this swapchain.
 		 * @param flag Creation flag
 		 */
@@ -268,15 +258,7 @@ public class Swapchain extends VulkanObject {
 		 * Sets the image extents.
 		 * @param extents Image extents
 		 */
-		public Builder extent(Dimensions extent) {
-			return extent(Vulkan.extent(extent));
-		}
-
-		/**
-		 * Sets the image extents.
-		 * @param extents Image extents
-		 */
-		public Builder extent(VkExtent2D extent) {
+		public Builder extents(VkExtent2D extent) {
 			info.imageExtent = requireNonNull(extent);
 			return this;
 		}

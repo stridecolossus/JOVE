@@ -6,9 +6,9 @@ import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.Command.Buffer;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.image.View;
 import org.sarge.jove.platform.vulkan.present.*;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface.Properties;
 
 class RenderTaskTest {
 	private RenderTask task;
@@ -24,7 +24,7 @@ class RenderTaskTest {
 			}
 		};
 
-		final var manager = new SwapchainManager(device, new MockSurfaceProperties(), builder, List.of());
+		final var manager = new SwapchainManager(device, MockSurfaceProperties::new, builder, List.of());
 
 		final var framebuffers = new Framebuffer.Factory(new MockRenderPass()) {
 			@Override

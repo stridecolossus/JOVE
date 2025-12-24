@@ -1,4 +1,4 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.present;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.platform.vulkan.VkPresentModeKHR.*;
@@ -10,8 +10,9 @@ import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.IntegerReference;
 import org.sarge.jove.platform.desktop.MockWindow;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface.Properties;
 
 class VulkanSurfaceTest {
 	static class MockVulkanSurfaceLibrary implements VulkanSurface.Library {
@@ -106,7 +107,7 @@ class VulkanSurfaceTest {
 
 		@BeforeEach
 		void before() {
-			properties = surface.properties(device);
+			properties = surface.properties(device).get();
 		}
 
     	@Test

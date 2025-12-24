@@ -1,13 +1,15 @@
-package org.sarge.jove.platform.vulkan.core;
+package org.sarge.jove.platform.vulkan.present;
 
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
 import org.sarge.jove.platform.desktop.Window;
 import org.sarge.jove.platform.vulkan.*;
+import org.sarge.jove.platform.vulkan.core.*;
 import org.sarge.jove.platform.vulkan.core.WorkQueue.Family;
 
 /**
@@ -96,72 +98,44 @@ public class VulkanSurface extends AbstractNativeObject {
 	/**
 	 * Retrieves the surface properties for the given device.
 	 * @param device Physical device
-	 * @return Surface properties
+	 * @return Surface properties provider
 	 */
-	public Properties properties(PhysicalDevice device) {
-		return new LocalProperties(device) {
-			private final VkSurfaceCapabilitiesKHR capabilities = super.capabilities();
-			private final List<VkSurfaceFormatKHR> formats = super.formats();
-			private final List<VkPresentModeKHR> modes = super.modes();
+	public Supplier<Properties> properties(PhysicalDevice device) {
+		class PropertiesInstance implements Properties {
+			@Override
+			public VulkanSurface surface() {
+				return VulkanSurface.this;
+			}
 
 			@Override
 			public VkSurfaceCapabilitiesKHR capabilities() {
-				// TODO - mutable!!!
-				return capabilities;
-			}
+	    		final var capabilities = new VkSurfaceCapabilitiesKHR();
+	    		library.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, VulkanSurface.this, capabilities);
+	    		return capabilities;
+	    	}
 
 			@Override
 			public List<VkSurfaceFormatKHR> formats() {
-				return formats;
-			}
+	    		final VulkanFunction<VkSurfaceFormatKHR[]> formats = (count, array) -> library.vkGetPhysicalDeviceSurfaceFormatsKHR(device, VulkanSurface.this, count, array);
+	    		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(formats, VkSurfaceFormatKHR[]::new);
+	    		return List.of(array);
+	    	}
 
 			@Override
 			public List<VkPresentModeKHR> modes() {
-				return modes;
+				final VulkanFunction<VkPresentModeKHR[]> function = (count, array) -> library.vkGetPhysicalDeviceSurfacePresentModesKHR(device, VulkanSurface.this, count, array);
+				final VkPresentModeKHR[] modes = VulkanFunction.invoke(function, VkPresentModeKHR[]::new);
+				return List.of(modes);
 			}
-		};
-	}
-
-	/**
-	 * Internal implementation.
-	 */
-	private class LocalProperties implements Properties{
-		private final PhysicalDevice device;
-
-		LocalProperties(PhysicalDevice device) {
-			this.device = requireNonNull(device);
 		}
 
-		@Override
-		public VulkanSurface surface() {
-			return VulkanSurface.this;
-		}
-
-		@Override
-		public VkSurfaceCapabilitiesKHR capabilities() {
-    		final var capabilities = new VkSurfaceCapabilitiesKHR();
-    		library.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, VulkanSurface.this, capabilities);
-    		return capabilities;
-    	}
-
-		@Override
-		public List<VkSurfaceFormatKHR> formats() {
-    		final VulkanFunction<VkSurfaceFormatKHR[]> formats = (count, array) -> library.vkGetPhysicalDeviceSurfaceFormatsKHR(device, VulkanSurface.this, count, array);
-    		final VkSurfaceFormatKHR[] array = VulkanFunction.invoke(formats, VkSurfaceFormatKHR[]::new);
-    		return List.of(array);
-    	}
-
-		@Override
-		public List<VkPresentModeKHR> modes() {
-			final VulkanFunction<VkPresentModeKHR[]> function = (count, array) -> library.vkGetPhysicalDeviceSurfacePresentModesKHR(device, VulkanSurface.this, count, array);
-			final VkPresentModeKHR[] modes = VulkanFunction.invoke(function, VkPresentModeKHR[]::new);
-			return List.of(modes);
-		}
+		return () -> new PropertiesInstance();
 	}
 
 	/**
 	 * Surface API.
 	 */
+	public // TODO
 	interface Library {
 		/**
 		 * Queries whether a queue family supports presentation to the given surface.

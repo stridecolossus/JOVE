@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.platform.vulkan.*;
-import org.sarge.jove.platform.vulkan.core.VulkanSurface.Properties;
 import org.sarge.jove.platform.vulkan.present.Swapchain.Builder;
+import org.sarge.jove.platform.vulkan.present.VulkanSurface.Properties;
 
 class SurfaceFormatSwapchainConfigurationTest {
 	private static class MockSwapchainBuilder extends Swapchain.Builder {

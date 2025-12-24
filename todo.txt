@@ -19,12 +19,10 @@ MSAA
 - final layout = colour optimal
 
 blog
+- add section for minimised/closed windows ~ callbacks, recreation
 - add GLFW callbacks -> input handling for model demo: close, resize, minimise, etc
 - move mesh load/persist -> model loader chapter
-- check cube vertices in perspective.md
 - physical device refers to NativeParameter
-- add section for minimised/closed windows ~ callbacks, recreation
-- region redundant after Panama, replaced with segment
 
 what is an descriptor set array used for?
 https://docs.vulkan.org/samples/latest/samples/performance/descriptor_management/README.html

@@ -11,7 +11,7 @@ import org.sarge.jove.model.Coordinate.Coordinate2D;
  * Quad utilities.
  * @author Sarge
  */
-public class Quad {
+public final class Quad {
 	/**
 	 * Indices for a quad comprising a pair of counter-clockwise triangles.
 	 * <p>
@@ -36,6 +36,9 @@ public class Quad {
 			TOP_RIGHT,
 			BOTTOM_RIGHT
 	);
+
+	private Quad() {
+	}
 
 	/**
 	 * Creates a quad centred on the origin with vertex normals pointing towards the viewer.
