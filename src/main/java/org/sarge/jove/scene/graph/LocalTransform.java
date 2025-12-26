@@ -2,19 +2,54 @@ package org.sarge.jove.scene.graph;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.stream.Stream;
-
-import org.sarge.jove.geometry.Matrix;
+import org.sarge.jove.geometry.*;
 
 /**
- * A <i>local transform</i> maintains the local transformation and world matrix of a node.
+ * A <i>local transform</i> is the model transform applied to a given node and its children.
  * @author Sarge
  */
 public class LocalTransform {
-	private Transform transform = () -> Matrix.IDENTITY;
-	private transient Matrix matrix;
+	/**
+	 * Empty transform, i.e. {@link Matrix#IDENTITY}.
+	 */
+	public static final LocalTransform NONE = new LocalTransform(Matrix.IDENTITY) {
+		@Override
+		protected Matrix multiply(Matrix parent) {
+			return parent;
+		}
+	};
 
-	LocalTransform() {
+	/**
+	 * Creates a local transform that always recalculates its world matrix, e.g. for a mutable rotation.
+	 * @param transform Transform
+	 * @return Mutable local transform
+	 */
+	public static LocalTransform mutable(Transform transform) {
+		return new LocalTransform(transform) {
+			@Override
+			protected boolean isDirty() {
+				return true;
+			}
+		};
+	}
+
+	private final Transform transform;
+	private Matrix world;
+
+	/**
+	 * Constructor.
+	 * @param transform Local transform
+	 */
+	public LocalTransform(Transform transform) {
+		this.transform = requireNonNull(transform);
+	}
+
+	/**
+	 * Copy constructor.
+	 * @param that Local transform to copy
+	 */
+	protected LocalTransform(LocalTransform that) {
+		this(that.transform);
 	}
 
 	/**
@@ -25,102 +60,77 @@ public class LocalTransform {
 	}
 
 	/**
-	 * Sets the local transform.
-	 * @param transform Local transform
-	 */
-	public void set(Transform transform) {
-		this.transform = requireNonNull(transform);
-	}
-
-	/**
 	 * @return World matrix
-	 * @throws IllegalStateException if this local transform has not been updated
-	 * @see #update(Node)
 	 */
-	Matrix matrix() {
-		if(matrix == null) {
-			throw new IllegalStateException("Local transform has not been updated: " + this);
-		}
-		return matrix;
+	Matrix world() {
+		return world;
 	}
 
 	/**
-	 * Updates the world matrix for the given node.
-	 * @param node Node
+	 * @return Whether the world matrix needs to be updated
+	 */
+	protected boolean isDirty() {
+		return world == null;
+	}
+
+	/**
+	 * Clears the world matrix of this transform.
+	 */
+	void clear() {
+		world = null;
+	}
+
+	/**
+	 * Updates the world matrix of this transform.
+	 * @param node Companion scene node
 	 */
 	void update(Node node) {
-		matrix = matrix(node);
+		// Stop if already updated
+		if(!isDirty()) {
+			return;
+		}
+
+		// Otherwise combine local transform with world matrix
+		final Matrix parent = parent(node.parent());
+		this.world = multiply(parent);
 	}
 
 	/**
-	 * Calculates the world matrix for the given node.
-	 * @param node Node
+	 * Combines this transform with the given parent world matrix.
+	 * @param parent Parent world matrix
 	 * @return World matrix
 	 */
-	private Matrix matrix(Node node) {
-		final Node parent = node.parent();
+	protected Matrix multiply(Matrix parent) {
 		final Matrix local = transform.matrix();
-		if(parent == null) {
+		if(parent == Matrix.IDENTITY) {
 			return local;
 		}
 		else {
-			final Matrix world = parent.transform().matrix();
-    		if(local == Matrix.IDENTITY) {
-    			return world;
-    		}
-    		else {
-    			return world.multiply(local);
-    		}
-    	}
+			return parent.multiply(local);
+		}
 	}
 
-	@Override
-	public int hashCode() {
-		return transform.hashCode();
-	}
+	/**
+	 * Recursively updates the world matrix of the given parent node.
+	 * @param node Parent node
+	 * @return World matrix
+	 */
+	private static Matrix parent(Node node) {
+		// Stop at root
+		if(node == null) {
+			return Matrix.IDENTITY;
+		}
 
-	@Override
-	public boolean equals(Object obj) {
-		return (obj == this);
+		// Recursively update ancestors
+		final LocalTransform transform = node.transform();
+		transform.update(node);
+
+		// Calculate world matrix
+		return transform.world();
 	}
 
 	@Override
 	public String toString() {
-		return transform.toString();
-	}
-
-	/**
-	 * The <i>update visitor</i> updates the local transforms of a scene graph.
-	 */
-	public static class UpdateVisitor {
-		/**
-		 * Recursively updates a scene graph.
-		 * @param node Starting node
-		 */
-		public void update(Node node) {
-			final var nodes = flatten(node);
-			nodes.forEach(UpdateVisitor::visit);
-		}
-
-		/**
-		 * Updates the given node.
-		 */
-		private static void visit(Node node) {
-			node.transform().update(node);
-		}
-
-		/**
-		 * @return Recursive stream for the given node and its children
-		 */
-		private static Stream<Node> flatten(Node node) {
-			final var stream = Stream.of(node);
-			if(node instanceof GroupNode group) {
-				final var children = group.nodes().flatMap(UpdateVisitor::flatten);
-				return Stream.concat(stream, children);
-			}
-			else {
-				return stream;
-			}
-		}
+		return String.format("Transform[transform=%s world=%s]", transform, world);
 	}
 }

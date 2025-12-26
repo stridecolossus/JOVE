@@ -1,80 +1,131 @@
 package org.sarge.jove.scene.graph;
 
 import static java.util.Objects.requireNonNull;
+import static org.sarge.jove.util.Validation.requireNotEmpty;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
- * A <i>node</i> is an element of a scene graph.
  * TODO
  * @author Sarge
  */
 public class Node {
-	private GroupNode parent;
-	private LocalTransform transform = new LocalTransform();
-	private LocalVolume vol = new LocalVolume();
+	private final String name;
+	private final List<Node> children = new ArrayList<>();
+	private Node parent;
+
+	private LocalTransform transform = LocalTransform.NONE;
+//	private Material material;
+//	private Renderable renderable;
+//	private RenderQueue queue;
+
+	// TODO
+	// - scenario test to flatten example scene graph -> render sequence
 
 	/**
 	 * Constructor.
-	 * @param parent Parent node
+	 * @param name			Node identifier
+	 * @param parent		Parent node
 	 */
-	protected Node(GroupNode parent) {
+	public Node(String name, Node parent) {
+		this.name = requireNotEmpty(name);
 		this.parent = requireNonNull(parent);
-		parent.attach(this);
+		parent.children.add(this);
 	}
 
 	/**
 	 * Root node constructor.
 	 */
-	protected Node() {
+	public Node(String name) {
+		this.name = requireNotEmpty(name);
+		this.parent = null;
 	}
 
 	/**
-	 * @return Parent node or {@code null} is this is the root node
-	 * @see #isRoot()
+	 * @return Node identifier
 	 */
-	public final Node parent() {
+	public String name() {
+		return name;
+	}
+
+	/**
+	 * @return Parent of this node or {@code null} for a root node
+	 */
+	public Node parent() {
 		return parent;
 	}
 
 	/**
-	 * @return Root node
+	 * @return Children of this node
 	 */
-	public RootNode root() {
-		return parent.root();
+	public List<Node> children() {
+		return Collections.unmodifiableList(children);
 	}
 
 	/**
-	 * Detaches this node from the scene graph.
-	 * @throws IllegalStateException if this is the root node
+	 * @return Local transform
 	 */
-	public void detach() {
-		if(parent == null) throw new IllegalStateException("Cannot detach the root node");
-		parent.detach(this);
-		parent = null;
-	}
-
-	/**
-	 * @return Local transform at this node
-	 */
-	public final LocalTransform transform() {
+	public LocalTransform transform() {
 		return transform;
 	}
 
 	/**
-	 * @return Bounding volume of this node
+	 * Sets the local transform.
+	 * @param transform Local transform
 	 */
-	public final LocalVolume volume() {
-		return vol;
+	public void transform(LocalTransform transform) {
+		this.transform = requireNonNull(transform);
+	}
+
+	/**
+	 * Clones this node as a new scene graph.
+	 * @return Clone
+	 */
+	public Node copy() {
+		// Clone this node
+		final Node parent = new Node(name);
+		parent.transform = new LocalTransform(transform);
+
+		// Clone children
+		for(Node n : children) {
+			final Node child = n.copy();
+			child.parent = parent;
+			parent.children.add(child);
+		}
+
+		return parent;
+	}
+
+	/**
+	 * Removes this node from the scene graph.
+	 * @throws UnsupportedOperationException if this is a {@link #root(String)} node.
+	 */
+	public void remove() {
+		if(parent == null) {
+			throw new UnsupportedOperationException();
+		}
+		final boolean removed = parent.children.remove(this);
+		assert removed;
+		parent = null;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(transform, vol);
+		return name.hashCode();
 	}
 
 	@Override
-	public final boolean equals(Object obj) {
-		return obj == this;
+	public boolean equals(Object obj) {
+		return
+				(obj == this) ||
+				(obj instanceof Node that) &&
+				this.name.equals(that.name) &&
+				(this.parent == that.parent) &&
+				this.transform.equals(that.transform);
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 }

@@ -1,122 +1,83 @@
 package org.sarge.jove.scene.graph;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.control.MutableRotation;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.scene.graph.LocalTransform.UpdateVisitor;
 
 class LocalTransformTest {
 	private LocalTransform transform;
-	private Matrix matrix;
-	private Node node;
 
 	@BeforeEach
 	void before() {
-		node = new Node();
-		transform = node.transform();
-		matrix = Matrix.translation(Axis.X);
+		transform = new LocalTransform(Matrix.translation(Axis.X));
 	}
 
-	@DisplayName("A new local transform...")
 	@Nested
-	class New {
-		@DisplayName("has an identity transform")
+	class Dirty {
 		@Test
-		void constructor() {
-			assertEquals(Matrix.IDENTITY, transform.transform().matrix());
+		void dirty() {
+			assertEquals(true, transform.isDirty());
+			assertEquals(null, transform.world());
 		}
 
-		@DisplayName("can set the local transform")
-		@Test
-		void set() {
-			transform.set(() -> matrix);
-			//assertEquals(matrix, transform.transform());
-		}
-
-		@DisplayName("can update the world matrix")
 		@Test
 		void update() {
-			transform.update(node);
+			transform.update(new Node("whatever"));
+			assertEquals(false, transform.isDirty());
 		}
 
-		@DisplayName("has an undefined world matrix")
 		@Test
-		void matrix() {
-			assertThrows(IllegalStateException.class, () -> transform.matrix());
+		void clear() {
+			transform.clear();
+			assertEquals(true, transform.isDirty());
+			assertEquals(null, transform.world());
 		}
 	}
 
-	@DisplayName("An updated local transform...")
 	@Nested
 	class Updated {
-		private Matrix other;
-
 		@BeforeEach
 		void before() {
-			other = Matrix.translation(Axis.Y);
-			transform.set(() -> matrix);
-			transform.update(node);
+			transform.update(new Node("whatever"));
 		}
 
-		@DisplayName("has a world matrix")
 		@Test
-		void matrix() {
-			assertEquals(matrix, transform.matrix());
+		void dirty() {
+			assertEquals(false, transform.isDirty());
+			assertEquals(Matrix.translation(Axis.X), transform.world());
 		}
 
-		@DisplayName("can reset the local transform of a node")
 		@Test
-		void update() {
-			transform.set(() -> other);
-			transform.update(node);
-			assertEquals(other, transform.matrix());
-		}
-
-		@DisplayName("composes the world matrix with the ancestors of the node")
-		@Test
-		void compose() {
-			final GroupNode parent = new GroupNode();
-			parent.transform().set(() -> other);
-			parent.transform().update(parent);
-			node = new Node(parent);
-			transform.update(node);
-			assertEquals(other.multiply(matrix), transform.matrix());
+		void clear() {
+			transform.clear();
+			assertEquals(true, transform.isDirty());
+			assertEquals(null, transform.world());
 		}
 	}
 
 	@Test
-	void equals() {
-		assertEquals(transform, transform);
-		assertNotEquals(transform, null);
-		assertNotEquals(transform, new LocalTransform());
+	void inherited() {
+		// Create a parent node with a transform
+		final Node parent = new Node("parent");
+		parent.transform(new LocalTransform(Matrix.translation(Axis.Y)));
+
+		// Attach a child node with a transform
+		final Node child = new Node("child", parent);
+		child.transform(transform);
+
+		// Update and check combined world matrix
+		final var expected = Matrix.translation(Axis.Y).multiply(Matrix.translation(Axis.X));
+		transform.update(child);
+		assertEquals(expected, transform.world());
 	}
 
-	@DisplayName("An update visitor...")
-	@Nested
-	class VisitorTests {
-		private UpdateVisitor visitor;
-
-		@BeforeEach
-		void before() {
-			visitor = new UpdateVisitor();
-		}
-
-		@DisplayName("updates the world matrix of a visited node")
-    	@Test
-    	void matrix() {
-    		visitor.update(node);
-			transform.matrix();
-    	}
-
-		@DisplayName("recursively visits the nodes of a scene graph")
-    	@Test
-    	void recurse() {
-			final GroupNode parent = new GroupNode();
-			node = new Node(parent);
-    		visitor.update(parent);
-    		parent.transform().matrix();
-			node.transform().matrix();
-    	}
-    }
+	@Test
+	void mutable() {
+		final var mutable = LocalTransform.mutable(new MutableRotation(Axis.Z));
+		assertEquals(true, mutable.isDirty());
+		mutable.update(new Node("whatever"));
+		assertEquals(true, mutable.isDirty());
+	}
 }

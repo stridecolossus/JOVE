@@ -1,7 +1,10 @@
 
-general
-- scene graph
-- renderer transforms graph -> vulkan render sequence
+purpose
+- mutable scene graph
+- renderer flattens graph -> render sequence, ordered by render queue, material
+- scene constants -> uniform buffers / push constants
+- world transform ~ scene (down)
+- bounding / picking ~ scene (up)
 
 nodes
 - name?

@@ -21,7 +21,7 @@ import org.sarge.jove.util.MathsUtility;
  * <p>
  * @author Sarge
  */
-public class Matrix implements Bufferable {
+public class Matrix implements Bufferable, Transform {
 	/**
 	 * Order of a 4x4 transformation matrix.
 	 */
@@ -129,6 +129,11 @@ public class Matrix implements Bufferable {
 			throw new IllegalArgumentException(String.format("Invalid matrix order: expected=%d actual=%d", this.order(), order));
 		}
 		return order;
+	}
+
+	@Override
+	public Matrix matrix() {
+		return this;
 	}
 
 	/**

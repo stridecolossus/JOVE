@@ -10,7 +10,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) {
+public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) implements Transform {
 	/**
 	 * Constructor.
 	 * @param axis 			Rotation axis
@@ -23,7 +23,7 @@ public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) {
 	}
 
 	/**
-	 * Constructor using {@link Consine.Provider#DEFAULT}.
+	 * Constructor using {@link Cosine.Provider#DEFAULT}.
 	 * @param axis 			Rotation axis
 	 * @param angle			Angle (radians)
 	 */
@@ -47,6 +47,7 @@ public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) {
 	 * <p>
 	 * @see <a href="https://en.wikipedia.org/wiki/Rotation_matrix">Wikipedia</a>
 	 */
+	@Override
 	public Matrix matrix() {
 		// Init angle
 		final Cosine cosine = provider.cosine(angle);

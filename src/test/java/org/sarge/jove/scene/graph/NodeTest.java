@@ -5,91 +5,114 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 
 import org.junit.jupiter.api.*;
+import org.sarge.jove.geometry.*;
 
 class NodeTest {
-	@DisplayName("A new node...")
-	@Nested
-	class New {
-		private Node node;
+	private Node node;
 
-		@BeforeEach
-		void before() {
-			node = new Node();
+	@BeforeEach
+	void before() {
+		node = new Node("node");
+	}
+
+	@Nested
+	class RootNodeTest {
+		@Test
+		void constructor() {
+			assertEquals("node", node.name());
+			assertEquals(null, node.parent());
+			assertEquals(List.of(), node.children());
 		}
 
-		@DisplayName("has a local transform")
-    	@Test
-    	void transform() {
-    		assertNotNull(node.transform());
-    	}
+		@Test
+		void remove() {
+			assertThrows(UnsupportedOperationException.class, () -> node.remove());
+		}
+
+		@Test
+		void copy() {
+			final Node copy = node.copy();
+			assertEquals("node", copy.name());
+			assertEquals(null, copy.parent());
+			assertEquals(List.of(), copy.children());
+		}
 
 		@Test
 		void equals() {
 			assertEquals(node, node);
+			assertEquals(node, new Node("node"));
 			assertNotEquals(node, null);
-			assertNotEquals(node, new Node());
+			assertNotEquals(node, new Node("other"));
 		}
 	}
 
-	@DisplayName("A root node...")
 	@Nested
-	class Root {
-		private Node root;
+	class ChildNodeTest {
+		private Node child;
 
 		@BeforeEach
 		void before() {
-			root = new Node();
+			child = new Node("child", node);
 		}
 
-		@DisplayName("does not have a parent")
-    	@Test
-    	void parent() {
-    		assertEquals(null, root.parent());
-    	}
-
-//		@DisplayName("is the root node of the scene graph")
-//    	@Test
-//    	void root() {
-//    		assertEquals(root, root.root());
-//    	}
-
-		@DisplayName("cannot be detached")
 		@Test
-		void detach() {
-			assertThrows(IllegalStateException.class, () -> root.detach());
+		void constructor() {
+			assertEquals(node, child.parent());
+			assertEquals(List.of(), child.children());
+			assertEquals(List.of(child), node.children());
+		}
+
+		@Test
+		void remove() {
+			child.remove();
+			assertEquals(null, child.parent());
+			assertEquals(List.of(), node.children());
+		}
+
+		@Test
+		void copy() {
+			final Node copy = node.copy();
+			assertEquals("node", copy.name());
+			assertEquals(null, copy.parent());
+			assertEquals(1, copy.children().size());
+
+			final Node child = copy.children().getFirst();
+			assertEquals("child", child.name());
+			assertEquals(copy, child.parent());
+		}
+
+		@DisplayName("A copy of a leaf node is a root node")
+		@Test
+		void child() {
+			final Node copy = child.copy();
+			assertEquals("child", copy.name());
+			assertEquals(null, copy.parent());
+		}
+
+		@Test
+		void equals() {
+			assertEquals(child, child);
+			assertEquals(child, new Node("child", node));
+			assertNotEquals(child, null);
+			assertNotEquals(child, new Node("child"));
+			assertNotEquals(child, new Node("other", node));
 		}
 	}
 
-	@DisplayName("A child node...")
 	@Nested
-	class Child {
-		private Node node;
-		private RootNode parent;
-
-		@BeforeEach
-		void before() {
-			parent = new RootNode();
-			node = new Node(parent);
+	class LocalTransformTest {
+		@Test
+		void none() {
+			assertEquals(LocalTransform.NONE, node.transform());
+			assertEquals(true, node.transform().isDirty());
 		}
 
-		@DisplayName("has a parent")
 		@Test
-		void parent() {
-    		assertEquals(parent, node.parent());
-		}
-
-		@DisplayName("has a root node")
-    	@Test
-    	void root() {
-    		assertEquals(parent, node.root());
-    	}
-
-		@DisplayName("can be detached from its parent")
-		@Test
-		void detach() {
-			node.detach();
-    		assertEquals(null, node.parent());
-    		assertEquals(List.of(), parent.nodes().toList());
+		void transform() {
+			final var transform = new LocalTransform(Matrix.translation(Axis.X));
+			node.transform(transform);
+			assertEquals(transform, node.transform());
+			assertEquals(true, node.transform().isDirty());
 		}
 	}
 }

@@ -1,19 +1,23 @@
 package org.sarge.jove.scene.graph;
 
-import java.util.List;
+public class Material {
 
-/**
- * A <i>material</i> specifies the rendering properties of a {@link MeshNode}.
- * @author Sarge
- */
-public interface Material {
-	/**
-	 * @return Render queue for this material
-	 */
-	RenderQueue queue();
-
-	/**
-	 * @return Rendering state switch keys for this material
-	 */
-	List<Renderable> states();
 }
+
+
+//material
+//- inherited
+//- name
+//- texture(s?) ~ descriptor sets
+//- pipeline -> layout -> descriptor sets, push constant/ranges(?)
+//- render queue? opaque, translucent, etc
+//- properties: named 'variables' -> shader
+//- out: bind pipeline & descriptors to sequence
+//
+//material properties
+//- name
+//- type: equivalent to GLSL types: int, float, vector[size], matrix[order], etc
+//- size (bytes)
+//- array length?
+//- mutability: fixed, variable, per-frame, per-node, etc
+//- maps to uniform, push constant, shader constants?

@@ -13,7 +13,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">Wikipedia</a>
  * @author Sarge
  */
-public record Quaternion(float scalar, Vector vector) {
+public record Quaternion(float scalar, Vector vector) implements Transform {
 	/**
 	 * Quaternion that represents no rotation.
 	 */
@@ -108,6 +108,7 @@ public record Quaternion(float scalar, Vector vector) {
 	/**
 	 * @return This quaternion as a rotation matrix
 	 */
+	@Override
 	public Matrix matrix() {
 		final float xx = vector.x * vector.x;
 		final float xy = vector.x * vector.y;
