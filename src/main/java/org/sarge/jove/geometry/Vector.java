@@ -74,7 +74,7 @@ public class Vector extends Tuple {
 	 * @return Dot product
 	 * @see <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia</a>
 	 */
-	public float dot(Vector that) {
+	public float dot(Tuple that) {
 		return this.x * that.x + this.y * that.y + this.z * that.z;
 	}
 

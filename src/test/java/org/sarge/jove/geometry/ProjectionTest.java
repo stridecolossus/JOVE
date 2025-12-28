@@ -7,26 +7,26 @@ import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.MathsUtility;
 
 class ProjectionTest {
-	private Dimensions dim;
+	private Viewport viewport;
 
 	@BeforeEach
 	public void before() {
-		dim = new Dimensions(640, 480);
+		viewport = new Viewport(new Dimensions(640, 480));
 	}
 
 	@Test
 	public void perspective() {
-		final Matrix expected = new Matrix.Builder(4)
+		final Matrix expected = new Matrix.Builder()
 				.set(0, 0, 0.75f)
-				.set(1, 1, -1)
-				.set(2, 2, -1.0001f)
-				.set(2, 3, -0.10001f)
-				.set(3, 2, -1)
+				.set(1, 1, 1)
+				.set(2, 2, 1.001f)
+				.set(2, 3, -0.1001f)
+				.set(3, 2, 1)
 				.build();
 
-		final Projection proj = Projection.perspective(MathsUtility.HALF_PI);
+		final Projection projection = Projection.perspective(MathsUtility.HALF_PI);
 //		assertEquals(1, proj.height(dim));
-		assertEquals(expected, proj.matrix(0.1f, 1000f, dim));
+		assertEquals(expected, projection.matrix(viewport));
 	}
 
 	@Test

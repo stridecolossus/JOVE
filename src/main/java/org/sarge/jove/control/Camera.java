@@ -5,24 +5,37 @@ import static java.util.Objects.requireNonNull;
 import java.util.Objects;
 
 import org.sarge.jove.geometry.*;
+import org.sarge.jove.util.MathsUtility;
 
 /**
  * A <i>camera</i> models the viewers position and orientation.
  * <p>
- * Note that the camera points in the opposite direction to the view, i.e. the {@link #direction()} points <b>out</b> of the screen in the {@link Axis#Z} direction.
+ * The camera points in the <b>opposite</b> direction to the view, i.e. the {@link #direction()} points <b>out</b> of the screen in the {@link Axis#Z} direction.
+ * <p>
+ * Also note that this camera is susceptible to <i>gimbal locking</i> if the view direction is set to the {@link #up()} axis of the camera.
  * <p>
  * @author Sarge
  */
 public class Camera {
-	// Camera state
+	// Camera location and view
 	private Point position = Point.ORIGIN;
 	private Normal direction = Axis.Z;
 	private Normal up = Axis.Y;
+	private float fov = MathsUtility.toRadians(60);
 
-	// Transient view transform
-	private Normal right = Axis.X;
+	// Camera axes
+	private Normal right;
+	private Normal y;
 	private Matrix matrix;
-	private boolean dirty = true;
+
+	/**
+	 * Constructor.
+	 */
+	public Camera() {
+		update();
+		assert right.equals(Axis.X);
+		assert y.equals(Axis.Y);
+	}
 
 	/**
 	 * @return Camera position
@@ -52,7 +65,7 @@ public class Camera {
 	}
 
 	/**
-	 * Moves the camera by the given distance in the current view direction.
+	 * Moves the camera by the given distance in the current view direction (towards the viewer).
 	 * @param distance Distance to move
 	 * @see #direction()
 	 */
@@ -67,7 +80,6 @@ public class Camera {
 	 * @see #right()
 	 */
 	public Camera strafe(float distance) {
-		// TODO - assumes right is valid at this point? what if direction or up have been changed?
 		move(right.multiply(distance));
 		return this;
 	}
@@ -82,40 +94,22 @@ public class Camera {
 	/**
 	 * Sets the camera view direction.
 	 * @param direction View direction
-	 * @throws IllegalStateException if the direction would result in gimbal lock
+	 * @throws IllegalStateException if the new direction would result in gimbal lock
 	 */
 	public Camera direction(Normal direction) {
-		validate(direction, up);
 		this.direction = requireNonNull(direction);
-		dirty();
-		return this;
-	}
-
-	/**
-	 * Points the camera at the given location.
-	 * @param target Target position
-	 * @throws IllegalArgumentException if {@link #target} is the same as the current position of the camera
-	 * @throws IllegalStateException if the resultant direction would result in gimbal lock
-	 */
-	public Camera look(Point target) {
-		if(position.equals(target)) {
-			throw new IllegalArgumentException("Cannot point camera at its current position");
-		}
-		final Vector look = Vector.between(target, position);
-		direction(new Normal(look));
+		update();
 		return this;
 	}
 
 	/**
 	 * Sets the up axis of this camera.
-	 * The default is {@link Axis#Y}.
 	 * @param up Camera up axis
 	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
 	public Camera up(Normal up) {
-		validate(direction, up);
 		this.up = requireNonNull(up);
-		dirty();
+		update();
 		return this;
 	}
 
@@ -134,55 +128,98 @@ public class Camera {
 	}
 
 	/**
-	 * Marks the camera matrix as dirty.
+	 * Updates the camera axes.
 	 */
-	private void dirty() {
-		dirty = true;
+	private void update() {
+		right = new Normal(up.cross(direction));
+		y = new Normal(direction.cross(right));
+		dirty();
 	}
 
 	/**
+	 * Points the camera at the given target.
+	 * @param target Target position
+	 * @throws IllegalArgumentException if {@link #target} is the same as the current position of the camera
+	 * @throws IllegalStateException if the resultant direction would result in gimbal lock
+	 */
+	public Camera look(Point target) {
+		if(position.equals(target)) {
+			throw new IllegalArgumentException("Cannot point camera at its current position");
+		}
+		final Vector look = Vector.between(position, target);
+		direction(new Normal(look));
+		return this;
+	}
+
+	/**
+	 * Marks the camera matrix as dirty.
+	 */
+	private void dirty() {
+		matrix = null;
+	}
+
+	/**
+	 * Builds the view matrix for this camera.
+	 * <p>
+	 * The view matrix is the <b>inverse</b> of the cameras world transformation.
+	 * i.e. This matrix effectively translates and rotates the world to <i>camera</i> (or view) space.
+	 * <p>
+	 * For an <i>orthonormal</i> matrix (one that comprises purely rotational and translation components)
+	 * this view matrix is the <i>transpose</i> of the rotation combined with the position translation.
+	 * <p>
+	 * The resultant matrix is:
+	 * <pre>
+	 * R T
+	 * 0 1
+	 * </pre>
+	 * Where {@code T} is the translation component and {@code R} is the 3x3 rotation with rows comprising the camera axes:
+	 * <ul>
+	 * <li>right axis</li>
+	 * <li>actual <i>up</i> axis</li>
+	 * <li>direction (towards the viewer)</li>
+	 * </ul>
+	 * <p>
 	 * @return Camera view matrix
 	 */
 	public Matrix matrix() {
-		if(dirty) {
-			update();
-			dirty = false;
+		if(matrix == null) {
+			build();
 		}
 		return matrix;
 	}
 
 	/**
-	 * @throws IllegalStateException if the camera would be gimbal locked
+	 * @return Vertical field-of-view of this camera (radians)
 	 */
-	private void validate(Vector direction, Vector up) {
-		if(direction.equals(up) || direction.equals(up.invert())) {
-			throw new IllegalStateException("Camera gimbal lock: direction=%s up=%s camera=%s".formatted(direction, up, this));
-		}
+	public float fov() {
+		return fov;
 	}
 
 	/**
-	 * Updates the camera axes and matrix.
+	 * Sets the vertical field-of-view of this camera.
+	 * @param fov Field-of-view (radians)
 	 */
-	protected void update() {
-		// Determine right axis
-		right = new Normal(up.cross(direction));
+	public void fov(float fov) {
+		this.fov = fov;
+	}
 
-		// Determine up axis
-		final Vector y = direction.cross(right).normalize();
+	/**
+	 * Builds the camera view matrix.
+	 */
+	private void build() {
+		final Vector translation = new Vector(
+				right.dot(position),
+				y.dot(position),
+				direction.dot(position)
+		);
 
-		// Build translation component
-		final Matrix trans = Matrix.translation(new Vector(position).invert());
-
-		// Build rotation component
-		final Matrix rot = new Matrix.Builder(4)
-				.identity()
+		matrix = new Matrix.Builder()
 				.row(0, right)
 				.row(1, y)
 				.row(2, direction)
+				.column(3, translation.invert())
+				.set(3, 3, 1)
 				.build();
-
-		// Create camera matrix
-		matrix = rot.multiply(trans);
 	}
 
 	@Override
@@ -202,6 +239,6 @@ public class Camera {
 
 	@Override
 	public String toString() {
-		return String.format("Camera[position=%s direction=%s up=%s]", position, direction, up);
+		return String.format("Camera[position=%s direction=%s up=%s fov=%f]", position, direction, up, fov);
 	}
 }

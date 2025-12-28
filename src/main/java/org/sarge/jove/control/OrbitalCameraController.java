@@ -1,5 +1,6 @@
 package org.sarge.jove.control;
 
+import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.requireZeroOrMore;
 
 import java.util.function.Consumer;
@@ -26,25 +27,21 @@ public class OrbitalCameraController extends CameraController {
 	 */
 	public OrbitalCameraController(Camera camera, Dimensions dimensions) {
 		super(camera, dimensions);
-		init();
-		camera.look(target);
+		update();
 	}
 
 	/**
-	 * Sets the camera position after a change to the orbital radius.
+	 * Updates the camera position after modifications to the view direction or radius.
 	 */
-	private void init() {
-		final Camera camera = super.camera();
-		final Vector pos = camera.direction().multiply(radius);
-		camera.move(target.add(pos));
+	private void update() {
+		camera.move(target);
+		camera.move(radius);
 	}
 
 	@Override
 	protected void update(Normal direction) {
-		final Point position = target.add(direction.multiply(radius));
-		final Camera camera = super.camera();
-		camera.move(position);
 		camera.direction(direction);
+		update();
 	}
 
 	/**
@@ -60,12 +57,11 @@ public class OrbitalCameraController extends CameraController {
 	 * @throws IllegalArgumentException if {@link #target} is the same as the current camera position
 	 */
 	public void target(Point target) {
-		final Camera camera = super.camera();
 		final float radius = MathsUtility.sqrt(camera.position().distance(target));
 		this.radius = MathsUtility.clamp(radius, min, max);
-		this.target = target;
-		init();
+		this.target = requireNonNull(target);
 		camera.look(target);
+		update();
 	}
 
 	/**
@@ -86,7 +82,7 @@ public class OrbitalCameraController extends CameraController {
 			throw new IllegalArgumentException("Invalid radius: radius=%d range=%d/%d".formatted(radius, min, max));
 		}
 		this.radius = radius;
-		init();
+		update();
 	}
 
 	/**
@@ -122,7 +118,7 @@ public class OrbitalCameraController extends CameraController {
 	 */
 	public void zoom(float zoom) {
 		this.radius = MathsUtility.clamp(radius - zoom * scale, min, max);
-		init();
+		update();
 	}
 
 	/**

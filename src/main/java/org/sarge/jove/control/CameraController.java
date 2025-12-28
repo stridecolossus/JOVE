@@ -15,9 +15,11 @@ import org.sarge.jove.util.Interpolator;
  * @author Sarge
  */
 public class CameraController {
-	private final Camera camera;
+	protected final Camera camera;
+
 	private final Interpolator horizontal = Interpolator.linear(0, TWO_PI);
 	private final Interpolator vertical = Interpolator.linear(-HALF_PI, HALF_PI);
+
 	private float dx, dy;
 	private SphereNormalFactory sphere = new DefaultSphereNormalFactory().rotate();
 
@@ -26,7 +28,6 @@ public class CameraController {
 	// - either FOV | constrained dimensions, e.g. 640,480 -> 320,240 | fiddle angles
 	// - replace dx/dy with interpolator pair
 	// - use compound interpolators?
-	// - gimbal locking
 
 	/**
 	 * Constructor.
@@ -35,13 +36,13 @@ public class CameraController {
 	 */
 	public CameraController(Camera camera, Dimensions dimensions) {
 		this.camera = requireNonNull(camera);
-		dimensions(dimensions);
+		setViewportDimensions(dimensions);
 	}
 
 	/**
 	 * @return Camera
 	 */
-	protected Camera camera() {
+	public Camera camera() {
 		return camera;
 	}
 
@@ -49,15 +50,15 @@ public class CameraController {
 	 * Sets the normal factory for the unit-sphere.
 	 * @param sphere Sphere normal factory
 	 */
-	public void sphere(SphereNormalFactory sphere) {
+	public void setNormalFactory(SphereNormalFactory sphere) {
 		this.sphere = requireNonNull(sphere);
 	}
 
 	/**
-	 * Sets the view dimensions.
-	 * @param dimensions View dimensions
+	 * Sets the viewport dimensions.
+	 * @param dimensions Viewport dimensions
 	 */
-	public void dimensions(Dimensions dimensions) {
+	public void setViewportDimensions(Dimensions dimensions) {
 		this.dx = 1f / dimensions.width();
 		this.dy = 1f / dimensions.height();
 	}
@@ -79,7 +80,7 @@ public class CameraController {
 	protected final void update(float x, float y) {
 		final float yaw = horizontal.interpolate(x * dx);
 		final float pitch = vertical.interpolate(y * dy);
-		final Normal normal = sphere.normal(yaw, pitch);
+		final Normal normal = sphere.normal(yaw, pitch);			// TODO - invert Y option
 		update(normal);
 	}
 

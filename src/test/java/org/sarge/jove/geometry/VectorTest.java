@@ -147,6 +147,15 @@ class VectorTest {
 			cross = unit.cross(other);
 		}
 
+
+		// TODO
+		@Test
+		void test() {
+			assertEquals(Axis.Z, Axis.X.cross(Axis.Y));
+			assertEquals(Axis.Z.invert(), Axis.Y.cross(Axis.X));
+		}
+
+
 		@DisplayName("of two unit-vectors is a vector perpendicular to both")
 		@Test
 		void cross() {

@@ -1,22 +1,28 @@
 package org.sarge.jove.geometry;
 
-import org.sarge.jove.common.Dimensions;
 import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>view projection</i> generates the projection matrix.
+ * A <i>projection</i> generates the projection matrix for a given viewport.
  * @author Sarge
  */
 @FunctionalInterface
 public interface Projection {
 	/**
-	 * Builds the matrix for this projection.
-	 * @param near				Near plane
-	 * @param far				Far plane
-	 * @param dimensions		Viewport dimensions
+	 * - dimensions ~ FOV at far distance & aspect, i.e. inferred and fixed (unless FOV or aspect changes)
+	 * - dimensions unused? (unless by frustum?)
+	 * - both frustum & projection use tan() thingy
+	 */
+
+	//const float halfVSide = zFar * tanf(fovY * .5f);
+	//const float halfHSide = halfVSide * aspect;
+
+	/**
+	 * Builds the projection matrix for the given viewport.
+	 * @param viewport Camera viewport
 	 * @return Projection matrix
 	 */
-	Matrix matrix(float near, float far, Dimensions dimensions);
+	Matrix matrix(Viewport viewport);
 
 	/**
 	 * Perspective projection with a 60 degree FOV.
@@ -24,18 +30,22 @@ public interface Projection {
 	Projection DEFAULT = perspective(MathsUtility.toRadians(60));
 
 	/**
-	 * Creates a perspective projection.
+	 * Creates a perspective projection with the given field-of-view.
 	 * @param fov Field-of-view (radians)
 	 */
 	static Projection perspective(float fov) {
-		final float scale = 1 / (float) Math.tan(fov / 2);
-		return (near, far, dimensions) -> {
-			return new Matrix.Builder(4)
-					.set(0, 0, scale / dimensions.ratio())
-					.set(1, 1, -scale)
-					.set(2, 2, far / (near - far))
-					.set(2, 3, (near * far) / (near - far))
-					.set(3, 2, -1)
+		return viewport -> {
+			final float aspect = 1 / viewport.dimensions().ratio();
+			final float scale = (float) Math.tan(fov / 2);
+			final float near = viewport.near();
+			final float far = viewport.far();
+
+			return new Matrix.Builder()
+					.set(0, 0, aspect / scale)
+					.set(1, 1, 1 / scale)
+					.set(2, 2, far / (far - near))
+					.set(2, 3, -(near * far) / (far - near))
+					.set(3, 2, 1)
 					.build();
 		};
 	}
@@ -44,15 +54,18 @@ public interface Projection {
 	 * Orthographic or flat projection.
 	 * TODO - update for Vulkan (see cookbook)
 	 */
-	Projection FLAT = (near, far, dimensions) -> {
+	Projection FLAT = viewport -> {
 		// Determine clipping planes
+		final var dimensions = viewport.dimensions();
 		final float left = 0;
 		final float right = dimensions.width();
 		final float top = 0;
 		final float bottom = dimensions.height();
 
 		// Build projection matrix
-		return new Matrix.Builder(4)
+		final float near = viewport.near();
+		final float far = viewport.far();
+		return new Matrix.Builder()
 				.identity()
 				.set(0, 0, 2f / (right - left))
 				.set(1, 1, 2f / (top - bottom))

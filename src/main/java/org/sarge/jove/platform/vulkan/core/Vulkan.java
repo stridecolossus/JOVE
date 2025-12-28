@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import org.sarge.jove.common.*;
 import org.sarge.jove.foreign.*;
+import org.sarge.jove.geometry.Matrix;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.image.ImageLibrary;
 import org.sarge.jove.platform.vulkan.memory.MemoryLibrary;
@@ -50,6 +51,24 @@ public interface Vulkan {
 
 		// Build native Vulkan API
 		return (VulkanCoreLibrary) factory.build(List.of(api));
+	}
+
+	/**
+	 * Builds the view transformation matrix for Vulkan.
+	 * <p>
+	 * To maintain the right-handed coordinate system the view axis are flipped 180 degrees about the horizontal axis.
+	 * This transforms view space to the Vulkan clip space coordinate system where Y is down and the view direction is along the Z axis.
+	 * <p>
+	 * Generally this is combined with the projection matrix to transform view space after the camera transformation.
+	 * <p>
+	 * @return Vulkan transformation matrix
+	 */
+	static Matrix matrix() {
+		return new Matrix.Builder()
+				.identity()
+				.set(1, 1, -1)
+				.set(2, 2, -1)
+				.build();
 	}
 
 	/**
