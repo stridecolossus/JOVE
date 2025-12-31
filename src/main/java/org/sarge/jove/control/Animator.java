@@ -28,10 +28,9 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	private final float scale;
 
 	// State
-	private long time;
 	private float speed = 1;
 	private boolean repeat = true;
-	// TODO - interpolator?
+	private long time;
 
 	/**
 	 * Constructor.
@@ -59,7 +58,7 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	}
 
 	/**
-	 * @return Current animation position
+	 * @return Current animation position expressed as a percentile
 	 */
 	public Duration time() {
 		return Duration.ofMillis(time);
@@ -106,22 +105,24 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 			return;
 		}
 
-		// Update animation time
-		final long end = frame.end().toEpochMilli();
-		if(end > duration) {
-			if(repeat) {
-				time = end % duration;
-			}
-			else {
-				time = duration;
-				state(State.STOPPED);
-			}
+		// Update animation position
+		final long elapsed = frame.elapsed().toMillis();
+		if(!repeat && (elapsed > duration)) {
+			// Stop at end of duration if not repeating
+			state(State.STOPPED);
+			time = duration;
+			animation.set(1);
 		}
 		else {
-			time = end;
+			// Otherwise quantise animation time by duration
+			time += elapsed * speed;
+			time = time % duration;
+			animation.set(time * scale);
 		}
+	}
 
-		// Update animation position
-		animation.set(time * scale);
+	@Override
+	public String toString() {
+		return String.format("Animator[state=%s time=%s animation=%s]", this.state(), this.time(), animation);
 	}
 }

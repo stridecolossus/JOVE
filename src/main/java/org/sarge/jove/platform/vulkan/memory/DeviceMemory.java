@@ -61,7 +61,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	 * @param offset		Offset into this memory
 	 * @param size			Size of the region to map
 	 * @return Mapped memory region
-	 * @throws IllegalArgumentException if {@code offset} and {@code size} exceed the size of this memory
+	 * @throws IllegalArgumentException if {link #offset} plus {@link #size} exceeds the size of this memory
 	 * @throws IllegalStateException if this memory is not {@link VkMemoryProperty#HOST_VISIBLE}, a mapping already exists, or the memory has been destroyed
 	 * @see #unmap()
 	 */
@@ -81,7 +81,7 @@ public interface DeviceMemory extends NativeObject, TransientObject {
 	/**
 	 * Unmaps the current mapped region of this memory.
 	 * Note that regions are <i>persistent</i>, i.e. it is not required to explicitly unmap memory after a read/write access.
-	 * Similarly a region does not need to be explicitly unmapped when the memory is destroyed.
+	 * Similarly a region does not need to be explicitly unmapped before memory is destroyed.
 	 * @throws IllegalStateException if this memory has not been mapped or the memory has been destroyed
 	 * @see #map()
 	 */

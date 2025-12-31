@@ -35,6 +35,7 @@ public class Player extends AbstractPlayable {
 
 	@Override
 	public void state(State state) {
+		super.state(state);
 		playable.state(state);
 		update();
 	}

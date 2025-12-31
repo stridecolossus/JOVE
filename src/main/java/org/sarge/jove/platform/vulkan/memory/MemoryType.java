@@ -72,13 +72,13 @@ public record MemoryType(int index, Heap heap, Set<VkMemoryPropertyFlags> proper
 
 		// Extracts a memory type
 		class TypeMapper implements IntFunction<MemoryType> {
-			private final ReverseMapping<VkMemoryPropertyFlags> properties = ReverseMapping.mapping(VkMemoryPropertyFlags.class);
+			private final ReverseMapping<VkMemoryPropertyFlags> mapper = ReverseMapping.mapping(VkMemoryPropertyFlags.class);
 
 			@Override
 			public MemoryType apply(int index) {
 				final VkMemoryType type = descriptor.memoryTypes[index];
 				final Heap heap = heaps[type.heapIndex];
-				final Set<VkMemoryPropertyFlags> props = type.propertyFlags.enumerate(properties);
+				final Set<VkMemoryPropertyFlags> props = type.propertyFlags.enumerate(mapper);
 				return new MemoryType(index, heap, props);
 			}
 		}

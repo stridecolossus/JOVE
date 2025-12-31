@@ -12,7 +12,8 @@ import org.sarge.jove.platform.vulkan.*;
  * <p>
  * In general the client requests <i>required</i> and <i>optimal</i> properties for the memory, with the allocator falling back to the minimal properties as required.
  * <p>
- * Example for the properties of a uniform buffer visible to the application and ideally GPU resident:
+ * Example for a uniform buffer visible to the application and ideally GPU resident:
+ * <p>
  * {@snippet:
  * var properties = new MemoryProperties.Builder<VkBufferUsageFlag>()
  *     .usage(VkBufferUsageFlag.UNIFORM_BUFFER)
@@ -23,12 +24,12 @@ import org.sarge.jove.platform.vulkan.*;
  *     .build()</pre>
  * }
  * <p>
- * @param <T> Usage enumeration
+ * @param <E> Usage enumeration
  * @see VkBufferUsageFlag
  * @see VkImageUsageFlag
  * @author Sarge
  */
-public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemoryPropertyFlags> required, Set<VkMemoryPropertyFlags> optimal) {
+public record MemoryProperties<E>(Set<E> usage, VkSharingMode mode, Set<VkMemoryPropertyFlags> required, Set<VkMemoryPropertyFlags> optimal) {
 	/**
 	 * Constructor.
 	 * @param usage			Memory usage(s)
@@ -38,9 +39,9 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * @throws IllegalArgumentException if {@link #usage} is empty
 	 */
 	public MemoryProperties {
-		requireNonNull(mode);
 		requireNotEmpty(usage);
 		usage = Set.copyOf(usage);
+		requireNonNull(mode);
 		required = Set.copyOf(required);
 		optimal = Set.copyOf(optimal);
 	}
@@ -49,25 +50,25 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 	 * Convenience constructor for basic memory properties with the given usage.
 	 * @param usage Memory usage
 	 */
-	public MemoryProperties(T usage) {
+	public MemoryProperties(E usage) {
 		this(Set.of(usage), VkSharingMode.EXCLUSIVE, Set.of(), Set.of());
 	}
 
 	/**
 	 * Builder for memory properties.
-	 * @param <T> Usage enumeration
+	 * @param <E> Usage enumeration
 	 */
-	public static class Builder<T> {
+	public static class Builder<E> {
 		private final Set<VkMemoryPropertyFlags> required = new HashSet<>();
 		private final Set<VkMemoryPropertyFlags> optimal = new HashSet<>();
-		private final Set<T> usage = new HashSet<>();
+		private final Set<E> usage = new HashSet<>();
 		private VkSharingMode mode = VkSharingMode.EXCLUSIVE;
 
 		/**
 		 * Adds a <i>required</i> memory property.
 		 * @param property Required memory property
 		 */
-		public Builder<T> required(VkMemoryPropertyFlags property) {
+		public Builder<E> required(VkMemoryPropertyFlags property) {
 			required.add(property);
 			return this;
 		}
@@ -76,7 +77,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * Adds an <i>optimal</i> memory property.
 		 * @param property Optimal memory property
 		 */
-		public Builder<T> optimal(VkMemoryPropertyFlags property) {
+		public Builder<E> optimal(VkMemoryPropertyFlags property) {
 			optimal.add(property);
 			return this;
 		}
@@ -85,7 +86,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * Adds a usage flag for this memory.
 		 * @param usage Memory usage flag
 		 */
-		public Builder<T> usage(T usage) {
+		public Builder<E> usage(E usage) {
 			this.usage.add(usage);
 			return this;
 		}
@@ -95,7 +96,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * The default value is {@link VkSharingMode#EXCLUSIVE}.
 		 * @param mode Sharing mode
 		 */
-		public Builder<T> mode(VkSharingMode mode) {
+		public Builder<E> mode(VkSharingMode mode) {
 			this.mode = mode;
 			return this;
 		}
@@ -104,7 +105,7 @@ public record MemoryProperties<T>(Set<T> usage, VkSharingMode mode, Set<VkMemory
 		 * Constructs this memory properties instance.
 		 * @return New memory properties
 		 */
-		public MemoryProperties<T> build() {
+		public MemoryProperties<E> build() {
 			return new MemoryProperties<>(usage, mode, required, optimal);
 		}
 	}

@@ -20,6 +20,7 @@ class HandleTest {
 	@Test
 	void address() {
 		assertEquals(address, handle.address());
+		assertTrue(handle.address().isReadOnly());
 	}
 
 	@Test
