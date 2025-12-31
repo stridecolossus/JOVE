@@ -333,6 +333,15 @@ public interface Command {
 		}
 
 		/**
+		 * Convenience method to allocate a single primary command buffer.
+		 * @return Allocated command buffer
+		 * @see #allocate(int, boolean)
+		 */
+		public Buffer allocate() {
+			return allocate(1, true).getFirst();
+		}
+
+		/**
 		 * Resets this command pool.
 		 * @param flags Reset flags
 		 */

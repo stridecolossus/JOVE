@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import org.sarge.jove.common.Handle;
 import org.sarge.jove.foreign.Pointer;
-import org.sarge.jove.platform.vulkan.VkResult;
 
 /**
  * Helper base-class to initialise by-reference parameters.
@@ -13,7 +12,6 @@ import org.sarge.jove.platform.vulkan.VkResult;
  */
 public abstract class MockLibrary {
 	private int handle = 1;
-	public VkResult result = VkResult.VK_SUCCESS;
 
 	/**
 	 * Initialises a returned pointer.

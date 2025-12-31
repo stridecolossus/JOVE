@@ -35,6 +35,11 @@ public class Swapchain extends VulkanObject {
 	public static final String EXTENSION = "VK_KHR_swapchain";
 
 	/**
+	 * Default surface mode for the swapchain images.
+	 */
+	public static final SurfaceFormatWrapper DEFAULT_SURFACE_FORMAT = new SurfaceFormatWrapper(VkFormat.B8G8R8A8_UNORM, VkColorSpaceKHR.SRGB_NONLINEAR_KHR);
+
+	/**
 	 * Default presentation mode guaranteed on all Vulkan implementations.
 	 */
 	public static final VkPresentModeKHR DEFAULT_PRESENTATION_MODE = VkPresentModeKHR.FIFO_KHR;
@@ -48,6 +53,7 @@ public class Swapchain extends VulkanObject {
 	private final VkFormat format;
 	private final Dimensions extents;
 	private List<Image> attachments;
+	private final IntegerReference index = new IntegerReference();
 
 	/**
 	 * Constructor.
@@ -75,6 +81,13 @@ public class Swapchain extends VulkanObject {
 	 */
 	public Dimensions extents() {
 		return extents;
+	}
+
+	/**
+	 * @return Index of the most recently acquired swapchain image
+	 */
+	public int index() {
+		return index.get();
 	}
 
 	/**
@@ -128,8 +141,7 @@ public class Swapchain extends VulkanObject {
 	 * Indicates that this swapchain has been invalidated, generally caused by the window being resized or minimised.
 	 */
 	public static final class Invalidated extends VulkanException {
-		//protected
-		public Invalidated(VkResult result) {
+		Invalidated(VkResult result) {
 			super(result);
 		}
 	}
@@ -149,7 +161,7 @@ public class Swapchain extends VulkanObject {
 		}
 
 		// Retrieve next image index
-		final var index = new IntegerReference();
+		index.set(null);
 		final int code = library.vkAcquireNextImageKHR(this.device(), this, Long.MAX_VALUE, semaphore, fence, index);
 		final VkResult result = MAPPING.map(code);
 
@@ -215,14 +227,22 @@ public class Swapchain extends VulkanObject {
 		private final Set<VkImageUsageFlags> usage = new HashSet<>();
 
 		public Builder() {
-			info.imageFormat = VkFormat.B8G8R8A8_UNORM;
-			info.imageColorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
-			info.preTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
-			info.imageArrayLayers = 1;
-			info.compositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
-			info.imageSharingMode = VkSharingMode.EXCLUSIVE;
-			info.presentMode = DEFAULT_PRESENTATION_MODE;
-			info.clipped = true;
+			usage(VkImageUsageFlags.COLOR_ATTACHMENT);
+			format(DEFAULT_SURFACE_FORMAT);
+			transform(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
+			arrays(1);
+			alpha(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
+			presentation(DEFAULT_PRESENTATION_MODE);
+			clipped(true);
+
+//			info.imageFormat = VkFormat.B8G8R8A8_UNORM;
+//			info.imageColorSpace = VkColorSpaceKHR.SRGB_NONLINEAR_KHR;
+			//info.preTransform = new EnumMask<>(VkSurfaceTransformFlagsKHR.IDENTITY_KHR);
+			//info.imageArrayLayers = 1;
+			//info.compositeAlpha = new EnumMask<>(VkCompositeAlphaFlagsKHR.OPAQUE_KHR);
+info.imageSharingMode = VkSharingMode.EXCLUSIVE;
+//			info.presentMode = DEFAULT_PRESENTATION_MODE;
+//			info.clipped = true;
 		}
 
 		/**
@@ -273,7 +293,7 @@ public class Swapchain extends VulkanObject {
 		}
 
 		/**
-		 * Sets the image usage flag.
+		 * Adds an image usage flag for the swapchain attachments.
 		 * @param usage Image usage
 		 */
 		public Builder usage(VkImageUsageFlags usage) {
@@ -410,10 +430,10 @@ public class Swapchain extends VulkanObject {
 			info.flags = new EnumMask<>(flags);
 			info.surface = requireNonNull(properties.surface().handle());
 
-			// Init image usage
-			if(usage.isEmpty()) {
-				usage.add(VkImageUsageFlags.COLOR_ATTACHMENT);
-			}
+//			// Init image usage
+//			if(usage.isEmpty()) {
+//				usage.add(VkImageUsageFlags.COLOR_ATTACHMENT);
+//			}
 			info.imageUsage = new EnumMask<>(usage);
 		}
 

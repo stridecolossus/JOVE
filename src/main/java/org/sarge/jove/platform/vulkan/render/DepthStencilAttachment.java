@@ -33,7 +33,7 @@ public class DepthStencilAttachment extends AbstractAttachment {
 	 */
 	public static VkFormat format(Function<VkFormat, VkFormatProperties> provider, List<VkFormat> formats) {
 		final var filter = new FormatFilter(provider, true, Set.of(VkFormatFeatureFlags.DEPTH_STENCIL_ATTACHMENT));
-		final var selector = new PrioritySelector<>(filter);
+		final var selector = new PrioritySelector<>(filter, PrioritySelector.first());
 		return selector.select(formats);
 	}
 

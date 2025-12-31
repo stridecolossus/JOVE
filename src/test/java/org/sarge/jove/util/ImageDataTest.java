@@ -6,10 +6,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.*;
-import org.sarge.jove.util.ImageData;
 import org.sarge.jove.util.ImageData.Level;
 
-public class ImageDataTest {
+class ImageDataTest {
 	private static final Dimensions EXTENTS = new Dimensions(2, 3);
 	private static final Layout LAYOUT = new Layout(4, Layout.Type.INTEGER, false, 1);
 	private static final byte[] DATA = new byte[2 * 3 * 4];

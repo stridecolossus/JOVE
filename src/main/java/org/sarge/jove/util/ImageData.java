@@ -204,6 +204,6 @@ public class ImageData {
 
 	@Override
 	public String toString() {
-		return String.format("Imagedata[channels=%s size=%s layout=%s length=%d]", channels, size, layout, data.length);
+		return String.format("ImageData[channels=%s size=%s layout=%s length=%d]", channels, size, layout, data.length);
 	}
 }

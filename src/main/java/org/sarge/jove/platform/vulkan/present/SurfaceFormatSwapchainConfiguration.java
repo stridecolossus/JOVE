@@ -13,6 +13,7 @@ import org.sarge.jove.util.PrioritySelector;
 /**
  * The <i>surface format</i> swapchain configuration selects a preferred surface format for the swapchain.
  * This implementation falls back to the <b>first</b> surface format supported by the surface.
+ * @see Swapchain#DEFAULT_SURFACE_FORMAT
  * @author Sarge
  */
 public class SurfaceFormatSwapchainConfiguration implements SwapchainConfiguration {
@@ -38,7 +39,7 @@ public class SurfaceFormatSwapchainConfiguration implements SwapchainConfigurati
 	@Override
 	public void configure(Builder builder, Properties properties) {
 		final List<VkSurfaceFormatKHR> formats = properties.formats();
-		final var selector = new PrioritySelector<VkSurfaceFormatKHR>(format::equals);		// TODO - configurable/protected
+		final var selector = new PrioritySelector<VkSurfaceFormatKHR>(format::equals, PrioritySelector.first());
 		final VkSurfaceFormatKHR selected = selector.select(formats);
 		builder.format(selected);
 	}

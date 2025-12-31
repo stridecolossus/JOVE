@@ -53,7 +53,7 @@ public class FrameState extends AbstractTransientObject {
 	}
 
 	/**
-	 * @return Frame index
+	 * @return In-flight frame index
 	 */
 	public int index() {
 		return index;
@@ -69,13 +69,13 @@ public class FrameState extends AbstractTransientObject {
 		// Wait for the previous frame to be completed
 		fence.waitReady();
 
-		// Acquire next buffer
-		final int index = swapchain.acquire(available, null);
+		// Acquire next framebuffer
+		final int framebuffer = swapchain.acquire(available, null);
 
 		// Ensure still waiting if the swapchain has been invalidated
 		fence.reset();
 
-		return index;
+		return framebuffer;
 	}
 
 	/**

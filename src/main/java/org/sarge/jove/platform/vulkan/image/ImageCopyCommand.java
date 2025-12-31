@@ -17,8 +17,8 @@ public class ImageCopyCommand implements Command {
 	/**
 	 * Creates a copy command for the whole of the image.
 	 * @param source			Source
-	 * @param destination			Destination
-	 * @param library		Image library
+	 * @param destination		Destination
+	 * @param library			Image library
 	 * @return Copy command
 	 */
 	public static ImageCopyCommand of(Image source, Image destination, Image.Library library) {

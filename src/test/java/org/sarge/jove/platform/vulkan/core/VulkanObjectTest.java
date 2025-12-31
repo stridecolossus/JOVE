@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.*;
 import org.sarge.jove.common.Handle;
 
-public class VulkanObjectTest {
+class VulkanObjectTest {
 	private static class MockVulkanObject extends VulkanObject {
 		public boolean released;
 

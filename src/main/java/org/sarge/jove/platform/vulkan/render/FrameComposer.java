@@ -59,7 +59,7 @@ public class FrameComposer {
 	 * @return Command buffer
 	 */
 	protected Buffer allocate(Command.Pool pool, int index) {
-		return pool.allocate(1, true).getFirst();
+		return pool.allocate();
 	}
 	// TODO - this needs to return a factory
 

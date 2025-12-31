@@ -165,8 +165,7 @@ public record Work(List<Buffer> buffers, Map<VulkanSemaphore, Set<VkPipelineStag
 	 */
 	public static Buffer submit(Command cmd, Pool pool) {
 		final Buffer buffer = pool
-				.allocate(1, true)
-				.getFirst()
+				.allocate()
 				.begin(VkCommandBufferUsageFlags.ONE_TIME_SUBMIT)
 				.add(cmd)
 				.end();

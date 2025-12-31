@@ -43,14 +43,6 @@ public class PrioritySelector<T> {
 	}
 
 	/**
-	 * Constructor for a selector using the {@link #first()} candidate as a fallback.
-	 * @param filter Filter
-	 */
-	public PrioritySelector(Predicate<T> filter) {
-		this(filter, first());
-	}
-
-	/**
 	 * Selects from the given list of candidates or falls back to the configured default value.
 	 * @param candidates Candidates
 	 * @return Selected value

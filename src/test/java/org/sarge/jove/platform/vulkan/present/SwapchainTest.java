@@ -41,15 +41,15 @@ class SwapchainTest {
 		}
 
 		public VkResult vkGetSwapchainImagesKHR(LogicalDevice device, Swapchain swapchain, IntegerReference pSwapchainImageCount, Handle[] pSwapchainImages) {
-			pSwapchainImageCount.set(1);
+			pSwapchainImageCount.set(2);
 			init(pSwapchainImages);
 			return VkResult.VK_SUCCESS;
 		}
 
 		public int vkAcquireNextImageKHR(LogicalDevice device, Swapchain swapchain, long timeout, VulkanSemaphore semaphore, Fence fence, IntegerReference pImageIndex) {
 			assertEquals(Long.MAX_VALUE, timeout);
-			pImageIndex.set(0);
-			return result.value();
+			pImageIndex.set(1);
+			return 0;
 		}
 	}
 
@@ -73,7 +73,7 @@ class SwapchainTest {
 	@Test
 	void attachments() {
 		final List<Image> attachments = swapchain.attachments();
-		assertEquals(1, attachments.size());
+		assertEquals(2, attachments.size());
 
 		final Image.Descriptor descriptor = attachments.getFirst().descriptor();
 		assertEquals(VkFormat.B8G8R8A8_UNORM, descriptor.format());
@@ -100,13 +100,16 @@ class SwapchainTest {
 
 		@Test
 		void acquire() {
-			assertEquals(0, swapchain.acquire(semaphore, null));
+			assertEquals(1, swapchain.acquire(semaphore, null));
+			assertEquals(1, swapchain.index());
 		}
 
 		@Test
 		void suboptimal() {
+			// TODO - this doesn't really test much cos mockery does not actually set the FB index!
 			acquire.result(VkResult.VK_SUBOPTIMAL_KHR.value());
 			assertEquals(0, swapchain.acquire(semaphore, null));
+			//assertEquals(1, swapchain.index());
 		}
 
 		@Test
@@ -143,7 +146,7 @@ class SwapchainTest {
 			assertEquals(new Dimensions(640, 480), swapchain.extents());
 			assertEquals(MockSurfaceProperties.FORMAT.format, swapchain.format());
 			assertEquals(false, swapchain.isDestroyed());
-			assertEquals(1, swapchain.attachments().size());
+			assertEquals(2, swapchain.attachments().size());
 		}
 
 		// TODO

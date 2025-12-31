@@ -49,8 +49,7 @@ class WorkTest {
 
 		// Create a command buffer
 		buffer = pool
-				.allocate(1, true)
-				.getFirst()
+				.allocate()
 				.begin()
 				.end();
 	}
@@ -73,7 +72,7 @@ class WorkTest {
 	@DisplayName("All command buffers in a work submission must be ready for execution")
 	@Test
 	void ready() {
-		final Buffer unready = pool.allocate(1, true).getFirst();
+		final Buffer unready = pool.allocate();
 		assertThrows(IllegalStateException.class, () -> new Work.Builder().add(unready).build());
 	}
 
@@ -83,8 +82,7 @@ class WorkTest {
 		final WorkQueue queue = new WorkQueue(new Handle(4), new Family(1, 2, Set.of()));
 
 		final Buffer other = new Pool(new Handle(5), device, queue)
-				.allocate(1, true)
-				.getFirst()
+				.allocate()
 				.begin()
 				.end();
 

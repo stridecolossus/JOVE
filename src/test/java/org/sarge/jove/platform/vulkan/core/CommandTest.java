@@ -130,7 +130,7 @@ class CommandTest {
 
 		@BeforeEach
 		void before() {
-			buffer = pool.allocate(1, true).getFirst();
+			buffer = pool.allocate();
 		}
 
 		@Nested
@@ -239,7 +239,7 @@ class CommandTest {
 
 		@BeforeEach
 		void before() {
-			primary = pool.allocate(1, true).getFirst();
+			primary = pool.allocate();
 			primary.begin();
 			secondary = pool.allocate(1, false).getFirst();
 		}
@@ -287,11 +287,7 @@ class CommandTest {
 
 		@Test
 		void allocate() {
-			final List<Buffer> buffers = pool.allocate(1, true);
-			assertEquals(1, buffers.size());
-			assertEquals(buffers, pool.buffers());
-
-			final Buffer buffer = buffers.getFirst();
+			final Buffer buffer = pool.allocate();
 			assertEquals(pool, buffer.pool());
 			assertEquals(false, buffer.isReady());
 			assertEquals(INITIAL, buffer.stage());
@@ -310,8 +306,7 @@ class CommandTest {
 		@Test
 		void reset() {
 			final Buffer buffer = pool
-					.allocate(1, true)
-					.getFirst()
+					.allocate()
 					.begin();
 
 			pool.reset(VkCommandPoolResetFlags.RELEASE_RESOURCES);
@@ -321,7 +316,7 @@ class CommandTest {
 
 		@Test
 		void free() {
-			final Buffer buffer = pool.allocate(1, true).getFirst();
+			final Buffer buffer = pool.allocate();
 			pool.free(List.of(buffer));
 			// TODO - library.assertFlag("free");
 			assertEquals(Stage.INVALID, buffer.stage());
@@ -330,7 +325,7 @@ class CommandTest {
 
 		@Test
 		void destroy() {
-			final Buffer buffer = pool.allocate(1, true).getFirst();
+			final Buffer buffer = pool.allocate();
 			pool.destroy();
 			assertTrue(pool.isDestroyed());
 			// TODO - library.assertDestroyed();
