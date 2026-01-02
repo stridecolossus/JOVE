@@ -7,7 +7,7 @@ import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.util.EnumMask;
 
 /**
- * An <i>subresource</i> defines a subset of the aspects, mip levels and array layers of an image.
+ * A <i>subresource</i> defines a subset of the aspects, mip levels and array layers of an image.
  * @author Sarge
  */
 public interface Subresource {
