@@ -18,6 +18,11 @@ import org.sarge.jove.util.EnumMask;
  */
 public class Sampler extends VulkanObject {
 	/**
+	 * Required device feature for an anisotropic sampler.
+	 */
+	public static final String SAMPLER_ANISOTROPY = "samplerAnisotropy";
+
+	/**
 	 * Constructor.
 	 * @param handle		Sampler handle
 	 * @param device		Logical device
@@ -284,9 +289,7 @@ public class Sampler extends VulkanObject {
 
 			// Validate anisotropy feature
 			if(info.anisotropyEnable) {
-				if(!device.features().contains("samplerAnisotropy")) {
-					throw new UnsupportedOperationException("Anisotropy feature not enabled");
-				}
+				device.features().require(SAMPLER_ANISOTROPY);
 
 				final float max = device.limits().get("maxSamplerAnisotropy");
 				if(info.maxAnisotropy > max) {

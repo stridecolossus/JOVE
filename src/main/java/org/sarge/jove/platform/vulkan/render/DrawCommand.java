@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.sarge.jove.util.Validation.*;
 
 import org.sarge.jove.model.Mesh;
+import org.sarge.jove.model.Mesh.Index;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
@@ -11,6 +12,18 @@ import org.sarge.jove.platform.vulkan.core.*;
  * @author Sarge
  */
 public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, int firstInstance, Integer firstIndex, Library library) implements Command {
+	/**
+	 * Required device feature for an index with restart indices.
+	 * @see Index#restart()
+	 */
+	public static final String FEATURE_RESTART = "primitiveRestart";
+
+	/**
+	 * Required device feature for a mesh with restarted indices and a <i>list</i> topology.
+	 * @see Index#restart()
+	 */
+	public static final String FEATURE_LIST_RESTART = "primitiveTopologyListRestart";
+
 	/**
 	 * Constructor.
 	 * @param vertexCount			Number of vertices
@@ -56,13 +69,28 @@ public record DrawCommand(int vertexCount, int instanceCount, int firstVertex, i
 	 * @param mesh		Mesh
 	 * @param device	Logical device
 	 * @return Mesh draw command
+	 * @throws UnsupportedOperationException if the mesh requires a device feature that is not enabled
+	 * @see Index#isIndexRestart()
+	 * @see #FEATURE_RESTART
+	 * @see #FEATURE_LIST_RESTART
 	 */
 	public static DrawCommand of(Mesh mesh, LogicalDevice device) {
+		// Init draw command
 		final var draw = new Builder();
 		draw.vertexCount(mesh.count());
 
+		// Init indexed draw
 		if(mesh.index().isPresent()) {
 			draw.indexed();
+		}
+
+		// Check required features for a restarted index
+		if(mesh.index().filter(Index::isIndexRestart).isPresent()) {
+			final DeviceFeatures features = device.features();
+			features.require(FEATURE_RESTART);
+			if(mesh.primitive().isStrip()) {
+				features.require(FEATURE_LIST_RESTART);
+			}
 		}
 
 		return draw.build(device);

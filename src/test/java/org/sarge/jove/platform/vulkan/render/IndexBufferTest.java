@@ -10,6 +10,7 @@ import org.sarge.jove.util.Mockery;
 
 class IndexBufferTest {
 	private IndexBuffer index;
+	private VulkanBuffer buffer;
 	private Mockery mockery;
 	private MockLogicalDevice device;
 
@@ -20,7 +21,7 @@ class IndexBufferTest {
 		device = new MockLogicalDevice(mockery.proxy());
 
 		// Create underlying buffer
-		final var buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
+		buffer = new MockVulkanBuffer(device, 8L, VkBufferUsageFlags.INDEX_BUFFER);
 
 		// Init bind command
 		@SuppressWarnings("unused")
@@ -37,6 +38,15 @@ class IndexBufferTest {
 		index = new IndexBuffer(VkIndexType.UINT32, buffer);
 	}
 
+	@DisplayName("The Vulkan index type can be determined from the data type of the index")
+	@Test
+	void type() {
+		assertEquals(VkIndexType.UINT8_EXT, IndexBuffer.type(Byte.BYTES));
+		assertEquals(VkIndexType.UINT16, IndexBuffer.type(Short.BYTES));
+		assertEquals(VkIndexType.UINT32, IndexBuffer.type(Integer.BYTES));
+		assertThrows(IllegalArgumentException.class, () -> IndexBuffer.type(Long.BYTES));
+	}
+
 	@Test
 	void bind() {
 		final Command bind = index.bind(0L);
@@ -49,12 +59,24 @@ class IndexBufferTest {
 		assertThrows(IllegalArgumentException.class, () -> index.bind(8L));
 	}
 
+	@DisplayName("The length of an index buffer with 32-bit indices must not exceed the hardware limit")
 	@Test
 	void limit() {
 		device.limits.maxDrawIndexedIndexValue = 0;
 		assertThrows(IllegalStateException.class, () -> index.bind(0L));
 	}
 
+	@DisplayName("An index buffer with 8-bit indices requires a device feature")
+	@Test
+	void bytes() {
+		final var bytes = new IndexBuffer(VkIndexType.UINT8_EXT, buffer);
+		assertThrows(UnsupportedOperationException.class, () -> bytes.bind());
+
+		device.features.add("indexTypeUint8");
+		bytes.bind();
+	}
+
+	@DisplayName("The underlying buffer must be able to be used as an index buffer")
 	@Test
 	void invalid() {
 		final VulkanBuffer invalid = new MockVulkanBuffer(new MockLogicalDevice(), 8L, VkBufferUsageFlags.TRANSFER_SRC);

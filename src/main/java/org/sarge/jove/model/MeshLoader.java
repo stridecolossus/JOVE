@@ -93,6 +93,12 @@ public class MeshLoader {
 	 */
 	private record IndexWrapper(MeshData index) implements Mesh.Index {
 		@Override
+		public boolean isIndexRestart() {
+			return false;
+		}
+		// TODO - persist (also data type?)
+
+		@Override
 		public int length() {
 			return index.length();
 		}

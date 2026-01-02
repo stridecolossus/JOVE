@@ -96,14 +96,4 @@ class IndexedMeshTest {
 		assertThrows(IllegalArgumentException.class, () -> index.index(1));
 		assertThrows(IllegalArgumentException.class, () -> index.index(2));
 	}
-
-	@DisplayName("A mesh containing index restarts can only be indexed by 32-bit values")
-	@Test
-	void restartIndex() {
-		mesh.restart();
-		assertEquals(4, index.minimumElementBytes());
-		assertNotNull(index.index(4));
-		assertThrows(IllegalArgumentException.class, () -> index.index(1));
-		assertThrows(IllegalArgumentException.class, () -> index.index(2));
-	}
 }

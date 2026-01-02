@@ -41,6 +41,17 @@ public record DeviceFeatures(Set<String> features) implements Predicate<Physical
 	}
 
 	/**
+	 * Helper.
+	 * @param feature Required device feature
+	 * @throws UnsupportedOperationException if the required feature is not enabled
+	 */
+	public void require(String feature) {
+		if(!contains(feature)) {
+			throw new UnsupportedOperationException("Missing required device feature: " + feature);
+		}
+	}
+
+	/**
 	 * @return Device features structure
 	 */
 	public VkPhysicalDeviceFeatures build() {

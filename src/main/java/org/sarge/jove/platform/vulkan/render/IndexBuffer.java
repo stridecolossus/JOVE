@@ -2,22 +2,22 @@ package org.sarge.jove.platform.vulkan.render;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.model.IndexedMesh;
 import org.sarge.jove.platform.vulkan.*;
 import org.sarge.jove.platform.vulkan.core.*;
 
 /**
  * An <i>index buffer</i> binds a drawing index to the pipeline.
- * <p>
- * Note that the index can be represented as either {@code short} or {@code int} values depending on the length of the vertex data.
- * <p>
- * @see IndexedMesh.Index#isCompactIndex()
  * @author Sarge
  */
 public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	/**
+	 * Required feature name for 8-bit indices.
+	 */
+	public static final String INDEX_TYPE_UINT8 = "indexTypeUint8";
+
+	/**
 	 * Constructor given a specific index data type.
-	 * @param type			Index type
+	 * @param type			Index data type
 	 * @param buffer		Underlying buffer
 	 * @throws IllegalArgumentException if the given {@link #type} is invalid
 	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
@@ -30,13 +30,21 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 		buffer.require(VkBufferUsageFlags.INDEX_BUFFER);
 	}
 
-//	// TODO
-// - determine element type: either literal (e.g. 32) or >= minimumElementBytes => policy?
-// - make this (and VBO) transient with optional release (same as View)
-// - fix doc above
-//	public void write(Mesh.Index index) {
-//		final int bytes = index.minimumElementBytes();
-//	}
+	/**
+	 * Helper.
+	 * Maps the given index data size to the equivalent Vulkan index type.
+	 * @param size Index data size (bytes)
+	 * @return Vulkan index type
+	 * @throws IllegalArgumentException if {@link #size} is unsupported
+	 */
+	public static VkIndexType type(int size) {
+		return switch(size) {
+			case Byte.BYTES		-> VkIndexType.UINT8_EXT;
+			case Short.BYTES	-> VkIndexType.UINT16;
+			case Integer.BYTES	-> VkIndexType.UINT32;
+			default -> throw new IllegalArgumentException("Unsupported index size: " + size);
+		};
+	}
 
 	/**
 	 * Creates a command to bind this index buffer.
@@ -63,24 +71,29 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 
 	/**
 	 * @throws IllegalStateException if the index is larger than the hardware limit
+	 * @throws UnsupportedOperationException if the index requires a device feature that is not enabled
 	 */
 	private void validateLimit() {
-		// A short index is always supported
-		if(type == VkIndexType.UINT16) {
-			return;
-		}
-
-		// Ignore if unlimited
 		final var device = buffer.device();
-		final int max = device.limits().get("maxDrawIndexedIndexValue");
-		if(max == -1) {
-			return;
-		}
+		switch(type) {
+			case UINT8_EXT -> {
+				device.features().require(INDEX_TYPE_UINT8);
+			}
 
-		// Otherwise check buffer length is supported
-		final long count = buffer.length() / Integer.BYTES;
-		if(count > max) {
-			throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
+			case UINT16 -> {
+				// A short index is always supported
+			}
+
+			case UINT32 -> {
+				// Check buffer length is supported
+				final int max = device.limits().get("maxDrawIndexedIndexValue");
+				if(max >= 0) {
+					final long count = buffer.length() / Integer.BYTES;
+					if(count > max) {
+						throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
+					}
+				}
+			}
 		}
 	}
 }

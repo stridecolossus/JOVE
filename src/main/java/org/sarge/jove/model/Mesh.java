@@ -55,6 +55,11 @@ public interface Mesh {
 	 */
 	interface Index extends MeshData {
 		/**
+		 * @return Whether this index is restarted
+		 */
+		boolean isIndexRestart();
+
+		/**
 		 * @return Minimum number of bytes required for the values of this index
 		 */
 		int minimumElementBytes();

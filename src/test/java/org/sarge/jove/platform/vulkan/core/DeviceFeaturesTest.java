@@ -30,6 +30,12 @@ class DeviceFeaturesTest {
 	}
 
 	@Test
+	void require() {
+		features.require("wideLines");
+		assertThrows(UnsupportedOperationException.class, () -> features.require("depthClamp"));
+	}
+
+	@Test
 	void build() {
 		final VkPhysicalDeviceFeatures structure = features.build();
 		assertEquals(true, structure.wideLines);

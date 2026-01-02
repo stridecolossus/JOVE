@@ -9,6 +9,7 @@ import org.sarge.jove.util.Mockery;
 
 public class MockLogicalDevice extends LogicalDevice {
 	public final VkPhysicalDeviceLimits limits;
+	public final Set<String> features = new HashSet<>();
 
 	private final Object library;
 
@@ -42,5 +43,10 @@ public class MockLogicalDevice extends LogicalDevice {
 	@Override
 	public DeviceLimits limits() {
 		return new DeviceLimits(limits);
+	}
+
+	@Override
+	public DeviceFeatures features() {
+		return new DeviceFeatures(features);
 	}
 }

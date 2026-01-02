@@ -10,6 +10,12 @@ import org.sarge.jove.util.MathsUtility;
  * @author Sarge
  */
 public class IndexedMesh extends MutableMesh {
+	/**
+	 * Special case value to restart the index.
+	 * @see #restart()
+	 */
+	public static final int RESTART = -1;
+
 	private final List<Integer> indices = new ArrayList<>();
 	private boolean restart;
 
@@ -47,11 +53,10 @@ public class IndexedMesh extends MutableMesh {
 
 	/**
 	 * Restarts the index.
-	 * Note that an index containing one-or-more restarts can <b>only</b> be represented by 32-bit values.
-	 * @see Index#minimumElementBytes()
+	 * @see #RESTART
 	 */
 	public IndexedMesh restart() {
-		indices.add(-1);
+		indices.add(RESTART);
 		restart = true;
 		return this;
 	}
@@ -65,6 +70,11 @@ public class IndexedMesh extends MutableMesh {
 	 * Default 32-bit index.
 	 */
 	private class IntegerIndex implements Index {
+		@Override
+		public boolean isIndexRestart() {
+			return restart;
+		}
+
 		@Override
 		public final int length() {
 			return indices.size() * bytes();
@@ -88,12 +98,6 @@ public class IndexedMesh extends MutableMesh {
 
 		@Override
 		public final int minimumElementBytes() {
-			// An restarted index can only be represented by 32-bit indices
-			if(restart) {
-				return Integer.BYTES;
-			}
-
-			// Determine smallest element size for the index
 			final int vertices = IndexedMesh.super.count();
 			if(vertices <= MathsUtility.unsignedMaximum(Byte.SIZE)) {
 				return Byte.BYTES;
