@@ -1,83 +1,66 @@
 package org.sarge.jove.control;
-
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.*;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.function.BiFunction;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * The <i>key table</i> maps GLFW keyboard codes to the corresponding key names.
  * @author Sarge
  */
 public class KeyTable {
-	private final Map<Integer, String> keys;
-	private final Map<String, Integer> codes;
+	/**
+	 * TODO - JDK26 lazy construction
+	 * TODO - how to specify use specific rather than default? system property?
+	 */
+	public enum Instance {
+		INSTANCE;
 
-	// TODO - move to control?
+		private KeyTable table;
+
+		public synchronized KeyTable get() {
+			if(table == null) {
+				table = defaultKeyTable();
+			}
+			return table;
+		}
+
+		public void set(KeyTable table) {
+			this.table = requireNonNull(table);
+		}
+	}
+
+	private final Map<String, Button> table;
+	private final Map<Integer, Button> index;
 
 	/**
 	 * Constructor.
+	 * @param keys Key table
 	 */
-	public KeyTable(Map<Integer, String> keys) {
-		this.keys = Map.copyOf(keys);
-		this.codes = codes(keys);
+	public KeyTable(List<Button> table) {
+		this.table = table.stream().collect(toMap(Button::name, Function.identity()));
+		this.index = table.stream().collect(toMap(Button::index, Function.identity()));
 	}
 
 	/**
-	 * Builds the inverse mapping for key codes.
+	 * @return Keys indexed by name
 	 */
-	private static Map<String, Integer> codes(Map<Integer, String> keys) {
-		return keys
-				.entrySet()
-				.stream()
-				.collect(toMap(Entry::getValue, Entry::getKey));
+	public Map<String, Button> keys() {
+		return table;
 	}
 
 	/**
-	 * @return Keys indexed by code
+	 * @return Keys indexed by key code
 	 */
-	public Map<Integer, String> keys() {
-		return keys;
+	public Map<Integer, Button> index() {
+		return index;
 	}
 
 	/**
-	 * Maps the given key code to the corresponding name.
-	 * @param key Key code
-	 * @return Key name or {@code UNKNOWN} if not present
-	 */
-	public String name(int key) {
-		return keys.getOrDefault(key, "UNKNOWN");
-	}
-
-	/**
-	 * Maps the given key name to the corresponding code.
-	 * @param name Key name
-	 * @return Key code or {@code zero} if unknown
-	 */
-	public int code(String name) {
-		return codes.getOrDefault(name, 0);
-	}
-
-	/**
-	 * Helper.
-	 * Maps this key table by the given function.
-	 * @param <T> Return type
-	 * @param mapper Mapping function
-	 * @return Mapped key table
-	 */
-	public <T> Map<Integer, T> map(BiFunction<Integer, String, T> mapper) {
-		return keys
-				.entrySet()
-				.stream()
-				.collect(toMap(Map.Entry::getKey, entry -> mapper.apply(entry.getKey(), entry.getValue())));
-	}
-
-	/**
-	 * Default key definitions specified by the {@code key.table.txt} resource file.
+	 * Loads the default key definitions specified by the {@code key.table.txt} resource file.
 	 * @return Default key table
 	 * @see Loader
 	 */
@@ -88,27 +71,6 @@ public class KeyTable {
 		}
 		catch(IOException e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * TODO - JDK26 lazy construction
-	 * TODO - how to specify use specific rather than default? system property?
-	 */
-	public enum Instance {
-		INSTANCE;
-
-		private KeyTable table;
-
-		public synchronized KeyTable table() {
-			if(table == null) {
-				table = defaultKeyTable();
-			}
-			return table;
-		}
-
-		public void table(KeyTable table) {
-			this.table = requireNonNull(table);
 		}
 	}
 
@@ -138,16 +100,16 @@ public class KeyTable {
 					.map(String::trim)
 					.map(str -> str.split("\\s+"))
 					.map(Loader::load)
-					.collect(collectingAndThen(toMap(Entry::getKey, Entry::getValue), KeyTable::new));
+					.collect(collectingAndThen(toList(), KeyTable::new));
 		}
 
 		/**
 		 * Loads a key table entry.
 		 */
-		private static Entry<Integer, String> load(String[] tokens) {
+		private static Button load(String[] tokens) {
 			final Integer code = Integer.parseInt(tokens[1].trim());
 			final String name = tokens[0].trim();
-			return Map.entry(code, name);
+			return new Button(code, name);
 		}
 	}
 }

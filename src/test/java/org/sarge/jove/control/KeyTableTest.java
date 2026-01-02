@@ -2,54 +2,39 @@ package org.sarge.jove.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.Map;
+import java.util.List;
 
 import org.junit.jupiter.api.*;
 
 class KeyTableTest {
 	private KeyTable table;
+	private Button key;
 
 	@BeforeEach
 	void before() {
-		table = new KeyTable(Map.of(42, "key"));
+		key = new Button(42, "key");
+		table = new KeyTable(List.of(key));
 	}
 
 	@Test
-	void name() {
-		assertEquals("key", table.name(42));
+	void keys() {
+		assertEquals(key, table.keys().get("key"));
 	}
 
 	@Test
-	void unknown() {
-		assertEquals("UNKNOWN", table.name(999));
-	}
-
-	@Test
-	void code() {
-		assertEquals(42, table.code("key"));
-	}
-
-	@Test
-	void zero() {
-		assertEquals(0, table.code("cobblers"));
-	}
-
-	@Test
-	void map() {
-		final Map<Integer, Button> buttons = table.map(Button::new);
-		assertEquals(new Button(42, "key"), buttons.get(42));
+	void index() {
+		assertEquals(key, table.index().get(42));
 	}
 
 	@Test
 	void instance() {
-		final var instance = KeyTable.Instance.INSTANCE;
-		instance.table(table);
-		assertEquals(table, instance.table());
+		KeyTable.Instance.INSTANCE.set(table);
+		assertEquals(table, KeyTable.Instance.INSTANCE.get());
 	}
 
 	@Test
-	void standard() {
-		final KeyTable standard = KeyTable.defaultKeyTable();
-		assertEquals(256, standard.code("ESCAPE"));
+	void defaultKeyTable() {
+		final KeyTable def = KeyTable.Instance.INSTANCE.get();
+		assertEquals(new Button(256, "ESCAPE"), def.index().get(256));
 	}
 }

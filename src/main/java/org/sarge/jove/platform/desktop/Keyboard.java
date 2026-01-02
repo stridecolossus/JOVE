@@ -1,7 +1,6 @@
 package org.sarge.jove.platform.desktop;
 
 import java.lang.foreign.MemorySegment;
-import java.util.Map;
 import java.util.function.*;
 
 import org.sarge.jove.control.*;
@@ -13,7 +12,7 @@ import org.sarge.jove.platform.desktop.DeviceLibrary.KeyListener;
  * @author Sarge
  */
 public class Keyboard extends AbstractWindowDevice<ButtonEvent, KeyListener> {
-	private final Map<Integer, Button> keys;
+	private final KeyTable table = KeyTable.Instance.INSTANCE.get();
 
 	/**
 	 * Constructor.
@@ -21,14 +20,6 @@ public class Keyboard extends AbstractWindowDevice<ButtonEvent, KeyListener> {
 	 */
 	Keyboard(Window window) {
 		super(window);
-		this.keys = KeyTable.Instance.INSTANCE.table().map(Button::new);
-	}
-
-	/**
-	 * @return Keyboard keys
-	 */
-	public Map<Integer, Button> keys() {
-		return keys;
 	}
 
 	@Override
@@ -37,7 +28,7 @@ public class Keyboard extends AbstractWindowDevice<ButtonEvent, KeyListener> {
 			@Override
 			public void key(MemorySegment window, int key, int scancode, int action, int mods) {
 				// Lookup key
-				final Button button = keys.get(key);
+				final Button button = table.index().get(key);
 				if(button == null) {
 					throw new RuntimeException("Unknown keyboard key: " + key);
 				}

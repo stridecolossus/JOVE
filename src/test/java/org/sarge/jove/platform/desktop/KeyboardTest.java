@@ -18,7 +18,7 @@ class KeyboardTest {
 
 	@BeforeEach
 	void before() {
-		KeyTable.Instance.INSTANCE.table(new KeyTable(Map.of(42, "key")));
+		KeyTable.Instance.INSTANCE.set(new KeyTable(List.of(new Button(42, "key"))));
 		key = new AtomicReference<>();
 		listener = key::set;
 		window = new MockWindow(new MockDeviceLibrary());
