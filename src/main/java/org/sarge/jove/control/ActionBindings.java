@@ -1,131 +1,205 @@
 package org.sarge.jove.control;
+
 import static java.util.stream.Collectors.toMap;
 
 import java.util.*;
 import java.util.function.Function;
 
+import org.sarge.jove.control.Button.ButtonEvent;
+import org.sarge.jove.control.Event.Handler;
+
 /**
  * A set of <i>action bindings</i> maps events to actions.
  * @author Sarge
  */
-public class ActionBindings {
-	private final Map<Action<?>, List<Device<?>>> bindings;
-	private final Map<Device<?>, Action<?>> inverse = new HashMap<>();
+public class ActionBindings implements Handler<Event> {
+	/**
+	 * A <i>binding</i> maps an event to an action.
+	 */
+	private record Binding<E extends Event>(Action<E> action, Object event) {
+		/**
+		 * Handles an event.
+		 */
+		@SuppressWarnings("unchecked")
+		private void handle(Event event) {
+			@SuppressWarnings("rawtypes")
+			final Handler handler = action.handler();
+			handler.handle(event);
+		}
+	}
+
+	private final Map<Action<?>, List<Binding<?>>> actions;
+	private final Map<Object, Binding<?>> bindings = new HashMap<>();
 
 	/**
 	 * Constructor.
 	 * @param actions Actions
-	 * @throws IllegalStateException if the {@link #actions} are not unique
 	 */
-	public ActionBindings(List<Action<?>> actions) {
-		this.bindings = actions.stream().collect(toMap(Function.identity(), _ -> new ArrayList<>()));
+	public ActionBindings(Set<Action<?>> actions) {
+		this.actions = actions.stream().collect(toMap(Function.identity(), _ -> new ArrayList<>()));
 	}
 
 	/**
-	 * Retrieves the bindings for the given action.
-	 * @param action Action
-	 * @return Bindings
-	 * @throws IllegalArgumentException if the action is not present
+	 * Copy constructor.
+	 * @param actions Action bindings
 	 */
-	private List<Device<?>> list(Action<?> action) {
-		final var list = bindings.get(action);
+	public ActionBindings(Map<Action<?>, List<Binding<?>>> actions) {
+		this.actions = Map.copyOf(actions);
+	}
+
+	/**
+	 * @return Action bindings
+	 */
+	public Map<Action<?>, List<Object>> actions() {
+		return actions
+				.keySet()
+				.stream()
+				.collect(toMap(Function.identity(), this::events));
+	}
+
+	/**
+	 * Converts an action binding to its list of bound events.
+	 */
+	private List<Object> events(Action<?> action) {
+		return actions
+				.get(action)
+				.stream()
+				.map(Binding::event)
+				.toList();
+	}
+
+	/**
+	 * Looks up the action bound to the given event identifier.
+	 * @param key Event key
+	 * @return Action
+	 */
+	public Optional<Action<?>> action(Object id) {
+		return Optional
+				.ofNullable(bindings.get(id))
+				.map(Binding::action);
+	}
+
+	/**
+	 * Helper.
+	 * Finds an action by name.
+	 * @param name Action name
+	 * @return Action
+	 * @throws NoSuchElementException if the action is not present
+	 */
+	public Action<?> action(String name) {
+		return actions
+				.keySet()
+				.stream()
+				.filter(action -> action.name().equals(name))
+				.findAny()
+				.orElseThrow();
+	}
+
+	@Override
+	public void handle(Event event) {
+		// Determine event type
+		final Object type = switch(event) {
+			case ButtonEvent button -> button.button();
+			default -> event.getClass();
+		};
+
+		// Lookup binding for this event (if any)
+		final Binding<?> binding = bindings.get(type);
+		if(binding == null) {
+			return;
+		}
+
+		// Delegate to action
+		binding.handle(event);
+	}
+
+	/**
+	 * Binds an event to an action.
+	 * @param <E> Event type
+	 * @param action		Action
+	 * @param binding		Event binding
+	 * @throws IllegalArgumentException if the {@link #action} is not present
+	 * @throws IllegalArgumentException if the event does not match {@link Action#type()}
+	 * @throws IllegalStateException if the {@link #event} is already bound to an action
+	 */
+	public <E extends Event> void bind(Action<E> action, Object event) {
+		// Check matching event type
+		final Class<?> expected = switch(event) {
+			case Button _ -> ButtonEvent.class;
+			default -> event.getClass();
+		};
+		if(action.type() != expected) {
+			throw new IllegalArgumentException("Mismatched event type %s for action %s".formatted(event, action));
+		}
+
+		// Lookup action bindings
+		final List<Binding<?>> list = actions.get(action);
 		if(list == null) {
 			throw new IllegalArgumentException("Action not present: " + action);
 		}
-		return list;
-	}
 
-	/**
-	 * @return Actions managed by this set of bindings
-	 */
-	public Set<Action<?>> actions() {
-		return bindings.keySet();
-	}
-
-	/**
-	 * Enumerates the bindings for the given action.
-	 * @param <E> Event type
-	 * @param action Action
-	 * @return Bindings
-	 * @throws IllegalArgumentException if the action is not present
-	 */
-	@SuppressWarnings("unchecked")
-	public <E extends Event> List<Device<E>> bindings(Action<E> action) {
-		@SuppressWarnings("rawtypes")
-		final List list = list(action);
-		return Collections.unmodifiableList(list);
-	}
-
-	/**
-	 * Retrieves the action bound to the given device.
-	 * @param <E> Event type
-	 * @param device Device
-	 * @return Bound action
-	 */
-	public <E extends Event> Optional<Action<E>> action(Device<E> device) {
-		@SuppressWarnings("unchecked")
-		final var action = (Action<E>) inverse.get(device);
-		return Optional.ofNullable(action);
-	}
-
-	/**
-	 * Binds a device to the given action.
-	 * @param <E> Event type
-	 * @param action Action
-	 * @param device Device to bind
-	 * @throws IllegalArgumentException if the action is not present
-	 * @throws IllegalStateException if the device is already bound to an action
-	 */
-	public <E extends Event> void bind(Action<E> action, Device<E> device) {
-		if(inverse.containsKey(device)) {
-			throw new IllegalStateException("Device already bound: " + device);
+		// Check event is not already used
+		final Binding<?> bound = bindings.get(event);
+		if(Objects.nonNull(bound)) {
+			throw new IllegalStateException("Event %s already bound to action %s".formatted(event, bound.action));
 		}
 
-		// Register binding
-		final var list = list(action);
-		list.add(device);
-		inverse.put(device, action);
-
-		// Bind device to action
-		final var handler = action.handler();
-		device.bind(handler);
+		// Bind event to action
+		final var binding = new Binding<>(action, event);
+		list.add(binding);
+		bindings.put(event, binding);
 	}
 
 	/**
-	 * Removes a binding.
-	 * @param <E> Event type
-	 * @param action Action
-	 * @param device Bound device
-	 * @throws IllegalArgumentException if the action or binding is not present
+	 * Helper.
+	 * Binds an action by name.
+	 * @param name		Action name
+	 * @param event		Event
+	 * @see #action(String)
+	 * @see #bind(Action, Object)
 	 */
-	public <E extends Event> void remove(Action<E> action, Device<E> device) {
-		if(!inverse.containsKey(device)) {
-			throw new IllegalArgumentException("Binding not present: %s -> %s".formatted(device, action));
-		}
+	public void bind(String name, Object event) {
+		bind(action(name), event);
+	}
 
-		// Unbind device
-		device.remove();
+	/**
+	 * Removes an event binding.
+	 * @param <E> Event type
+	 * @param id Event identifier
+	 * @throws IllegalArgumentException if the event has not been bound
+	 */
+	public <E extends Event> void remove(Object id) {
+		// Lookup binding
+		final Binding<?> binding = bindings.remove(id);
+		if(binding == null) {
+			throw new IllegalArgumentException("Event not bound: " + id);
+		}
 
 		// Remove binding
-		final var list = list(action);
-		list.remove(device);
-
-		// Remove inverse binding
-		final var prev = inverse.remove(device);
-		assert prev == action;
+		final List<Binding<?>> list = actions.get(binding.action);
+		assert list.contains(binding);
+		list.remove(binding);
 	}
 
 	/**
-	 * Removes all bindings for the given action.
+	 * Removes all bindings of the given action.
 	 * @param action Action
 	 * @throws IllegalArgumentException if the action is not present
 	 */
 	public void clear(Action<?> action) {
-		final var list = list(action);
-		for(var device : list) {
-			device.remove();
-			inverse.remove(device);
+		// Lookup bindings for this action
+		final List<Binding<?>> list = actions.get(action);
+		if(list == null) {
+			throw new IllegalArgumentException("Action not present: " + action);
 		}
+
+		// Remove event bindings
+		for(Binding<?> b : list) {
+			final Binding<?> prev = bindings.remove(b.event);
+			assert Objects.nonNull(prev);
+		}
+
+		// Remove action bindings
 		list.clear();
 	}
 
@@ -133,21 +207,15 @@ public class ActionBindings {
 	 * Removes <b>all</b> bindings.
 	 */
 	public void clear() {
-		// Remove bindings
-		for(var list : bindings.values()) {
+		for(var list : actions.values()) {
 			list.clear();
 		}
-
-		// Unbind devices
-		for(var device : inverse.keySet()) {
-			device.remove();
-		}
-		inverse.clear();
+		bindings.clear();
 	}
 
 	@Override
 	public int hashCode() {
-		return bindings.hashCode();
+		return actions.hashCode();
 	}
 
 	@Override
@@ -155,11 +223,6 @@ public class ActionBindings {
 		return
 				(obj == this) ||
 				(obj instanceof ActionBindings that) &&
-				this.bindings.equals(that.bindings);
-	}
-
-	@Override
-	public String toString() {
-		return bindings.toString();
+				this.actions.equals(that.actions);
 	}
 }

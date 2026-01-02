@@ -4,85 +4,75 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.*;
-import org.sarge.jove.foreign.Callback;
+import org.sarge.jove.control.Button.*;
 
 class ActionBindingsTest {
-	private static class MockDevice implements Device<AxisEvent> {
-		private Consumer<AxisEvent> listener;
-
-		@Override
-		public boolean isBound() {
-			return listener != null;
-		}
-
-		@Override
-		public Callback bind(Consumer<AxisEvent> listener) {
-			assertEquals(null, this.listener);
-			this.listener = listener;
-			return null;
-		}
-
-		@Override
-		public void remove() {
-			assertNotNull(this.listener);
-			this.listener = null;
-		}
-	}
-
 	private ActionBindings bindings;
-	private Action<AxisEvent> action;
-	private MockDevice device;
-	private AtomicReference<AxisEvent> listener;
+	private Action<ButtonEvent> action;
+	private AtomicReference<ButtonEvent> handler;
+	private Button button;
+	private ButtonEvent event;
 
 	@BeforeEach
 	void before() {
-		listener = new AtomicReference<>();
-		action = new Action<>("action", AxisEvent.class, listener::set);
-		device = new MockDevice();
-		bindings = new ActionBindings(List.of(action));
+		button = new Button(1, "button");
+		event = new ButtonEvent(button, ButtonAction.PRESS, Set.of());
+		handler = new AtomicReference<>();
+		action = new Action<>("action", ButtonEvent.class, handler::set);
+		bindings = new ActionBindings(Set.of(action));
 	}
 
 	@Test
-	void actions() {
-		assertEquals(Set.of(action), bindings.actions());
-	}
-
-	@Test
-	void distinct() {
-		assertThrows(IllegalStateException.class, () -> new ActionBindings(List.of(action, action)));
+	void name() {
+		assertEquals(action, bindings.action("action"));
+		assertThrows(NoSuchElementException.class, () -> bindings.action("cobblers"));
 	}
 
 	@Nested
-	class Empty {
+	class None {
 		@Test
 		void bindings() {
-			assertEquals(List.of(), bindings.bindings(action));
-			assertEquals(Optional.empty(), bindings.action(device));
+			assertEquals(Map.of(action, List.of()), bindings.actions());
+		}
+
+		@Test
+		void action() {
+			assertEquals(Optional.empty(), bindings.action(button));
+		}
+
+		@Test
+		void handle() {
+			bindings.handle(event);
+			assertEquals(null, handler.get());
 		}
 
 		@Test
 		void bind() {
-			bindings.bind(action, device);
+			bindings.bind(action, button);
 		}
 
 		@Test
-		void uknown() {
-			final var unknown = new Action<>("other", AxisEvent.class, listener::set);
-			assertThrows(IllegalArgumentException.class, () -> bindings.bind(unknown, device));
+		void type() {
+			assertThrows(IllegalArgumentException.class, () -> bindings.bind(action, new Object()));
 		}
 
 		@Test
 		void remove() {
-			assertThrows(IllegalArgumentException.class, () -> bindings.remove(action, device));
+			assertThrows(IllegalArgumentException.class, () -> bindings.remove(button));
 		}
 
 		@Test
 		void clear() {
 			bindings.clear(action);
+			assertEquals(Map.of(action, List.of()), bindings.actions());
+		}
+
+		@Test
+		void all() {
 			bindings.clear();
+			assertEquals(Map.of(action, List.of()), bindings.actions());
 		}
 	}
 
@@ -90,58 +80,64 @@ class ActionBindingsTest {
 	class Bound {
 		@BeforeEach
 		void before() {
-			bindings.bind(action, device);
+			bindings.bind(action, button);
 		}
 
 		@Test
 		void bindings() {
-			assertEquals(List.of(device), bindings.bindings(action));
-			assertEquals(Optional.of(action), bindings.action(device));
-			assertNotNull(device.listener);
+			assertEquals(Map.of(action, List.of(button)), bindings.actions());
+		}
+
+		@Test
+		void action() {
+			assertEquals(Optional.of(action), bindings.action(button));
+		}
+
+		@Test
+		void handle() {
+			bindings.handle(event);
+			assertEquals(event, handler.get());
+		}
+
+		@Test
+		void ignored() {
+			bindings.handle(new ButtonEvent(new Button(2, "other"), ButtonAction.PRESS, Set.of()));
+			assertEquals(null, handler.get());
 		}
 
 		@Test
 		void bind() {
-			assertThrows(IllegalStateException.class, () -> bindings.bind(action, device));
+			final var other = new Button(2, "other");
+			bindings.bind(action, other);
+			assertEquals(Map.of(action, List.of(button, other)), bindings.actions());
+			assertEquals(Optional.of(action), bindings.action(button));
+			assertEquals(Optional.of(action), bindings.action(other));
+		}
+
+		@Test
+		void duplicate() {
+			assertThrows(IllegalStateException.class, () -> bindings.bind(action, button));
 		}
 
 		@Test
 		void remove() {
-			bindings.remove(action, device);
-			assertEquals(List.of(), bindings.bindings(action));
-			assertEquals(Optional.empty(), bindings.action(device));
-			assertEquals(null, device.listener);
+			bindings.remove(button);
+			assertEquals(Map.of(action, List.of()), bindings.actions());
+			assertEquals(Optional.empty(), bindings.action(button));
 		}
 
 		@Test
 		void clear() {
 			bindings.clear(action);
-			assertEquals(List.of(), bindings.bindings(action));
-			assertEquals(Optional.empty(), bindings.action(device));
-			assertEquals(null, device.listener);
+			assertEquals(Map.of(action, List.of()), bindings.actions());
+			assertEquals(Optional.empty(), bindings.action(button));
 		}
 
 		@Test
 		void all() {
 			bindings.clear();
-			assertEquals(List.of(), bindings.bindings(action));
-			assertEquals(Optional.empty(), bindings.action(device));
-			assertEquals(null, device.listener);
+			assertEquals(Map.of(action, List.of()), bindings.actions());
+			assertEquals(Optional.empty(), bindings.action(button));
 		}
-
-		@Test
-		void event() {
-			final var event = new AxisEvent(2);
-			device.listener.accept(event);
-			assertEquals(event, listener.get());
-		}
-	}
-
-	@Test
-	void equals() {
-		assertEquals(bindings, bindings);
-		assertEquals(bindings, new ActionBindings(List.of(action)));
-		assertNotEquals(bindings, null);
-		assertNotEquals(bindings, new ActionBindings(List.of()));
 	}
 }
