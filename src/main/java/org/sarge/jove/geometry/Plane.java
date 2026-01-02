@@ -19,7 +19,7 @@ import org.sarge.jove.util.MathsUtility;
  * @see <a href="https://en.wikipedia.org/wiki/Plane_(geometry)">Wikipedia</a>
  * @author Sarge
  */
-public record Plane(Normal normal, float distance) implements IntersectedSurface {
+public record Plane(Vector normal, float distance) implements IntersectedSurface {
 	/**
 	 * Creates a plane from the given triangle of points.
 	 * @param triangle Triangle
@@ -30,8 +30,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 		if(triangle.isDegenerate()) {
 			throw new IllegalArgumentException("Cannot define a plane from a degenerate triangle");
 		}
-		final Normal normal = new Normal(triangle.normal());
-		return new Plane(normal, triangle.a());
+		return new Plane(triangle.normal(), triangle.a());
 	}
 
 	/**
@@ -49,7 +48,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	 * @param point			Point on the plane
 	 */
 	public Plane(Normal normal, Point point) {
-		this(normal, -normal.dot(new Vector(point)));
+		this(normal, -normal.dot(point));
 	}
 
 	/**
@@ -57,17 +56,16 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	 * @return Normalized plane
 	 */
 	public Plane normalize() {
-		final float len = normal.magnitude();
-		if(MathsUtility.isApproxEqual(len, 1)) {
+		final float length = normal.magnitude();
+		if(MathsUtility.isApproxEqual(length, 1)) {
 			return this;
 		}
 		else {
-			final float inv = MathsUtility.inverseSquareRoot(len);
-			final Vector n = normal.multiply(inv).normalize();
+			final float inv = MathsUtility.inverseSquareRoot(length);
+			final Vector n = normal.multiply(inv);
 			return new Plane(new Normal(n), distance * inv);
 		}
 	}
-	// TODO - what is this actually doing? need references, is it used anyway?
 
 	/**
 	 * Determines the distance of the given point from this plane.
@@ -75,7 +73,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 	 * @return Distance to the given point
 	 */
 	public float distance(Point p) {
-		return normal.dot(new Vector(p)) + distance;
+		return normal.dot(p) + distance;
 	}
 
 	/**
@@ -142,7 +140,7 @@ public record Plane(Normal normal, float distance) implements IntersectedSurface
 
 	@Override
 	public Normal normal(Point intersection) {
-		return normal;
+		return new Normal(normal);
 	}
 
 	@Override
