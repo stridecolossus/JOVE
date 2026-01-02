@@ -48,4 +48,6 @@ public class InputAssemblyStage {
 		info.primitiveRestartEnable = restart;
 		return info;
 	}
+
+	// TODO - restart -> primitiveTopology[Patch]ListRestart feature, see DrawCommand => also sets this flag?
 }
