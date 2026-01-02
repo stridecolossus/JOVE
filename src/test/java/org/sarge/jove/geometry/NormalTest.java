@@ -30,19 +30,13 @@ class NormalTest {
 	@DisplayName("An inverted normal is also a normal")
 	@Test
 	void invert() {
-		assertEquals(new Vector(-1, 0, 0), normal.invert());
+		assertEquals(new Normal(-1, 0, 0), normal.invert());
 	}
 
 	@DisplayName("A normal can be created from an arbitrary vector")
 	@Test
 	void unit() {
 		assertEquals(normal, new Normal(new Vector(3, 0, 0)));
-	}
-
-	@DisplayName("A normal can be copied")
-	@Test
-	void copy() {
-		assertEquals(normal, new Normal(normal));
 	}
 
 	@DisplayName("A normal has a vertex layout")

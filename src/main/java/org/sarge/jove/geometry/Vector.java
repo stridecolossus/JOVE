@@ -109,17 +109,9 @@ public class Vector extends Tuple {
 
 	/**
 	 * @return Normalized (or unit) vector
-	 * @see Normal
 	 */
-	public Vector normalize() {
-		final float len = this.magnitude();
-		if(MathsUtility.isApproxEqual(1, len)) {
-			return this;
-		}
-		else {
-    		final float f = MathsUtility.inverseSquareRoot(len);
-    		return multiply(f);
-		}
+	public Normal normalize() {
+		return new Normal(this);
 	}
 
 	/**

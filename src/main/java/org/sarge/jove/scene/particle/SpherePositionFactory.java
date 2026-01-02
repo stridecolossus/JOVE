@@ -28,7 +28,8 @@ public class SpherePositionFactory implements PositionFactory {
 
 	@Override
 	public Point position() {
-		final Vector vec = randomiser.vector().normalize().multiply(radius);
-		return centre.add(vec);
+		final Vector v = randomiser.vector(); // .normalize().multiply(radius);
+		final Normal n = new Normal(v); // randomiser.vector().normalize().multiply(radius);
+		return centre.add(n.multiply(radius));
 	}
 }

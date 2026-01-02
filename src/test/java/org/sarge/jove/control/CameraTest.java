@@ -95,7 +95,7 @@ class CameraTest {
 			camera.direction(dir);
 			assertEquals(dir, camera.direction());
 			assertEquals(Y, camera.up());
-			assertEquals(Y.cross(dir).normalize(), camera.right());
+			assertEquals(new Normal(Y.cross(dir)), camera.right());
 		}
 
 		@DisplayName("The up axis of the camera can be configured")

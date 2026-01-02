@@ -1,6 +1,6 @@
 package org.sarge.jove.geometry;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.sarge.jove.geometry.Axis.*;
 import static org.sarge.jove.util.MathsUtility.PI;
 
@@ -9,16 +9,16 @@ import org.junit.jupiter.api.*;
 class AxisTest {
 	@Test
 	void vectors() {
-		assertEquals(new Vector(1, 0, 0), X);
-		assertEquals(new Vector(0, 1, 0), Y);
-		assertEquals(new Vector(0, 0, 1), Z);
+		assertEquals(new Normal(1, 0, 0), X);
+		assertEquals(new Normal(0, 1, 0), Y);
+		assertEquals(new Normal(0, 0, 1), Z);
 	}
 
 	@Test
 	void invert() {
-		assertEquals(new Vector(-1, 0, 0), X.invert());
-		assertEquals(new Vector(0, -1, 0), Y.invert());
-		assertEquals(new Vector(0, 0, -1), Z.invert());
+		assertEquals(new Normal(-1, 0, 0), X.invert());
+		assertEquals(new Normal(0, -1, 0), Y.invert());
+		assertEquals(new Normal(0, 0, -1), Z.invert());
 	}
 
 	@Test
@@ -75,5 +75,6 @@ class AxisTest {
 		assertEquals(X, Axis.parse('X'));
 		assertEquals(Y, Axis.parse('Y'));
 		assertEquals(Z, Axis.parse('Z'));
+		assertThrows(NumberFormatException.class, () -> Axis.parse('?'));
 	}
 }
