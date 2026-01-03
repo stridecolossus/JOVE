@@ -24,7 +24,7 @@ public class MouseWheel extends AbstractWindowDevice<AxisEvent, MouseListener> {
 		return new MouseListener() {
 			@Override
 			public void event(MemorySegment window, double x, double y) {
-				listener.accept(new AxisEvent((int) y));
+				listener.accept(new AxisEvent((float) y));
 			}
 		};
 	}
