@@ -28,10 +28,9 @@ public record Ray(Point origin, Vector direction) {
 	 * @return Point on ray
 	 */
 	public Point point(float distance) {
-		final Vector v = direction.multiply(distance);
+		final Vector v = direction.normalize().multiply(distance);
 		return origin.add(v);
 	}
-	// TODO - surely normalize direction? or enforce to normal and add length member? need to volumes (plane, sphere)
 
 	/**
 	 * An <i>intersected surface</i> defines a volume that can be tested for intersections by this ray.

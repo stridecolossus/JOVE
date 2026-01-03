@@ -96,6 +96,24 @@ public class Frustum {
 	}
 }
 
+
+//For performance, you perform frustum culling on the CPU to avoid even submitting invisible objects to the pipeline.
+//This is done by extracting six mathematical planes from the View-Projection (VP) matrix
+//
+//the left plane in Vulkan is often calculated as \(Row_{4}+Row_{1}\), and the right as \(Row_{4}-Row_{1}\).
+//
+//Because Vulkan's depth range is \([0,1]\), the "Near" plane extraction uses \(Row_{3}\) (for \(z=0\))
+//rather than the \(Row_{4}+Row_{3}\) (for \(z=-1\)) used in OpenGL.
+//
+//Left Plane: (R3 + R0) (vector from first row + last row of VP) dot P <= 0.
+//Right Plane: (R3 - R0) dot P <= 0.
+//Bottom Plane: (R3 + R1) dot P <= 0.
+//Top Plane: (R3 - R1) dot P <= 0.
+//Near Plane: (R3 + R2) dot P <= 0.
+//Far Plane: (R3 - R2) dot P <= 0
+
+
+
 	// http://davidlively.com/programming/graphics/frustum-calculation-and-culling-hopefully-demystified/
 
 	////////////////////

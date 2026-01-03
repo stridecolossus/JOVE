@@ -12,6 +12,8 @@ public interface Projection {
 	 * - dimensions ~ FOV at far distance & aspect, i.e. inferred and fixed (unless FOV or aspect changes)
 	 * - dimensions unused? (unless by frustum?)
 	 * - both frustum & projection use tan() thingy
+	 *
+	 * https://johannesugb.github.io/gpu-programming/setting-up-a-proper-vulkan-projection-matrix/
 	 */
 
 	//const float halfVSide = zFar * tanf(fovY * .5f);
