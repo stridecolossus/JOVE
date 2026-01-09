@@ -84,7 +84,7 @@ public class Node {
 	public Node copy() {
 		// Clone this node
 		final Node parent = new Node(name);
-		parent.transform = new LocalTransform(transform);
+		parent.transform = new LocalTransform(transform.transform()); // TODO - also copy(), e.g. for mutable local transform?
 
 		// Clone children
 		for(Node n : children) {

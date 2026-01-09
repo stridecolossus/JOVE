@@ -5,14 +5,24 @@ import static java.util.Objects.requireNonNull;
 import org.sarge.jove.geometry.*;
 
 /**
- * A <i>local transform</i> is the model transform applied to a given node and its children.
+ * A <i>local transform</i> is the model transformation applied to a given node and its children.
  * @author Sarge
  */
 public class LocalTransform {
 	/**
-	 * Empty transform, i.e. {@link Matrix#IDENTITY}.
+	 * Empty transform, i.e. the {@link Matrix#IDENTITY} matrix.
 	 */
 	public static final LocalTransform NONE = new LocalTransform(Matrix.IDENTITY) {
+		@Override
+		protected boolean isDirty() {
+			return false;
+		}
+
+		@Override
+		Matrix world() {
+			return Matrix.IDENTITY;
+		}
+
 		@Override
 		protected Matrix multiply(Matrix parent) {
 			return parent;
@@ -20,7 +30,7 @@ public class LocalTransform {
 	};
 
 	/**
-	 * Creates a local transform that always recalculates its world matrix, e.g. for a mutable rotation.
+	 * Creates a local transform that <b>always</b> recalculates its world matrix, e.g. for a mutable rotation.
 	 * @param transform Transform
 	 * @return Mutable local transform
 	 */
@@ -45,14 +55,6 @@ public class LocalTransform {
 	}
 
 	/**
-	 * Copy constructor.
-	 * @param that Local transform to copy
-	 */
-	protected LocalTransform(LocalTransform that) {
-		this(that.transform);
-	}
-
-	/**
 	 * @return Local transform
 	 */
 	public Transform transform() {
@@ -74,59 +76,55 @@ public class LocalTransform {
 	}
 
 	/**
-	 * Clears the world matrix of this transform.
+	 *
 	 */
-	void clear() {
-		world = null;
-	}
+	public static class UpdateVisitor {
+		/**
+		 * Updates the world matrix of the given scene graph node.
+		 * @param node Node to update
+		 */
+		public void update(Node node) {
+			final LocalTransform local = node.transform();
+			if(!local.isDirty()) {
+				return;
+			}
 
-	/**
-	 * Updates the world matrix of this transform.
-	 * @param node Companion scene node
-	 */
-	void update(Node node) {
-		// Stop if already updated
-		if(!isDirty()) {
-			return;
+			final Matrix world = world(node.parent());
+			local.world = local.multiply(world);
 		}
 
-		// Otherwise combine local transform with world matrix
-		final Matrix parent = parent(node.parent());
-		this.world = multiply(parent);
+		/**
+		 * Retrieves or recursively updates the world matrix of the given node.
+		 * @param node Scene node
+		 * @return World matrix
+		 */
+		private Matrix world(Node node) {
+			// Stop at root node
+			if(node == null) {
+				return Matrix.IDENTITY;
+			}
+
+			// Otherwise update as required
+			final LocalTransform transform = node.transform();
+			update(node);
+
+			return transform.world();
+		}
 	}
 
 	/**
-	 * Combines this transform with the given parent world matrix.
-	 * @param parent Parent world matrix
-	 * @return World matrix
+	 * Combines this transform with the given parent matrix.
+	 * @param world Parent world matrix
+	 * @return Local world matrix
 	 */
-	protected Matrix multiply(Matrix parent) {
+	protected Matrix multiply(Matrix world) {
 		final Matrix local = transform.matrix();
-		if(parent == Matrix.IDENTITY) {
+		if(world == Matrix.IDENTITY) {
 			return local;
 		}
 		else {
-			return parent.multiply(local);
+			return world.multiply(local);
 		}
-	}
-
-	/**
-	 * Recursively updates the world matrix of the given parent node.
-	 * @param node Parent node
-	 * @return World matrix
-	 */
-	private static Matrix parent(Node node) {
-		// Stop at root
-		if(node == null) {
-			return Matrix.IDENTITY;
-		}
-
-		// Recursively update ancestors
-		final LocalTransform transform = node.transform();
-		transform.update(node);
-
-		// Calculate world matrix
-		return transform.world();
 	}
 
 	@Override

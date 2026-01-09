@@ -7,6 +7,8 @@ VkDebugUtilsMessengerCallbackDataEXT
 also injects superfluous padding
 **********
 
+camera view direction - direction() inverts, ditto setter, and swap order in target() => more logical from users perspective?
+
 MSAA
 - render target with > 1 samples, and rasterizer
 - resolve attachment
@@ -15,6 +17,9 @@ MSAA
 - final layout = colour optimal
 
 blog
+- replace final chalet image
+- does depth chapter actually use the camera? if not, replace the model transform (or both?)
+- add validation for index buffer hardware limits to model loader chapter
 - add section for minimised/closed windows ~ callbacks, recreation & GLFW callbacks -> input handling for model demo: close, resize, minimise, etc
 - physical device refers to NativeParameter
 

@@ -15,6 +15,14 @@ class NodeTest {
 		node = new Node("node");
 	}
 
+	@Test
+	void transform() {
+		final var transform = new LocalTransform(Matrix.translation(Axis.X));
+		node.transform(transform);
+		assertEquals(transform, node.transform());
+		assertEquals(true, node.transform().isDirty());
+	}
+
 	@Nested
 	class RootNodeTest {
 		@Test
@@ -96,23 +104,6 @@ class NodeTest {
 			assertNotEquals(child, null);
 			assertNotEquals(child, new Node("child"));
 			assertNotEquals(child, new Node("other", node));
-		}
-	}
-
-	@Nested
-	class LocalTransformTest {
-		@Test
-		void none() {
-			assertEquals(LocalTransform.NONE, node.transform());
-			assertEquals(true, node.transform().isDirty());
-		}
-
-		@Test
-		void transform() {
-			final var transform = new LocalTransform(Matrix.translation(Axis.X));
-			node.transform(transform);
-			assertEquals(transform, node.transform());
-			assertEquals(true, node.transform().isDirty());
 		}
 	}
 }
