@@ -80,8 +80,7 @@ class CameraTest {
 					.column(3, new Vector(-1, -2, -3))
 					.build();
 
-			final Point pos = new Point(1, 2, 3);
-			camera.move(pos);
+			camera.move(new Point(1, 2, 3));
 			assertEquals(expected, camera.matrix());
 		}
 	}
@@ -91,7 +90,7 @@ class CameraTest {
 		@DisplayName("The camera can be pointed in a given direction")
 		@Test
 		void direction() {
-			final Normal dir = new Normal(new Vector(3, 4, 5));
+			final Normal dir = new Normal(3, 4, 5);
 			camera.direction(dir);
 			assertEquals(dir, camera.direction());
 			assertEquals(Y, camera.up());
@@ -116,8 +115,7 @@ class CameraTest {
 					.row(2, new Vector(0.6f, 0.8f, 0))
 					.build();
 
-			final Normal dir = new Normal(new Vector(3, 4, 0));
-			camera.direction(dir);
+			camera.direction(new Normal(3, 4, 0));
 			assertEquals(expected, camera.matrix());
 		}
 	}
@@ -129,9 +127,9 @@ class CameraTest {
 		void look() {
 			camera.move(new Point(3, 4, 0));
 			camera.look(Point.ORIGIN);
-			assertEquals(Z, camera.right());
+			assertEquals(Z.invert(), camera.right());
 			assertEquals(Y, camera.up());
-			assertEquals(new Normal(-0.6f, -0.8f, 0), camera.direction());
+			assertEquals(new Normal(0.6f, 0.8f, 0), camera.direction());
 		}
 
 		@DisplayName("The camera view matrix is recalculated when it is pointed at a target location")
@@ -140,14 +138,14 @@ class CameraTest {
 			// Build the 3x3 rotation component
 			final Matrix rotation = new Matrix.Builder()
 					.identity()
-					.column(0, new Vector(0, 0, 1))
+					.column(0, new Vector(0, 0, -1))
 					.column(1, new Vector(-0.8f, 0.6f, 0))
-					.column(2, new Vector(-0.6f, -0.8f, 0))
+					.column(2, new Vector(0.6f, 0.8f, 0))
 					.build()
 					.transpose();
 
 			// Build the translation component
-			final var translation = Matrix.translation(new Vector(0, 0, 5));
+			final var translation = Matrix.translation(new Vector(0, 0, -5));
 
 			// Build expected view matrix
 			final Matrix expected = translation.multiply(rotation);

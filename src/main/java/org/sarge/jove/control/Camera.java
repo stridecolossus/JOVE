@@ -80,6 +80,8 @@ public class Camera {
 	 * @see #right()
 	 */
 	public Camera strafe(float distance) {
+		// TODO - this is the only case dependant on the right axis (except for matrix)? i.e. update() needed here
+		update();
 		move(right.multiply(distance));
 		return this;
 	}
@@ -94,22 +96,20 @@ public class Camera {
 	/**
 	 * Sets the camera view direction.
 	 * @param direction View direction
-	 * @throws IllegalStateException if the new direction would result in gimbal lock
 	 */
 	public Camera direction(Normal direction) {
 		this.direction = requireNonNull(direction);
-		update();
+		dirty();
 		return this;
 	}
 
 	/**
 	 * Sets the up axis of this camera.
 	 * @param up Camera up axis
-	 * @throws IllegalStateException if {@link #up} would result in gimbal lock
 	 */
 	public Camera up(Normal up) {
 		this.up = requireNonNull(up);
-		update();
+		dirty();
 		return this;
 	}
 
@@ -124,6 +124,7 @@ public class Camera {
 	 * @return Camera right axis
 	 */
 	public Vector right() {
+		update();
 		return right;
 	}
 
@@ -133,7 +134,15 @@ public class Camera {
 	private void update() {
 		right = new Normal(up.cross(direction));
 		y = new Normal(direction.cross(right));
-		dirty();
+
+		// TODO...
+		if(Float.isNaN(right.x) || Float.isNaN(right.y) || Float.isNaN(right.z)) {
+			System.out.println("RIGHT "+right);
+		}
+		if(Float.isNaN(y.x) || Float.isNaN(y.y) || Float.isNaN(y.z)) {
+			System.out.println("Y "+y);
+		}
+		// TODO
 	}
 
 	/**
@@ -146,8 +155,8 @@ public class Camera {
 		if(position.equals(target)) {
 			throw new IllegalArgumentException("Cannot point camera at its current position");
 		}
-		final Vector look = Vector.between(position, target);
-		direction(new Normal(look));
+		this.direction = Vector.between(target, position).normalize();
+		dirty();
 		return this;
 	}
 
@@ -183,6 +192,7 @@ public class Camera {
 	 */
 	public Matrix matrix() {
 		if(matrix == null) {
+			update();
 			build();
 		}
 		return matrix;

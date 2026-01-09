@@ -30,7 +30,7 @@ class OrbitalCameraControllerTest {
 		final Point target = new Point(0, 0, -3);
 		controller.target(target);
 		assertEquals(target, controller.target());
-		assertEquals(Z.invert(), camera.direction());
+		assertEquals(Z, camera.direction());
 	}
 
 	@Nested
