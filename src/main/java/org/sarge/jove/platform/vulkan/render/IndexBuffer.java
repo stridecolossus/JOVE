@@ -21,6 +21,8 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	 * @param buffer		Underlying buffer
 	 * @throws IllegalArgumentException if the given {@link #type} is invalid
 	 * @throws IllegalStateException if the {@link #buffer} cannot be used as an {@link VkBufferUsageFlag#INDEX_BUFFER}
+	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
+	 * @throws UnsupportedOperationException if the index requires a device feature that is not enabled
 	 */
 	public IndexBuffer {
 		requireNonNull(type);
@@ -28,6 +30,7 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 			throw new IllegalArgumentException("Invalid index type: " + type);
 		}
 		buffer.require(VkBufferUsageFlags.INDEX_BUFFER);
+		validate(buffer, type);
 	}
 
 	/**
@@ -60,20 +63,17 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 	 * Creates a command to bind this index buffer.
 	 * @param offset Buffer offset
 	 * @return Command to bind this index buffer
-	 * @throws IllegalStateException if the index is larger than the {@code maxDrawIndexedIndexValue} hardware limit
 	 */
 	public Command bind(long offset) {
 		buffer.checkOffset(offset);
-		validateLimit();
 		final VulkanBuffer.Library library = buffer.device().library();
 		return commandBuffer -> library.vkCmdBindIndexBuffer(commandBuffer, buffer, offset, type);
 	}
 
 	/**
-	 * @throws IllegalStateException if the index is larger than the hardware limit
-	 * @throws UnsupportedOperationException if the index requires a device feature that is not enabled
+	 * Validates that the index is supported by the hardware.
 	 */
-	private void validateLimit() {
+	private static void validate(VulkanBuffer buffer, VkIndexType type) {
 		final var device = buffer.device();
 		switch(type) {
 			case UINT8_EXT -> {
@@ -88,9 +88,9 @@ public record IndexBuffer(VkIndexType type, VulkanBuffer buffer) {
 				// Check buffer length is supported
 				final int max = device.limits().get("maxDrawIndexedIndexValue");
 				if(max >= 0) {
-					final long count = buffer.length() / Integer.BYTES;
-					if(count > max) {
-						throw new IllegalStateException("Index too large: count=%d max=%d index=%s".formatted(count, max, this));
+					final long size = buffer.length() / Integer.BYTES;
+					if(size > max) {
+						throw new IllegalStateException("Index too large: count=%d max=%d".formatted(size, max));
 					}
 				}
 			}

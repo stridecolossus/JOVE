@@ -54,26 +54,20 @@ class IndexBufferTest {
 		assertEquals(1, mockery.mock("vkCmdBindIndexBuffer").count());
 	}
 
-	@Test
-	void length() {
-		assertThrows(IllegalArgumentException.class, () -> index.bind(8L));
-	}
-
 	@DisplayName("The length of an index buffer with 32-bit indices must not exceed the hardware limit")
 	@Test
 	void limit() {
 		device.limits.maxDrawIndexedIndexValue = 0;
-		assertThrows(IllegalStateException.class, () -> index.bind(0L));
+		assertThrows(IllegalStateException.class, () -> new IndexBuffer(VkIndexType.UINT32, buffer));
 	}
 
+	@SuppressWarnings("unused")
 	@DisplayName("An index buffer with 8-bit indices requires a device feature")
 	@Test
 	void bytes() {
-		final var bytes = new IndexBuffer(VkIndexType.UINT8_EXT, buffer);
-		assertThrows(UnsupportedOperationException.class, () -> bytes.bind());
-
+		assertThrows(UnsupportedOperationException.class, () -> new IndexBuffer(VkIndexType.UINT8_EXT, buffer));
 		device.features.add("indexTypeUint8");
-		bytes.bind();
+		new IndexBuffer(VkIndexType.UINT8_EXT, buffer);
 	}
 
 	@DisplayName("The underlying buffer must be able to be used as an index buffer")
