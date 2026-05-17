@@ -6,29 +6,22 @@ import org.sarge.jove.util.MathsUtility;
 
 /**
  * An <i>axis-angle</i> specifies a counter-clockwise rotation about an arbitrary axis.
- * TODO - doc cosine function
  * @see <a href="https://en.wikipedia.org/wiki/Axis%E2%80%93angle_representation">Axis Angle Representation</a>
  * @author Sarge
  */
-public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) implements Transform {
+public record AxisAngle(Normal axis, float angle) implements Transform {
 	/**
 	 * Constructor.
 	 * @param axis 			Rotation axis
 	 * @param angle			Angle (radians)
-	 * @param provider		Cosine function
 	 */
 	public AxisAngle {
 		requireNonNull(axis);
-		requireNonNull(provider);
 	}
 
-	/**
-	 * Constructor using {@link Cosine.Provider#DEFAULT}.
-	 * @param axis 			Rotation axis
-	 * @param angle			Angle (radians)
-	 */
-	public AxisAngle(Normal axis, float angle) {
-		this(axis, angle, Cosine.Provider.DEFAULT);
+	@Override
+	public Matrix matrix() {
+		return matrix(CosineFunction.DEFAULT);
 	}
 
 	/**
@@ -45,14 +38,13 @@ public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) impl
 	 * <li>and {@code N ^ N} is the outer product</li>
 	 * </ul>
 	 * <p>
+	 * @param cosine Cosine function
 	 * @see <a href="https://en.wikipedia.org/wiki/Rotation_matrix">Wikipedia</a>
 	 */
-	@Override
-	public Matrix matrix() {
+	public Matrix matrix(CosineFunction cosine) {
 		// Init angle
-		final Cosine cosine = provider.cosine(angle);
-		final float sin = cosine.sin();
-		final float cos = cosine.cos();
+		final float sin = cosine.sin(angle);
+		final float cos = cosine.cos(angle);
 
 		// Build the identity rotation
 		// TODO - use Transform.scale(cos)? => still need to handle add() to handle 3x3 and 4x4 matrices
@@ -96,18 +88,19 @@ public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) impl
 	 * <p>
 	 * This approach will generally be more efficient than constructing an intermediate rotation matrix.
 	 * <p>
-	 * @param vector Vector to rotate
+	 * @param vector		Vector to rotate
+	 * @param cosine		Cosine function
 	 * @return Rotated vector
 	 * @see #provider()
 	 * @see <a href="https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula">Wikipedia</a>
 	 */
-	public Vector rotate(Vector vector) {
-		final Cosine cosine = provider.cosine(angle);
-		final float cos = cosine.cos();
+	public Vector rotate(Vector vector, CosineFunction cosine) {
+		final float sin = cosine.sin(angle);
+		final float cos = cosine.cos(angle);
 		final float dot = axis.dot(vector);
-		final Vector a = vector.multiply(cos);							// Scale the vector down
-		final Vector b = axis.cross(vector).multiply(cosine.sin());		// Skew towards new position
-		final Vector c = axis.multiply(dot * (1 - cos));				// Restore height
+		final Vector a = vector.multiply(cos);						// Scale the vector down
+		final Vector b = axis.cross(vector).multiply(sin);			// Skew towards new position
+		final Vector c = axis.multiply(dot * (1 - cos));			// Restore height
 		return a.add(b).add(c);
 	}
 
@@ -118,5 +111,10 @@ public record AxisAngle(Normal axis, float angle, Cosine.Provider provider) impl
 				(obj instanceof AxisAngle that) &&
 				this.axis.equals(that.axis()) &&
 				MathsUtility.isApproxEqual(this.angle, that.angle());
+	}
+
+	@Override
+	public final String toString() {
+		return String.format("AxisAngle[axis=%s angle=%f]", axis, angle);
 	}
 }

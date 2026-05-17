@@ -1,3 +1,14 @@
+TODO
+
+work / buffers
+- factory to create batch from a collection of buffers (if not already)
+
+transformers
+- reconsider marker interfaces for returned and updated parameters
+- or have a set of properties/characteristics
+- reintroduce class-type of the parameter in marshshalling methods, rather than overly-complex factory approach (enums, structures)
+
+
 **********
 generator for primitive arrays -> need to be handles?
 VkShaderModuleCreateInfo::pCode
@@ -15,6 +26,7 @@ MSAA
 - final layout = colour optimal
 
 blog
+- update cube demo animation -> dependant on 1. animation ~ time NOT elapsed 2. UBO ~ frame (in flight) index
 - add section for minimised/closed windows ~ callbacks, recreation & GLFW callbacks -> input handling for model demo: close, resize, minimise, etc
 - physical device refers to NativeParameter
 

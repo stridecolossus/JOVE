@@ -2,12 +2,11 @@ package org.sarge.jove.control;
 
 import static java.util.Objects.requireNonNull;
 
-import org.sarge.jove.control.Animator.Animation;
 import org.sarge.jove.geometry.*;
-import org.sarge.jove.util.MathsUtility;
 
 /**
- * A <i>mutable rotation</i> is an adapter for an axis-angle.
+ * A <i>mutable rotation</i> specifies a rotation about a given axis.
+ * @see AxisAngle
  * @author Sarge
  */
 public class MutableRotation implements Transform {
@@ -15,63 +14,49 @@ public class MutableRotation implements Transform {
 
 	/**
 	 * Constructor.
-	 * @param axis Rotation axis
+	 * @param axis Axis of rotation
 	 */
 	public MutableRotation(Normal axis) {
-		set(axis, 0);
+		this.rotation = new AxisAngle(axis, 0);
 	}
 
 	/**
-	 * Constructor given an axis-angle.
-	 * @param rotation Axis-angle
+	 * Creates an adapter for this rotation using the given function to calculate the matrix.
+	 * @param function Cosine function
+	 * @return This rotation using the given function
 	 */
-	public MutableRotation(AxisAngle rotation) {
-		this.rotation = requireNonNull(rotation);
+	public MutableRotation with(CosineFunction function) {
+		requireNonNull(function);
+
+		return new MutableRotation(rotation.axis()) {
+			@Override
+			public Matrix matrix() {
+				return rotation.matrix(function);
+			}
+		};
 	}
 
 	@Override
 	public Matrix matrix() {
-		return rotation.matrix();
+		return rotation.matrix(CosineFunction.DEFAULT);
 	}
 
 	/**
-	 * @return Axis-angle
-	 */
-	public AxisAngle toAxisAngle() {
-		return rotation;
-	}
-
-	/**
-	 * @return This rotation as an animation about the unit-circle
-	 */
-	public Animation animation() {
-		return pos -> set(pos * MathsUtility.TWO_PI);
-	}
-
-	/**
-	 * Sets the rotation axis.
-	 * @param axis Rotation axis
-	 */
-	public void set(Axis axis) {
-		set(axis, rotation.angle());
-	}
-
-	/**
-	 * Sets the rotation angle.
-	 * @param angle Rotation angle (radians)
+	 * Sets the angle of this rotation.
+	 * @param angle Counter-clockwise rotation angle (radians)
 	 */
 	public void set(float angle) {
-		set(rotation.axis(), angle);
+		set(new AxisAngle(rotation.axis(), angle));
 	}
 
 	/**
 	 * Sets this rotation.
-	 * @param axis		Rotation axis
-	 * @param angle		Angle (radians)
+	 * @param rotation Rotation
 	 */
-	public void set(Normal axis, float angle) {
-		rotation = new AxisAngle(axis, angle, Cosine.Provider.DEFAULT);
+	public void set(AxisAngle rotation) {
+		this.rotation = requireNonNull(rotation);
 	}
+	// TODO - needed?
 
 	@Override
 	public int hashCode() {
@@ -81,8 +66,8 @@ public class MutableRotation implements Transform {
 	@Override
 	public boolean equals(Object obj) {
 		return
-				(obj == this) ||
-				(obj instanceof MutableRotation that) &&
+				obj == this ||
+				obj instanceof MutableRotation that &&
 				this.rotation.equals(that.rotation);
 	}
 

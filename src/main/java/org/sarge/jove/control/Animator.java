@@ -39,8 +39,9 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 	 */
 	public Animator(Animation animation, Duration duration) {
 		this.animation = requireNonNull(animation);
-		this.duration = requireOneOrMore(duration.toMillis());
-		this.scale = 1f / duration.toMillis();
+		this.duration = requireOneOrMore(duration.toNanos());
+		//this.duration = requireOneOrMore(duration.toMillis());
+		this.scale = 1f / this.duration; // .toMillis();
 	}
 
 	/**
@@ -106,19 +107,25 @@ public class Animator extends AbstractPlayable implements Frame.Listener {
 		}
 
 		// Update animation position
-		final long elapsed = frame.elapsed().toMillis();
-		if(!repeat && (elapsed > duration)) {
-			// Stop at end of duration if not repeating
-			state(State.STOPPED);
-			time = duration;
-			animation.set(1);
+//		final long elapsed = frame.elapsed().toMillis();
+		final long elapsed = frame.elapsed().toNanos();
+
+		if(elapsed == 0) {
+			System.out.println("********* ZERO");
 		}
-		else {
+
+//		if(!repeat && (elapsed > duration)) { // TODO - surely this should be time + elapsed > duration?
+//			// Stop at end of duration if not repeating
+//			state(State.STOPPED);
+//			time = duration;
+//			animation.set(1);
+//		}
+//		else {
 			// Otherwise quantise animation time by duration
 			time += elapsed * speed;
 			time = time % duration;
 			animation.set(time * scale);
-		}
+//		}
 	}
 
 	@Override

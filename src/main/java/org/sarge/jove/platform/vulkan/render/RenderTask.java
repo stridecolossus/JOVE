@@ -70,12 +70,20 @@ public class RenderTask implements Runnable {
 		final int index = frame.acquire(swapchain);
 		final Framebuffer framebuffer = framebuffers.get(index);
 
+		// TODO
+		update(frame.index());
+
 		// Render frame
 		final Buffer sequence = composer.compose(frame.index(), framebuffer);
 		frame.render(sequence);
 
 		// Present frame
 		frame.present(sequence, index, swapchain);
+	}
+
+	// TODO
+	protected void update(int index) {
+
 	}
 
 	/**

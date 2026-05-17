@@ -1,4 +1,63 @@
 
+demo - town model
+- flat surface for the moment, ground plane?
+- buildings: 2D polygon -> 3D model => extrusion? => triangle strip builder, rendered as flat colour / wireframe (toggle)
+- local transform? or built-in translation? [whichever is easiest]
+- roads/streets: 2 x lines or polygons? need to be raised if ground plane
+- street names: glyph text, centred and rotated to middle of road
+- walls: thick 'lines', towers at junctions, gates, towers/gates are instanced model => local transform
+- camera: WASD movement, cursor rotation, zoom => action bindings
+- frustum culling, shrink viewport for visual testing? => culling volumes
+- mouse cursor picking to display building names (simple text overlay) => selection bounding volumes (same volume?)
+- could then extent to 3D terrain? lighting? trees? water line?
+
+? or solar system demo to 'prove' transform inheritance of scene graph, sun / earth-moon, textured
+
+0
+- buildings in X-Z plane, hard-coded set of simple cubes with local transforms
+- inherited transform, rotate town action/animation?
+- 2 x pipelines, some wire-frames
+
+1
+- scene graph, grouped rendering by material
+- buildings in X-Z plane, hard-coded set of simple cubes with local transforms
+- camera, fixed position at 'front', free-look controller
+
+2
+- building extrusion + built-in translation
+- camera movement controller, WASD in X-Z, up/down Y, action bindings
+
+3
+- roads, built-in translation
+- walls, towers, gates
+- wireframe toggle for buildings
+- trees? compound model? instanced, random rotation & scale
+
+4
+- building culling/picking volumes (same)
+- frustum culling
+- picking (to console), ray from centre of screen
+
+required
+- scene graph
+- extrusion builder: polygon, add(normal, distance), triangle strip generator, stitch closed
+
+next chapter
+- street names
+- terrain
+- picking -> overlay, ray from mouse
+- etc
+
+Q - use Crooked Staff cottage textures for buildings, walls?
+
+terrain
+- check out YT videos
+- generation? algorithms?
+- tesselation? or just simple grid, and do full-on continuous terrain/following later
+- building LOD, mip/maps
+
+////////////////
+
 purpose
 - mutable scene graph
 - renderer flattens graph -> render sequence, ordered by render queue, material
@@ -69,3 +128,54 @@ implications:
 how to:
 - specify sequence is secondary buffers? hint: dynamic, fixed?
 - use uniform or push constant / range (others?) -> some sort of 'layout' thing ~ struct layout, i.e. 'ranges' with names
+
+---------
+
+EXTRUSION
+
+indexed mesh builder
+
+polygon = List<Point>
+initial direction
+optionally closed, e.g. could be used to create an open 'wall' or a closed cylinder
+
+// Extrudes in the given direction
+// - normal relative to previous row
+// - or is this the normal of the next row? [yes]
+// - or vector (including length) from previous polygon and then normal to orientate next row?
+add(Normal normal, float length)
+
+move polygon vertices by vector OR normal * length
+is there a difference?
+do we need to be able to calculate the centre-point of the polygon to calculate the next row?
+
+
+// 
+triangle fan to 'cap' previous row?
+e.g. create top/bottom of cylinder
+
+strip builder
+- adds N vertices -> mesh
+- links polygon 'layers' by generating triangle -> indices
+- texture coordinates? custom function?
+- optionally generates normals 
+
+0 - 1 - 2 - 3 - N
+| / | / | / | / |
+4 - 5 - 6 - 7 - ...
+
+previous row/layer, index(row, n, length) = row * length + n 
+next = index(row + 1)
+
+---------
+
+CONIC BUILDER
+
+similar to extrusion
+except polygon is the unit-circle, divided into N segments -> angle (radians)
+rows are unit-circle in other direction (name?)
+uses same stripifier to generate vertices
+pole() method, either triangle fan, or row that essentially has shared pole vertex
+generally would be hemisphere? 
+squash() for sky dome
+

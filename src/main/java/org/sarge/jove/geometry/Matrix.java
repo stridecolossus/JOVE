@@ -102,15 +102,13 @@ public class Matrix implements Bufferable, Transform {
 		init(matrix);
 	}
 
-	private void init(float[][] matrix) {
-		final int order = matrix.length;
+	private void init(float[][] that) {
+		final int order = that.length;
 		for(int r = 0; r < order; ++r) {
-			if(matrix[r].length != order) {
+			if(that[r].length != order) {
 				throw new IllegalArgumentException();
 			}
-			for(int c = 0; c < order; ++c) {
-				this.matrix[r][c] = matrix[r][c];
-			}
+			System.arraycopy(that[r], 0, this.matrix[r], 0, order);
 		}
 	}
 

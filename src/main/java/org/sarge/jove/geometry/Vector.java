@@ -173,7 +173,7 @@ public class Vector extends Tuple {
 	 */
 	public final Point nearest(Point p) {
 		final Vector v = new Vector(p);
-		final Vector n = v.project(new Normal(this));
+		final Vector n = v.project(this.normalize());
 		return new Point(n);
 	}
 	// TODO - specialise in Normal?

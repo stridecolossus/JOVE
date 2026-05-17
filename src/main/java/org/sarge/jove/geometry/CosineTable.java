@@ -2,8 +2,6 @@ package org.sarge.jove.geometry;
 
 import static org.sarge.jove.util.MathsUtility.*;
 
-import java.util.Arrays;
-
 /**
  * A <i>cosine table</i> implements the trigonometric functions via a lookup table.
  * <p>
@@ -15,8 +13,8 @@ import java.util.Arrays;
  * <p>
  * @author Sarge
  */
-public class CosineTable implements Cosine.Provider {
-	private final Cosine[] table;
+public class CosineTable implements CosineFunction {
+	private final float[] table;
 	private final float scale;
 
 	/**
@@ -25,21 +23,27 @@ public class CosineTable implements Cosine.Provider {
 	 * @throws IllegalArgumentException if the given size is not a power-of-two
 	 */
 	public CosineTable(int size) {
-		this(size, Cosine.Provider.DEFAULT);
+		this(size, CosineFunction.DEFAULT);
 	}
 
 	/**
 	 * Constructor given a custom cosine function.
 	 * @param size 			Table size
-	 * @param provider		Cosine function
-	 * @throws IllegalArgumentException if {@link #size} is not four or more
+	 * @param function		Cosine function
+	 * @throws IllegalArgumentException if {@link #size} is not a power-of-two or is too small
 	 */
-	public CosineTable(int size, Cosine.Provider provider) {
-		if(size < 4) throw new IllegalArgumentException();
+	public CosineTable(int size, CosineFunction function) {
+		if(size < 4) {
+			throw new IllegalArgumentException();
+		}
+
 		final float segment = TWO_PI / size;
 		this.scale = 1 / segment;
-		this.table = new Cosine[size];
-		Arrays.setAll(table, index -> provider.cosine(index * segment));
+		this.table = new float[size];
+
+		for(int n = 0; n < size; ++n) {
+			table[n] = function.cos(n * segment);
+		}
 	}
 
 	/**
@@ -59,7 +63,8 @@ public class CosineTable implements Cosine.Provider {
 	}
 
 	@Override
-	public Cosine cosine(float angle) {
-		return table[index(angle)];
+	public float cos(float angle) {
+		final int index = index(angle);
+		return table[index];
 	}
 }

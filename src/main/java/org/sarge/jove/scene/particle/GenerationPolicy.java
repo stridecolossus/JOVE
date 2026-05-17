@@ -25,6 +25,6 @@ public interface GenerationPolicy {
 	 * @return Fixed policy
 	 */
 	static GenerationPolicy fixed(int num) {
-		return (current, __) -> num - current;
+		return (current, _) -> num - current;
 	}
 }

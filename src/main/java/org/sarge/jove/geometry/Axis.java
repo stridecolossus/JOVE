@@ -48,12 +48,11 @@ public class Axis extends Normal {
 	 * @param provider		Cosine provider
 	 * @return Rotation matrix
 	 */
-	public Matrix rotation(float angle, Cosine.Provider provider) {
+	public Matrix rotation(float angle, CosineFunction function) {
 		// Init matrix
 		final var builder = new Matrix.Builder(4).identity();
-		final Cosine cosine = provider.cosine(angle);
-		final float sin = cosine.sin();
-		final float cos = cosine.cos();
+		final float sin = function.sin(angle);
+		final float cos = function.cos(angle);
 
 		// Build rotation matrix for this axis
 		switch(ordinal) {

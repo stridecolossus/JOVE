@@ -10,16 +10,27 @@ public class Cube {
 	// Cube vertices
 	private final Point[] vertices = {
 			// Front
-			new Point(-1, -1, 1),
 			new Point(-1, +1, 1),
-			new Point(+1, -1, 1),
+			new Point(-1, -1, 1),
 			new Point(+1, +1, 1),
+			new Point(+1, -1, 1),
 
 			// Back
-			new Point(-1, -1, -1),
-			new Point(+1, -1, -1),
 			new Point(-1, +1, -1),
 			new Point(+1, +1, -1),
+			new Point(-1, -1, -1),
+			new Point(+1, -1, -1),
+//			// Front
+//			new Point(-1, -1, 1),
+//			new Point(-1, +1, 1),
+//			new Point(+1, -1, 1),
+//			new Point(+1, +1, 1),
+//
+//			// Back
+//			new Point(-1, -1, -1),
+//			new Point(+1, -1, -1),
+//			new Point(-1, +1, -1),
+//			new Point(+1, +1, -1),
 	};
 
 	// Face indices

@@ -21,14 +21,15 @@ public record Quaternion(float scalar, Vector vector) implements Transform {
 
 	/**
 	 * Creates a quaternion from the given axis-angle rotation.
-	 * @param rotation Axis-angle rotation
+	 * @param rotation		Axis-angle rotation
+	 * @param function		Cosine function
 	 * @return Rotation quaternion
+	 * @see CosineFunction#DEFAULT
 	 */
-	public static Quaternion of(AxisAngle rotation) {
+	public static Quaternion of(AxisAngle rotation, CosineFunction function) {
 		final float half = rotation.angle() * HALF;
-		final Cosine cosine = rotation.provider().cosine(half);
-		final Vector axis = rotation.axis().multiply(cosine.sin());
-		return new Quaternion(cosine.cos(), axis);
+		final Vector axis = rotation.axis().multiply(function.sin(half));
+		return new Quaternion(function.cos(half), axis);
 	}
 
 	/**
@@ -44,15 +45,16 @@ public record Quaternion(float scalar, Vector vector) implements Transform {
 	/**
 	 * Converts this quaternion to an axis-angle rotation.
 	 * The rotation axis is undefined if this is approximately the {@link #IDENTITY} quaternion
-	 * @param provider Cosine function
+	 * @param function Cosine function
 	 * @return Axis-angle
+	 * @see CosineFunction#DEFAULT
 	 */
-	public AxisAngle toAxisAngle(Cosine.Provider provider) {
+	public AxisAngle toAxisAngle(CosineFunction function) {
 		// TODO - numerically unstable when w near +/- 1 (???)
-		final float angle = 2 * (float) Math.acos(scalar);
-		final float sin = provider.cosine(angle * HALF).sin();
+		final float angle = 2 * (float) Math.acos(scalar);			// TODO - acos() -> function?
+		final float sin = function.sin(angle * HALF);
 		final Vector axis = vector.multiply(1 / sin);
-		return new AxisAngle(new Normal(axis), angle, provider);
+		return new AxisAngle(new Normal(axis), angle);
 	}
 
 	/**

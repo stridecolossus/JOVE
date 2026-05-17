@@ -29,24 +29,24 @@ public interface SphereNormalFactory {
 	 * Default implementation.
 	 */
 	class DefaultSphereNormalFactory implements SphereNormalFactory {
-		private Cosine.Provider provider = Cosine.Provider.DEFAULT;
+		private final CosineFunction function;
 
-		/**
-		 * Sets the cosine function used by this factory.
-		 * @param provider Cosine function
-		 */
-		public void provider(Cosine.Provider provider) {
-			this.provider = requireNonNull(provider);
+		public DefaultSphereNormalFactory(CosineFunction function) {
+			this.function = requireNonNull(function);
+		}
+
+		public DefaultSphereNormalFactory() {
+			this(CosineFunction.DEFAULT);
 		}
 
 		@Override
 		public Normal normal(float yaw, float pitch) {
-			final Cosine theta = provider.cosine(yaw);
-			final Cosine phi = provider.cosine(pitch);
-			final float x = theta.cos() * phi.cos();
-			final float y = phi.sin();
-			final float z = theta.sin() * phi.cos();
+			final float cos = function.cos(pitch);
+			final float x = function.cos(yaw) * cos;
+			final float y = function.sin(pitch);
+			final float z = function.sin(yaw) * cos;
 			return new Normal(new Vector(x, y, z));
 		}
 	}
+	// TODO - do we really need a separate interface/implementation here?
 }
